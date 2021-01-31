@@ -309,7 +309,7 @@ input {
 .devinfocolumn1 {
   display: table-cell;
   float: left;
-  width: 160px;
+  width: 200px;
   font-size: 12px;
 }
 .devinfocolumn2 {
