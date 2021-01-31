@@ -10,5 +10,5 @@
 #define _SEMVER_BUILD "1.0.0"
 #define _SEMVER_FULL "1.0.0"
 #define _SEMVER_NOBUILD "1.0.0 (31-01-2021)"
-#define _VERSION "1.0.0 (12-01-2021)"
+#define _VERSION "1.0.0 (31-01-2021)"
 //The version information is created automatically, more information here: https://github.com/rvdbreemen/autoinc-semver
