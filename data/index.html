@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html charset="UTF-8">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/index.css">
+    <script src="/index.js"></script>
+    <title>Modbus firmware</title>
+  </head>
+  <body>
+    <font face="Arial">
+    <!-- <div class="dev-header"> -->
+    <div class="headerrow">
+        <div class="headercolumnbig" id="sysName">Modbus firmware</div>
+        <div class="headercolumn" id="devName">[hostname]</div>
+        <div class="headercolumn" id="devVersion">[version]</div>
+        <div class="headercolumn" id='theTime'>[00:00:00]</div>
+    </div>
+    </font>
+    <div id="displayMainPage"      style="display:none">
+      <div class="nav-container">
+        <div class='nav-left'>
+          <a id='tabDeviceInfo' class='nav-item tabButton' style="background: lightblue;">Device Info</a>
+          <a id='M_FSexplorer'  class='nav-img'> <img src='/FSexplorer.png' alt='FSexplorer'></a>
+          <a id='tabSettings'   class='nav-img'> <img src='/settings.png' alt='Settings'></a>
+        </div>
+      </div>
+      <br/>
+      <div id="mainPage">
+        <div id="waiting">Wait for it...</div>
+      </div>
+    </div>
+    <div id="displayDeviceInfo"  style="display:none">
+      <div class="nav-container">
+        <div class='nav-left'>
+          <a id='D_back' class='nav-item tabButton' style="background: lightblue;">Back</a>
+          <a id='D_FSexplorer' class='nav-img'> <img src='/FSexplorer.png' alt='FSexplorer'></a>
+        </div>
+      </div>
+      <br/>
+      <div id="deviceinfoPage"></div>
+    </div>
+    <div id="displaySettingsPage"  style="display:none">
+      <div class="nav-container">
+        <div class='nav-left'>
+          <a id='S_back' class='nav-item tabButton' style="background: lightblue;">Back</a>
+          <a id='S_saveSettings' class='nav-item tabButton' style="background: lightblue;">Save</a>
+          <a id='S_FSexplorer' class='nav-img'> <img src='/FSexplorer.png' alt='FSexplorer'></a>
+        </div>
+      </div>
+      <br/>
+      <div id="settingsPage"></div>
+      <div id="settingMessage">Loading...</div>
+    </div>
+
+    <!-- KEEP THIS --->
+
+    <!-- Pin to bottom right corner -->
+    <div class="bottom right-0">2021 &copy; Rob Roos</div>
+
+    <!-- Pin to bottom left corner -->
+    <div id="message" class="bottom left-0">-</div>
+
+    <script>
+       window.onload=bootsTrapMain;
+    </script>
+
+  </body>
+
+</html>
