@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.js, part of Modbus-firmware project
-**  Version 1.0.0
+**  Version 1.0.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -551,6 +551,7 @@
    ,[ "modbusbaudrate",             "Modbus Baudrate (serial 8N1)" ]
    ,[ "modbusslaveadres",           "Modbus Slave address" ]
    ,[ "modbussinglephase",          "Modbus Single Phase (1 for single)" ]
+   ,[ "wifireconnect",              "Wifi reconnect count (reset at reboot)" ]
    ,[ "wifirestart",                "Wifi restart count (reset at reboot)" ]
    ,[ "rebootcount",                "ESP reboot count" ]
 

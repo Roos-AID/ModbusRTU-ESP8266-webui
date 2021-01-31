@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Filename  : safeTimers.h
-**  Version 1.0.0
+**  Version 1.0.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications

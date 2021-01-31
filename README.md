@@ -20,4 +20,4 @@ Looking for the documentation, go here (work in progress):  TODO
 
 | Version | Release notes |
 |-|-|
-| 1.0.0 | Initial version, based on OTGW-firmware from Robert van Breemen|
+| 1.0.1 | Initial version, based on OTGW-firmware from Robert van Breemen|

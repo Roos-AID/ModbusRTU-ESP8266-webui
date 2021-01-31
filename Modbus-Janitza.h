@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.0.0
+**  Version 1.0.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -39,6 +39,7 @@ char        fChar[10];
 String      lastReset   = "";
 uint64_t    upTimeSeconds=0;
 uint32_t    rebootCount=0;
+uint32_t    reconnectWiFiCount=0;
 uint32_t    restartWiFiCount=0;
 Timezone    CET;
 

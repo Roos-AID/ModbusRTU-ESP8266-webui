@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.ino
-**  Version 1.0.0
+**  Version 1.0.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -203,7 +203,8 @@ void doTaskEvery60s(){
   if (WiFi.status() != WL_CONNECTED)
   {
     //disconnected, try to reconnect then...
-     startWiFi(_HOSTNAME, 240);
+    reconnectWiFiCount++;
+    startWiFi(_HOSTNAME, 240);
     //check telnet
     startTelnet();
   }
