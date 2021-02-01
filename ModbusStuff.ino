@@ -237,8 +237,47 @@ int sendModbus(const char* buf, int len)
  //    } else Debugln("Error: Write buffer not big enough!");
  //  } else Debugln("Error: Serial device not found!");
  }
+/*
+ /=============TO DO==============================================================================
+ void doInitModbusMap()
+ {
+   const char* cfgFilename = "/Modbusmap.cfg";
+   int id;
+   String Modbusmsgcmd;
+   String Modbustype;
+   int reg;
+   char* label;
+   int phase;           // 0 = generic ,  4 = sum
+   char* friendlyname;
+   char* unit;
+   uint16_t Modbus_short;
+   float Modbus_float;
+   File fh; //filehandle
+   //Let's open the Modbus config file
+   SPIFFS.begin();
+   if (SPIFFS.exists(cfgFilename))
+   {
+     fh = SPIFFS.open(cfgFilename, "r");
+     if (fh) {
+       //Lets go read the config and store in modbusmap line by line
+       while(fh.available())
+       {  //read file line by line, split and send to MQTT (topic, msg)
+ //          feedWatchDog(); //start with feeding the dog
 
+           String sLine = fh.readStringUntil('\n');
+           // DebugTf("sline[%s]\r\n", sLine.c_str());
+           if (splitString(sLine, ',', sTopic, sMsg))
+           {
+             DebugTf("sTopic[%s], sMsg[%s]\r\n", sTopic.c_str(), sMsg.c_str());
+             delay(10);
+           } else DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
+       } // while available()
+       fh.close();
+     }
+   }
+ }
 
+*/
 
 
 //====================[ functions for REST API ]====================
