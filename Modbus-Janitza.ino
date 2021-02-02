@@ -37,6 +37,7 @@
 #define _FW_VERSION _VERSION
 
 #include "Modbus-Janitza.h"
+// #include "helperStuff.ino"
 
 //=====================================================================
 void setup()
@@ -139,6 +140,9 @@ Debugln("\nHTTP Server started\r");
 //============== Setup Modbus ======================================
 
   setupModbus();
+
+
+  doInitModbusMap();
 
 //  readModbusSetup();
 

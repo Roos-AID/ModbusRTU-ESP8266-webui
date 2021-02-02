@@ -1,0 +1,42 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "/Users/robroos/Documents/Arduino/Modbus-Janitza/**",
+                "/Applications/Arduino.app/Contents/Java/libraries/**",
+                "${workspaceFolder}/**",
+                "/Users/robroos/Documents/Arduino/libraries/**",
+                "/Users/robroos/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.4/**",
+                "/Applications/Arduino.app/Contents/Java/libraries/WiFi/src",
+                "/Users/robroos/Library/Arduino15/packages/esp8266/tools/**"
+            ],
+            "defines": [
+                "USBCON"
+            ],
+            "macFrameworkPath": [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "${default}",
+            "forcedInclude": []
+        },
+        {
+            "name": "modbus",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}

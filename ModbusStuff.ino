@@ -237,14 +237,45 @@ int sendModbus(const char* buf, int len)
  //    } else Debugln("Error: Write buffer not big enough!");
  //  } else Debugln("Error: Serial device not found!");
  }
-/*
- /=============TO DO==============================================================================
+
+ // =============TO DO==============================================================================
+ //===========================================================================================
+bool splitStringMb(String sIn, char del, String& cKey, String& cVal)
+{
+  sIn.trim();                                 //trim spaces
+  cKey=""; cVal="";
+  if (sIn.indexOf("//")==0) return false;     //comment, skip split
+  if (sIn.length()<=3) return false;          //not enough buffer, skip split
+  int pos = sIn.indexOf(del);                 //determine split point
+  if ((pos==0) || (pos==(sIn.length()-1))) return false; // no key or no value
+  cKey = sIn.substring(0,pos); cKey.trim();   //before, and trim spaces
+  cVal = sIn.substring(pos+1); cVal.trim();   //after,and trim spaces
+  return true;
+}
+ 
+ 
  void doInitModbusMap()
  {
    const char* cfgFilename = "/Modbusmap.cfg";
-   int id;
-   String Modbusmsgcmd;
-   String Modbustype;
+   // file format
+   // reg, format, type, label, friendlyname, unit, phase
+   // eg: 19000, Modbus_short, Modbus_READ, UL1N, Voltage L1-N, V, 1
+   // format = (Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_undef)
+   // type = (Modbus_READ, Modbus_RW, Modbus_UNDEF)
+   // label = Short label string
+   // friendlyname = string in UI
+   // Unit = V, A, wH etc.
+   // phase = 1,2,3 or 0 for generic and 4 for sum
+
+   int id = 0;
+   String sReg;
+   String sFormat;
+   String sRegcmd;
+   String sLabel;
+   String sName;
+   String sUnit;
+   String sPhase;
+
    int reg;
    char* label;
    int phase;           // 0 = generic ,  4 = sum
@@ -252,6 +283,7 @@ int sendModbus(const char* buf, int len)
    char* unit;
    uint16_t Modbus_short;
    float Modbus_float;
+
    File fh; //filehandle
    //Let's open the Modbus config file
    SPIFFS.begin();
@@ -262,13 +294,13 @@ int sendModbus(const char* buf, int len)
        //Lets go read the config and store in modbusmap line by line
        while(fh.available())
        {  //read file line by line, split and send to MQTT (topic, msg)
- //          feedWatchDog(); //start with feeding the dog
-
+           id++;
            String sLine = fh.readStringUntil('\n');
-           // DebugTf("sline[%s]\r\n", sLine.c_str());
-           if (splitString(sLine, ',', sTopic, sMsg))
+           DebugTf("sline[%s]\r\n", sLine.c_str());
+           // reg, format, type, label, friendlyname, unit, phase
+           if (splitStringMb(sLine, ',', sReg, sFormat, sRegcmd, sLabel, sName, sUnit, sPhase ))
            {
-             DebugTf("sTopic[%s], sMsg[%s]\r\n", sTopic.c_str(), sMsg.c_str());
+             DebugTf("sReg[%s], sFormat[%s], sRegcmd[%s], sLabel[%s], sName[%s], sUnit[%s], sPhase[%s]\r\n", sReg.c_str(), sFormat.c_str(), sRegcmd.c_str(), sLabel.c_str(), sName.c_str(), sUnit.c_str(), sPhase.c_str());
              delay(10);
            } else DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
        } // while available()
@@ -277,7 +309,6 @@ int sendModbus(const char* buf, int len)
    }
  }
 
-*/
 
 
 //====================[ functions for REST API ]====================
