@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.1.0
+**  Version 1.1.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -141,7 +141,7 @@ void readModbus()
 
 //    Debugf("readModbus started\r\n");
 
-    for (int i = 1; i < ModbusdataObject.NumberRegisters ; i++) {
+    for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
        if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1) {
           switch (Modbusmap[i].regformat) {
             case Modbus_short:

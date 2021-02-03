@@ -205,12 +205,12 @@ void sendModbusmonitor()
 //  sendJsonModbusmonObj("Number read errors", ModbusdataObject.ModbusErrors,"");
 //  sendJsonModbusmonObj("Last result", ModbusdataObject.LastResult,"");
 
-  for (int i = 1; i < ModbusdataObject.NumberRegisters ; i++) {
+  for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
 //    DebugTf("Record: %d, id %d, oper: %d, format: %d \r\n", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
 //    DebugTf("Address: %d, phase: %d, Valuefloat %f \r\n", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
 //    DebugTf("Label: %s, Friendlyname %s, Unit: %s \r\n", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
     // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
-    if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1) {
+    if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
         switch (Modbusmap[i].regformat) {
           case Modbus_short:
               sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short, Modbusmap[i].unit);
