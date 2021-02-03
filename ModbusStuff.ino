@@ -142,7 +142,7 @@ void readModbus()
 //    Debugf("readModbus started\r\n");
 
     for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
-       if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1) {
+       if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
           switch (Modbusmap[i].regformat) {
             case Modbus_short:
                TempShort = Modbus_ReadShort(Modbusmap[i].address) ;
