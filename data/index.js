@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.js, part of Modbus-firmware project
-**  Version 1.0.1
+**  Version 1.1.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -554,6 +554,7 @@
    ,[ "wifireconnect",              "Wifi reconnect count (reset at reboot)" ]
    ,[ "wifirestart",                "Wifi restart count (reset at reboot)" ]
    ,[ "rebootcount",                "ESP reboot count" ]
+   ,[ "modbusreaderrors",           "Modbus read errors" ]
 
 
                  ];

@@ -4,8 +4,8 @@
             "name": "Mac",
             "includePath": [
                 "/Users/robroos/Documents/Arduino/Modbus-Janitza/**",
-                "/Applications/Arduino.app/Contents/Java/libraries/**",
                 "${workspaceFolder}/**",
+                "/Applications/Arduino.app/Contents/Java/libraries/**",
                 "/Users/robroos/Documents/Arduino/libraries/**",
                 "/Users/robroos/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.4/**",
                 "/Applications/Arduino.app/Contents/Java/libraries/WiFi/src",

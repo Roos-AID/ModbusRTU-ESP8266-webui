@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.0.1
+**  Version 1.1.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -141,11 +141,11 @@ void readModbus()
 
 //    Debugf("readModbus started\r\n");
 
-    for (int i = 1; i < MODBUSCOUNT ; i++) {
+    for (int i = 1; i < ModbusdataObject.NumberRegisters ; i++) {
        if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1) {
-          switch (Modbusmap[i].type) {
+          switch (Modbusmap[i].regformat) {
             case Modbus_short:
-               TempShort = Modbus_ReadShort(Modbusmap[i].reg) ;
+               TempShort = Modbus_ReadShort(Modbusmap[i].address) ;
 
               if (ModbusdataObject.LastResult == 0) {
                  Modbusmap[i].Modbus_short = TempShort ;
@@ -161,7 +161,7 @@ void readModbus()
               DebugTf("Not implemented %d = %s \r\n", i, Modbusmap[i].label) ;
               break;
             case Modbus_float:
-              TempFloat = Modbus_ReadFloat(Modbusmap[i].reg) ;
+              TempFloat = Modbus_ReadFloat(Modbusmap[i].address) ;
 
               if (ModbusdataObject.LastResult == 0) {
                  Modbusmap[i].Modbus_float = TempFloat ;
@@ -240,49 +240,40 @@ int sendModbus(const char* buf, int len)
 
  // =============TO DO==============================================================================
  //===========================================================================================
-bool splitStringMb(String sIn, char del, String& cKey, String& cVal)
-{
-  sIn.trim();                                 //trim spaces
-  cKey=""; cVal="";
-  if (sIn.indexOf("//")==0) return false;     //comment, skip split
-  if (sIn.length()<=3) return false;          //not enough buffer, skip split
-  int pos = sIn.indexOf(del);                 //determine split point
-  if ((pos==0) || (pos==(sIn.length()-1))) return false; // no key or no value
-  cKey = sIn.substring(0,pos); cKey.trim();   //before, and trim spaces
-  cVal = sIn.substring(pos+1); cVal.trim();   //after,and trim spaces
-  return true;
-}
- 
- 
+
+
  void doInitModbusMap()
  {
+
    const char* cfgFilename = "/Modbusmap.cfg";
-   // file format
-   // reg, format, type, label, friendlyname, unit, phase
-   // eg: 19000, Modbus_short, Modbus_READ, UL1N, Voltage L1-N, V, 1
-   // format = (Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_undef)
-   // type = (Modbus_READ, Modbus_RW, Modbus_UNDEF)
+   // Configuration file to map modbus registers
+   // file format is CSV , all values as string without "" ,  fields are
+   // reg = register address
+   // format = (Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_undef)  (Only short and float implemented in rel 1)
+   // operation = (Modbus_READ, Modbus_RW, Modbus_UNDEF)  (Only Modbus_READ implemented in rel 1)
    // label = Short label string
    // friendlyname = string in UI
-   // Unit = V, A, wH etc.
+   // unit = V, A, wH etc.
    // phase = 1,2,3 or 0 for generic and 4 for sum
+   // reg, format, operation, label, friendlyname, unit, phase
+   // 19000, Modbus_short, Modbus_READ, UL1N, Voltage L1-N, V, 1
+
+   Modbusmap  = new  Modbuslookup_t[MODBUSCOUNT];
 
    int id = 0;
+   int Index1, Index2, Index3, Index4, Index5, Index6 ;
    String sReg;
    String sFormat;
-   String sRegcmd;
+   String sOper;
    String sLabel;
    String sName;
    String sUnit;
    String sPhase;
 
-   int reg;
-   char* label;
-   int phase;           // 0 = generic ,  4 = sum
-   char* friendlyname;
-   char* unit;
-   uint16_t Modbus_short;
-   float Modbus_float;
+   String stName;
+   String stLabel;
+   String stUnit;
+
 
    File fh; //filehandle
    //Let's open the Modbus config file
@@ -292,22 +283,104 @@ bool splitStringMb(String sIn, char del, String& cKey, String& cVal)
      fh = SPIFFS.open(cfgFilename, "r");
      if (fh) {
        //Lets go read the config and store in modbusmap line by line
-       while(fh.available())
+       while(fh.available() && id <= MODBUSCOUNT)
        {  //read file line by line, split and send to MQTT (topic, msg)
-           id++;
-           String sLine = fh.readStringUntil('\n');
-           DebugTf("sline[%s]\r\n", sLine.c_str());
-           // reg, format, type, label, friendlyname, unit, phase
-           if (splitStringMb(sLine, ',', sReg, sFormat, sRegcmd, sLabel, sName, sUnit, sPhase ))
-           {
-             DebugTf("sReg[%s], sFormat[%s], sRegcmd[%s], sLabel[%s], sName[%s], sUnit[%s], sPhase[%s]\r\n", sReg.c_str(), sFormat.c_str(), sRegcmd.c_str(), sLabel.c_str(), sName.c_str(), sUnit.c_str(), sPhase.c_str());
-             delay(10);
-           } else DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
+          String sLine = fh.readStringUntil('\n');
+
+          if (sLine.startsWith("//") )
+          {
+            DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
+          } else {
+            DebugTf("sline[%s]\r\n", sLine.c_str());
+            // reg, format, type, label, friendlyname, unit, phase
+            Index1 = sLine.indexOf(',');
+            Index2 = sLine.indexOf(',', Index1+1);
+            Index3 = sLine.indexOf(',', Index2+1);
+            Index4 = sLine.indexOf(',', Index3+1);
+            Index5 = sLine.indexOf(',', Index4+1);
+            Index6 = sLine.indexOf(',', Index5+1);
+
+            sReg     = sLine.substring(0, Index1);
+            sFormat  = sLine.substring(Index1+1, Index2);
+            sOper    = sLine.substring(Index2+1, Index3);
+            sLabel   = sLine.substring(Index3+1, Index4);
+            sName    = sLine.substring(Index4+1, Index5);
+            sUnit    = sLine.substring(Index5+1, Index6);
+            sPhase   = sLine.substring(Index6+1);
+            sReg.trim();
+            sFormat.trim();
+            sOper.trim();
+            sLabel.trim();
+            sName.trim();
+            sUnit.trim();
+            sPhase.trim();
+
+//            DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sUnit[%s], sPhase[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sUnit.c_str(), sPhase.c_str());
+//            delay(10);
+
+            id++;
+
+            Modbusmap[id].id = id ;
+            if (sOper == "Modbus_READ" ) {
+                Modbusmap[id].oper = Modbus_READ ;
+//                DebugTln("Modbus_READ detected");
+            } else if (sOper == "Modbus_RW" ) {
+                Modbusmap[id].oper = Modbus_RW ;
+            } else {
+              Modbusmap[id].oper = Modbus_UNDEF ;
+//              DebugTln("Modbus_UNDEF detected");
+            }
+
+            if (sFormat == "Modbus_short" ) {
+                Modbusmap[id].regformat = Modbus_short ;
+//                DebugTln("Modbus_Short detected");
+            } else if (sFormat == "Modbus_float" ) {
+                Modbusmap[id].regformat = Modbus_float ;
+            } else {
+              Modbusmap[id].regformat= Modbus_undef ;
+//              DebugTln("Modbus_undef detected");
+            }
+             Modbusmap[id].address = sReg.toInt() ;
+             Modbusmap[id].phase = sPhase.toInt() ;
+
+             char *clabel = new char[sLabel.length() + 1];
+             char *cname = new char[sName.length() + 1];
+             char *cunit = new char[sUnit.length() + 1];
+             strcpy(clabel, sLabel.c_str());
+             strcpy(cname, sName.c_str());
+             strcpy(cunit, sUnit.c_str());
+             Modbusmap[id].label = clabel ;
+             Modbusmap[id].friendlyname = cname ;
+             Modbusmap[id].unit = cunit;
+            // delete [] clabel;  // do not delete, is required during runtime !
+            // delete [] cname;
+            // delete [] cunit;
+
+             Modbusmap[id].Modbus_short = 9999;
+             Modbusmap[id].Modbus_float = 9999;
+          }
+
        } // while available()
+
+       ModbusdataObject.NumberRegisters = id ;
+       DebugTf("Number of Modbus registers initialized:, %d \r\n", ModbusdataObject.NumberRegisters);
        fh.close();
+
      }
    }
  }
+
+void printModbusmap() {
+  DebugTf("printModbusmap begin for: %d, records", ModbusdataObject.NumberRegisters) ;
+  for (int i = 1; i < ModbusdataObject.NumberRegisters ; i++) {
+    // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
+
+       DebugTf("Record: %d, id %d, oper: %d, format: %d \r\n", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
+       DebugTf("Address: %d, phase: %d, Valuefloat %f \r\n", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
+       DebugTf("Label: %s, Friendlyname %s, Unit: %s \r\n", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
+    }
+
+}
 
 
 
