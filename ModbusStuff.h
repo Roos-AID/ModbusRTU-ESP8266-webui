@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Header file: ModbusStuff.h
-**  Version 1.0.1
+**  Version 1.1.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -13,19 +13,11 @@
 #include <ModbusRTU.h>
 #include "Debug.h"
 // Modbus RTU Specific API
-//
-// bool begin(SoftwareSerial* port, int16_t txPin=-1, bool direct=true); // For ESP8266 only
-// bool begin(HardwareSerial* port, int16_t txPin=-1, bool direct=true);
-// bool begin(Stream* port);
-// Assing Serial port. txPin controls transmit enable for MAX-485. Pass direct=false if txPin uses inverse logic.
-//MODBUS Settings
-//#define SLAVE_ID 2
-//#define FIRST_REG 0
-//#define REG_COUNT 2
 #define MODBUS_RX 13   // RX  D7 = GPIO 13
 #define MODBUS_TX 14   // TX  D5 = GPIO 14
 #define MODBUS_RXTX 12 // TX Enable D6 = GPIO 12 , use in Modbus.begin(*Serial,RXTX_PIN)
-// #define MbBdRate 38400
+
+#define MODBUSCOUNT 40  // max number of registers in config file
 
 
 #if defined(ESP8266)
@@ -65,60 +57,34 @@
 typedef struct {
 	uint16_t 	LastResult = 0;
   uint16_t  ModbusErrors = 0;
+  uint16_t  NumberRegisters = 0;
 } ModbusdataStruct;
 
+
+// #include <new>
 static ModbusdataStruct ModbusdataObject;
 
 
 // Modbus register types  and registeradresses
 
+enum Modbusoper_t { Modbus_READ, Modbus_RW, Modbus_UNDEF };
+enum Modbusformat_t {  Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_undef};
 
-  enum Modbustype_t {  Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_undef};
-  enum Modbusmsgcmd_t { Modbus_READ, Modbus_RW, Modbus_UNDEF };
-
-  struct Modbuslookup_t
+struct Modbuslookup_t
     {
-        int id;
-        Modbusmsgcmd_t msg;
-        Modbustype_t type;
-        int reg;
-        char* label;
-        int phase;           // 0 = generic ,  4 = sum
-        char* friendlyname;
-        char* unit;
+        uint16_t id;
+        Modbusoper_t oper;  // command RD or RW
+        Modbusformat_t regformat;  // type of data
+        uint16_t address;  //register address
+        uint16_t phase;           // 0 = generic ,  4 = sum
         uint16_t Modbus_short;
         float Modbus_float;
+        char* label;
+        char* friendlyname;
+        char* unit;
     };
 
-#define MODBUSCOUNT 24
-
-    Modbuslookup_t Modbusmap[MODBUSCOUNT] = {
-        {  0, Modbus_READ  , Modbus_short, 0, "ErrCount", 0, "Count Read Errors", "" , 0 , 0 },
-        {  1, Modbus_READ  , Modbus_float, 19000, "UL1N", 1, "Voltage L1-N", "V" , 0 , 0 },
-        {  2, Modbus_READ  , Modbus_float, 19002, "UL2N", 2, "Voltage L2-N", "V" , 0 , 0 },
-        {  3, Modbus_READ  , Modbus_float, 19004, "UL3N", 3, "Voltage L3-N", "V" , 0 , 0 },
-        {  4, Modbus_READ  , Modbus_float, 19006, "UL1L2", 1, "Voltage L1-L2", "V" , 0 , 0 },
-        {  5, Modbus_READ  , Modbus_float, 19008, "UL2L3", 2, "Voltage L2-L3", "V" , 0 , 0 },
-        {  6, Modbus_READ  , Modbus_float, 19010, "UL3L1", 3, "Voltage L3-L1", "V" , 0 , 0 },
-        {  7, Modbus_READ  , Modbus_float, 19012, "CurL1", 1, "Current L1", "A" , 0 , 0 },
-        {  8, Modbus_READ  , Modbus_float, 19014, "CurL2", 2, "Current L2", "A" , 0 , 0 },
-        {  9, Modbus_READ  , Modbus_float, 19016, "CurL3", 3, "Current L3", "A" , 0 , 0 },
-        { 10, Modbus_READ  , Modbus_float, 19018, "CurVSum", 4, "Vector sum; IN=I1+I2+I3", "A" , 0 , 0 },
-        { 11, Modbus_READ  , Modbus_float, 19020, "RlPwrL1", 1, "Real power L1", "W" , 0 , 0 },
-        { 12, Modbus_READ  , Modbus_float, 19022, "RlPwrL2", 2, "Real power L2", "W" , 0 , 0 },
-        { 13, Modbus_READ  , Modbus_float, 19024, "RlPwrL3", 3, "Real power L3", "W" , 0 , 0 },
-        { 14, Modbus_READ  , Modbus_float, 19026, "RlPwrSum", 4, "Sum; Psum3=P1+P2+P3", "W" , 0 , 0 },
-        { 15, Modbus_READ  , Modbus_float, 19050, "Freq", 0, "Measured frequency", "Hz" , 0 , 0 },
-        { 16, Modbus_READ  , Modbus_float, 19054, "RlEnerL1", 1, "Real energy L1", "Wh" , 0 , 0 },
-        { 17, Modbus_READ  , Modbus_float, 19056, "RlEnerL2", 2, "Real energy L2", "Wh" , 0 , 0 },
-        { 18, Modbus_READ  , Modbus_float, 19058, "RlEnerL3", 3, "Real energy L3", "Wh" , 0 , 0 },
-        { 19, Modbus_READ  , Modbus_float, 19060, "RlEnerSum", 4, "Real energy L1..L3", "Wh" , 0 , 0 },
-        { 20, Modbus_READ  , Modbus_float, 19062, "RlEnerConsL1", 1, "Real energy Consumed L1", "Wh" , 0 , 0 },
-        { 21, Modbus_READ  , Modbus_float, 19064, "RlEnerConsL2", 2, "Real energy Consumed L2", "Wh" , 0 , 0 },
-        { 22, Modbus_READ  , Modbus_float, 19066, "RlEnerConsL3", 3, "Real energy Consumed L3", "Wh" , 0 , 0 },
-        { 23, Modbus_READ  , Modbus_float, 19060, "RlEnerConsSum", 4, "Real energy Consumed Sum", "Wh" , 0 , 0 },
-
-  };
+Modbuslookup_t* Modbusmap;
 
 
 bool cb(Modbus::ResultCode event, uint16_t transactionId, void* data) { // Callback to monitor errors

@@ -11,7 +11,7 @@ The features of this Modbus-Janitza firmware are:
 - settings for Modbus baudrate, RTU slave address in the webUI
 
 To do:
-- InfluxDB client to do direct logging 
+- InfluxDB client to do direct logging
 - MQTT client to send to MQTT
 - Cleanup code remains from otgw-firmware
 
@@ -20,4 +20,4 @@ Looking for the documentation, go here (work in progress):  TODO
 
 | Version | Release notes |
 |-|-|
-| 1.0.1 | Initial version, based on OTGW-firmware from Robert van Breemen|
+| 1.0.1 | Initial version, based on OTGW-firmware from Robert van den Breemen|

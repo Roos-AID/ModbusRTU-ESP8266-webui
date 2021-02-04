@@ -1,7 +1,8 @@
+
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.ino
-**  Version 1.0.1
+**  Version 1.1.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -88,7 +89,9 @@ void setup()
  // startMQTT();
 
   // Initialisation ezTime
-  setDebug(ERROR);
+  Serial.println("Initialize ezTime");
+  setDebug(INFO);
+  // setDebug(ERROR);
   waitForSync();
   CET.setLocation(F("Europe/Amsterdam"));
   CET.setDefault();
@@ -139,6 +142,10 @@ Debugln("\nHTTP Server started\r");
 //============== Setup Modbus ======================================
 
   setupModbus();
+
+  doInitModbusMap();
+
+//  printModbusmap() ;
 
 //  readModbusSetup();
 

@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI
-**  Version 1.0.1
+**  Version 1.1.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -202,15 +202,18 @@ void sendModbusmonitor()
 
   sendStartJsonObj("Modbusmonitor");
 
-  sendJsonModbusmonObj("Number read errors", ModbusdataObject.ModbusErrors,"");
-  sendJsonModbusmonObj("Last result", ModbusdataObject.LastResult,"");
+//  sendJsonModbusmonObj("Number read errors", ModbusdataObject.ModbusErrors,"");
+//  sendJsonModbusmonObj("Last result", ModbusdataObject.LastResult,"");
 
-  for (int i = 1; i < MODBUSCOUNT ; i++) {
+  for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
+//    DebugTf("Record: %d, id %d, oper: %d, format: %d \r\n", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
+//    DebugTf("Address: %d, phase: %d, Valuefloat %f \r\n", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
+//    DebugTf("Label: %s, Friendlyname %s, Unit: %s \r\n", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
     // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
-    if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1) {
-        switch (Modbusmap[i].type) {
+    if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
+        switch (Modbusmap[i].regformat) {
           case Modbus_short:
-            DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
+              sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short, Modbusmap[i].unit);
             break;
           case Modbus_ushort:
             DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
@@ -222,9 +225,13 @@ void sendModbusmonitor()
             DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
             break;
           case Modbus_float:
-            if (Modbusmap[i].unit == "Wh") {
+            // Change Wh inot kWh , will be setting in future
+            if (strcmp("Wh", Modbusmap[i].unit) == 0)
+            {
               sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float/1000,"kWh");
-            } else {
+            }
+            else
+            {
               sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
             }
             break;
@@ -233,7 +240,7 @@ void sendModbusmonitor()
             break;
           default:
             DebugTf("Error undef type %s = %s \r\n", i, Modbusmap[i].label) ;
-            break;
+
         }
     }
   }
@@ -296,8 +303,10 @@ void sendDeviceInfo()
   sendNestedJsonObj("wifireconnect", reconnectWiFiCount);
   sendNestedJsonObj("wifirestart", restartWiFiCount);
   sendNestedJsonObj("rebootcount", rebootCount);
-
   sendNestedJsonObj("lastreset", lastReset);
+
+  sendNestedJsonObj("modbusreaderrors", ModbusdataObject.ModbusErrors);
+
 
   httpServer.sendContent("\r\n]}\r\n");
 
