@@ -5,11 +5,12 @@
             "includePath": [
                 "/Users/robroos/Documents/Arduino/Modbus-Janitza/**",
                 "${workspaceFolder}/**",
-                "/Applications/Arduino.app/Contents/Java/libraries/**",
                 "/Users/robroos/Documents/Arduino/libraries/**",
                 "/Users/robroos/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.4/**",
-                "/Applications/Arduino.app/Contents/Java/libraries/WiFi/src",
-                "/Users/robroos/Library/Arduino15/packages/esp8266/tools/**"
+                "/Users/robroos/Library/Arduino15/packages/esp8266/tools/**",
+                "/Applications/Arduino.app/Contents/Java/libraries/**",
+                "/Applications/Arduino.app/Contents/Java/libraries/WiFi/src"
+                
             ],
             "defines": [
                 "USBCON"

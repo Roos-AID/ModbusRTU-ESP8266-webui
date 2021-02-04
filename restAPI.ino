@@ -225,9 +225,13 @@ void sendModbusmonitor()
             DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
             break;
           case Modbus_float:
-            if (Modbusmap[i].unit == "Wh") {
+            // Change Wh inot kWh , will be setting in future
+            if (strcmp("Wh", Modbusmap[i].unit) == 0)
+            {
               sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float/1000,"kWh");
-            } else {
+            }
+            else
+            {
               sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
             }
             break;

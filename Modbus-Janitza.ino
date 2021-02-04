@@ -38,7 +38,6 @@
 #define _FW_VERSION _VERSION
 
 #include "Modbus-Janitza.h"
-// #include "helperStuff.ino"
 
 //=====================================================================
 void setup()
@@ -90,7 +89,9 @@ void setup()
  // startMQTT();
 
   // Initialisation ezTime
-  setDebug(ERROR);
+  Serial.println("Initialize ezTime");
+  setDebug(INFO);
+  // setDebug(ERROR);
   waitForSync();
   CET.setLocation(F("Europe/Amsterdam"));
   CET.setDefault();
