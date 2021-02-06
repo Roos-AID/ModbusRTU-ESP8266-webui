@@ -206,14 +206,15 @@ void sendModbusmonitor()
 //  sendJsonModbusmonObj("Last result", ModbusdataObject.LastResult,"");
 
   for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
-//    DebugTf("Record: %d, id %d, oper: %d, format: %d \r\n", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
-//    DebugTf("Address: %d, phase: %d, Valuefloat %f \r\n", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
-//    DebugTf("Label: %s, Friendlyname %s, Unit: %s \r\n", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
+  //  DebugTf("Record: %d, id %d, oper: %d, format: %d \r\n", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
+  //  DebugTf("Address: %d, phase: %d, Valuefloat %f\r\n ", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
+  //  DebugTf("Label: %s, Friendlyname %s, Unit: %s\r\n ", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
+  //  DebugTf("Factor %f, MQEnable %d \r\n", Modbusmap[i].factor,Modbusmap[i].mqenable);
     // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
     if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
         switch (Modbusmap[i].regformat) {
           case Modbus_short:
-              sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short, Modbusmap[i].unit);
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short*Modbusmap[i].factor, Modbusmap[i].unit);
             break;
           case Modbus_ushort:
             DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
@@ -225,15 +226,16 @@ void sendModbusmonitor()
             DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
             break;
           case Modbus_float:
-            // Change Wh inot kWh , will be setting in future
-            if (strcmp("Wh", Modbusmap[i].unit) == 0)
-            {
-              sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float/1000,"kWh");
-            }
-            else
-            {
-              sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
-            }
+            // // Change Wh inot kWh , will be setting in future
+            // if (strcmp("Wh", Modbusmap[i].unit) == 0)
+            // {
+            //   sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float/1000,"kWh");
+            // }
+            // else
+            // {
+            //   sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
+            // }
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float*Modbusmap[i].factor,Modbusmap[i].unit);
             break;
           case Modbus_undef:
             DebugTf("Error undef type %s = %s \r\n", i, Modbusmap[i].label) ;

@@ -79,6 +79,8 @@ struct Modbuslookup_t
         uint16_t phase;           // 0 = generic ,  4 = sum
         uint16_t Modbus_short;
         float Modbus_float;
+        float factor;
+        uint16_t mqenable;
         char* label;
         char* friendlyname;
         char* unit;

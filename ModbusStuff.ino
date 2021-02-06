@@ -132,6 +132,66 @@ float Modbus_ReadFloat(uint16_t readreg) {
  return returnfloat;
 }
 
+void toMQTT_float(int id)
+{
+  //function to push float data to MQTT
+  float _value = round(Modbusmap[id].Modbus_float * 100.0) / 100.0; // round float 2 digits, like this: x.xx
+ 
+  char _msg[15]{0};
+  dtostrf(_value, 3, 2, _msg);
+  // DebugTf("To MQTT_float %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
+  //SendMQTT
+  sendMQTTData(Modbusmap[id].label, _msg);
+  
+}
+void toMQTT_short(int id)
+{
+  //function to push float data to MQTT
+  int16_t _value = Modbusmap[id].Modbus_short;
+
+  char _msg[15]{0};
+  itoa(_value, _msg, 10);
+  // DebugTf("To MQTT_short %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
+  //SendMQTT
+  sendMQTTData(Modbusmap[id].label, _msg);
+}
+
+void Modbus2MQTT() {
+  for (int i = 1; i <= ModbusdataObject.NumberRegisters; i++)
+  {
+    if (Modbusmap[i].mqenable == 1) {
+      if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4)
+      {
+        switch (Modbusmap[i].regformat)
+        {
+        case Modbus_short:
+          toMQTT_short(i);
+          break;
+        case Modbus_ushort:
+          DebugTf("MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
+          break;
+        case Modbus_int:
+          DebugTf("MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
+          break;
+        case Modbus_uint:
+          DebugTf("MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
+          break;
+        case Modbus_float:
+          toMQTT_float(i);
+          break;
+        case Modbus_undef:
+          DebugTf("MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
+          break;
+        default:
+          DebugTf("MQTT Error undef type %d = %s \r\n", i, Modbusmap[i].label);
+          break;
+        }
+      }
+    }   
+  }
+
+  
+}
 
 void readModbus()
 {
@@ -255,13 +315,15 @@ int sendModbus(const char* buf, int len)
    // friendlyname = string in UI
    // unit = V, A, wH etc.
    // phase = 1,2,3 or 0 for generic and 4 for sum
-   // reg, format, operation, label, friendlyname, unit, phase
-   // 19000, Modbus_short, Modbus_READ, UL1N, Voltage L1-N, V, 1
+   // factor = multiplication/division factor to apply. Specify 1 for no conversion , eg. 1000 for Wh to kWh
+   // mqenable = set to 1 to enable sending to MQTT
+   // reg, format, operation, label, friendlyname, unit, phase, factor, mqenable
+   // 19000, Modbus_short, Modbus_READ, UL1N, Voltage L1-N, V, 1, 1, 1
 
    Modbusmap  = new  Modbuslookup_t[MODBUSCOUNT];
 
    int id = 0;
-   int Index1, Index2, Index3, Index4, Index5, Index6 ;
+   int Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8 ;
    String sReg;
    String sFormat;
    String sOper;
@@ -269,6 +331,8 @@ int sendModbus(const char* buf, int len)
    String sName;
    String sUnit;
    String sPhase;
+   String sFactor;
+   String sMQEnable;
 
    String stName;
    String stLabel;
@@ -294,19 +358,23 @@ int sendModbus(const char* buf, int len)
             DebugTf("sline[%s]\r\n", sLine.c_str());
             // reg, format, type, label, friendlyname, unit, phase
             Index1 = sLine.indexOf(',');
-            Index2 = sLine.indexOf(',', Index1+1);
-            Index3 = sLine.indexOf(',', Index2+1);
-            Index4 = sLine.indexOf(',', Index3+1);
-            Index5 = sLine.indexOf(',', Index4+1);
-            Index6 = sLine.indexOf(',', Index5+1);
+            Index2 = sLine.indexOf(',', Index1 + 1);
+            Index3 = sLine.indexOf(',', Index2 + 1);
+            Index4 = sLine.indexOf(',', Index3 + 1);
+            Index5 = sLine.indexOf(',', Index4 + 1);
+            Index6 = sLine.indexOf(',', Index5 + 1);
+            Index7 = sLine.indexOf(',', Index6 + 1);
+            Index8 = sLine.indexOf(',', Index7 + 1);
 
             sReg     = sLine.substring(0, Index1);
-            sFormat  = sLine.substring(Index1+1, Index2);
-            sOper    = sLine.substring(Index2+1, Index3);
-            sLabel   = sLine.substring(Index3+1, Index4);
-            sName    = sLine.substring(Index4+1, Index5);
-            sUnit    = sLine.substring(Index5+1, Index6);
-            sPhase   = sLine.substring(Index6+1);
+            sFormat  = sLine.substring(Index1 + 1, Index2);
+            sOper    = sLine.substring(Index2 + 1, Index3);
+            sLabel   = sLine.substring(Index3 + 1, Index4);
+            sName    = sLine.substring(Index4 + 1, Index5);
+            sUnit    = sLine.substring(Index5 + 1, Index6);
+            sPhase   = sLine.substring(Index6 + 1, Index7);
+            sFactor  = sLine.substring(Index7 + 1, Index8);
+            sMQEnable = sLine.substring(Index8 + 1);
             sReg.trim();
             sFormat.trim();
             sOper.trim();
@@ -314,9 +382,11 @@ int sendModbus(const char* buf, int len)
             sName.trim();
             sUnit.trim();
             sPhase.trim();
+            sFactor.trim();
+            sMQEnable.trim();
 
-//            DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sUnit[%s], sPhase[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sUnit.c_str(), sPhase.c_str());
-//            delay(10);
+          //  DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+          //  delay(10);
 
             id++;
 
@@ -340,8 +410,12 @@ int sendModbus(const char* buf, int len)
               Modbusmap[id].regformat= Modbus_undef ;
 //              DebugTln("Modbus_undef detected");
             }
+
+            // assign values to Modbusmap
              Modbusmap[id].address = sReg.toInt() ;
              Modbusmap[id].phase = sPhase.toInt() ;
+             Modbusmap[id].factor = sFactor.toFloat();
+             Modbusmap[id].mqenable = sMQEnable.toInt();
 
              char *clabel = new char[sLabel.length() + 1];
              char *cname = new char[sName.length() + 1];
@@ -375,11 +449,11 @@ void printModbusmap() {
   for (int i = 1; i < ModbusdataObject.NumberRegisters ; i++) {
     // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
 
-       DebugTf("Record: %d, id %d, oper: %d, format: %d \r\n", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
+       DebugTf("Record: %d, id %d, oper: %d, format: %d ", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
        DebugTf("Address: %d, phase: %d, Valuefloat %f \r\n", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
-       DebugTf("Label: %s, Friendlyname %s, Unit: %s \r\n", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
-    }
-
+       DebugTf("Label: %s, Friendlyname %s, Unit: %s ", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
+       DebugTf("Factor: %f, MQEnable %d \r\n", Modbusmap[i].factor, Modbusmap[i].mqenable, Modbusmap[i].unit);
+  }
 }
 
 

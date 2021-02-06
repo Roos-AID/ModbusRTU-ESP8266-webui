@@ -80,13 +80,44 @@ void setup()
   digitalWrite(LED_BUILTIN, HIGH);
   startWiFi(_HOSTNAME, 240);  // timeout 240 seconds
   digitalWrite(LED_BUILTIN, LOW);
+  Serial.println(F("WiFi network initialized\r"));
 
   startMDNS(CSTR(settingHostname));
 
   delay(1000);
 
+  //============== Setup Ping ======================================
+
+  setupPing();
+
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    //disconnected, try to reconnect then...
+    DebugTln("Wifi not Connected !!!  Restart Wifi");
+    reconnectWiFiCount++;
+    restartWiFi(_HOSTNAME, 240);
+    //check telnet
+    startTelnet();
+  }
+
+  // Ping default gateway and restart Wifi if it fails.
+
+  if (pinger.Ping(WiFi.gatewayIP(), 1) == false)
+  {
+    DebugTf("Pinging default gateway with IP %s, FAILED\n", WiFi.gatewayIP().toString().c_str());
+    DebugTln("Error during last ping command. Restart Wifi");
+    restartWiFiCount++;
+    if (restartWiFiCount > 5)
+    {
+      doRestart("IP Ping failed to often, restart ESP");
+    }
+    restartWiFi(_HOSTNAME, 240);
+    //check telnet
+    startTelnet();
+  }
+
   // Start MQTT connection
- // startMQTT();
+  startMQTT();
 
   // Initialisation ezTime
   Serial.println("Initialize ezTime");
@@ -134,9 +165,6 @@ Debugln("\nHTTP Server started\r");
 
 
 
-//============== Setup Ping ======================================
-
-  setupPing();
 
 
 //============== Setup Modbus ======================================
@@ -200,7 +228,7 @@ void doTaskEvery30s(){
   //== do tasks ==
 
   readModbus();
-
+  Modbus2MQTT();
 }
 
 //===[ Do task every 60s ]===
@@ -230,6 +258,7 @@ void doTaskEvery60s(){
     //check telnet
     startTelnet();
   }
+  
 
 }
 // end doTaskEvery60s()
@@ -238,7 +267,7 @@ void doTaskEvery60s(){
 void doBackgroundTasks()
 {
 
-//  handleMQTT();                 // MQTT transmissions
+  handleMQTT();                 // MQTT transmissions
 
   httpServer.handleClient();
   MDNS.update();
