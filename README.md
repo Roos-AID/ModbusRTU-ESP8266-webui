@@ -3,21 +3,25 @@
 
 
 The features of this Modbus-Janitza firmware are:
-- Implementing the Modbus protocol on the NodeMCU (8266)
-- Reading the Jantitza UMG96RM registers, display in webUI
-- enable telnet listening (interpreted data and debugging)
+- Implementing the Modbus RTU protocol on the NodeMCU (8266)
+- Initially designed to read Jantitza UMG96RM energy monitor registers and display in webUI
+- enable telnet listening (for debugging)
 - a REST API (http://<ip>/api/v1/Modbus/Modbusmonitor
-- settings for Hostname and MQTT (todo) in the webUI (just compile and edit in webUI)
+- settings for Hostname and MQTT in the webUI (edit in webUI)
 - settings for Modbus baudrate, RTU slave address in the webUI
+- Registers and formats to be read can be configured in config file Modbusmap.cfg 
+- Register values can be converted by a set factor in the config file for display in Webui (eg. read Wh and display kWh)
 
 To do:
+- Rename the utility to show that it can be used genericly for Modbus RTU register reading
 - InfluxDB client to do direct logging
-- MQTT client to send to MQTT
-- Cleanup code remains from otgw-firmware
+- Update of specific registers through MQTT (low prio)
+
 
 
 Looking for the documentation, go here (work in progress):  TODO
 
 | Version | Release notes |
-|-|-|
+| 1.2.0 | MQTT enabled and calculation factor added to config file-|
+| 1.1.0 | Modbus registers config in external file|
 | 1.0.1 | Initial version, based on OTGW-firmware from Robert van den Breemen|
