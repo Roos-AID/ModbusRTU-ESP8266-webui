@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : jsonStuff
-**  Version 1.2.0
+**  Version 1.4.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -209,19 +209,29 @@ void sendJsonSettingObj(const char *cName, float fValue, const char *fType, int 
 
 } // sendJsonSettingObj(*char, float, *char, int, int, int)
 
-
 //=======================================================================
-void sendJsonSettingObj(const char *cName, int iValue, const char *iType, int minValue, int maxValue)
+void sendJsonSettingObj(const char *cName, bool bValue, const char *sType)
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %d, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
-                                      , objSprtr, cName, iValue, iType, minValue, maxValue);
+  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\":\"%s\", \"type\": \"%s\"}", objSprtr, cName, CBOOLEAN(bValue), sType);
 
   httpServer.sendContent(jsonBuff);
   sprintf(objSprtr, ",\r\n");
 
-} // sendJsonSettingObj(*char, int, *char, int, int)
+} // sendJsonSettingObj(*char, bool, *char)
+//=======================================================================
+void sendJsonSettingObj(const char *cName, int iValue, const char *iType, int minValue, int maxValue, int stepValue)
+{
+  char jsonBuff[200] = "";
+
+  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %d, \"type\": \"%s\", \"min\": %d, \"max\": %d, \"step\": %d}" 
+                                        ,objSprtr, cName, iValue, iType, minValue, maxValue, stepValue);
+
+  httpServer.sendContent(jsonBuff);
+  sprintf(objSprtr, ",\r\n");
+
+} // sendJsonSettingObj(*char, int, *char, int, int, int)
 
 
 //=======================================================================
