@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.4.1
+**  Version 1.4.2
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -594,7 +594,7 @@ void checkactivateRelay(bool activaterelay)
       }
       else
       {
-        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay on\r\n", hour(), minute());
+        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
         if (activaterelay && statusRelay == RELAYON)
           setRelay(RELAYOFF);
       }
@@ -609,7 +609,7 @@ void checkactivateRelay(bool activaterelay)
       }
       else
       {
-        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay on\r\n", hour(), minute());
+        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
         if (activaterelay && statusRelay == RELAYON)
           setRelay(RELAYOFF);
       }

@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : handleDebug
-**  Version 1.4.1
+**  Version 1.4.2
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -17,13 +17,19 @@ void handleDebug(){
         char c;
         c = TelnetStream.read();
         switch (c){
+        case 'h':
+            Debugln("Available commands are:");
+            Debugln("t : List Daytimemap");
+            Debugln("r : Re-read Daytimemap from Daytimemap.cfg");
+            Debugln("s : Toggle Timebased Relay");
+            break;
         case 'r':
             DebugTln("Read Daytimemap");
             doInitDaytimemap() ;
+            printDaytimemap();
             break;
         case 't':
             DebugTln("List Daytimemap");
-            DebugTf("Enable Timebased relay: %s\r\n", CBOOLEAN(settingTimebasedSwitch));
             printDaytimemap();
             break;
         case 's':
@@ -35,8 +41,6 @@ void handleDebug(){
                 setRelay(RELAYON) ;
                 else setRelay(RELAYOFF);
 
-                DebugTf("Relay set to %d \r\n", statusRelay);
-                
             } else {
                 DebugTln("NOT POSSIBLE, TIMEBASED SWITCHING NOT ACTIVATED");
             }

@@ -24,6 +24,7 @@ To do:
 Looking for the documentation, go here (work in progress):  TODO
 
 | Version | Release notes |
+| 1.4.2 | Typo in debug info, additional telnet command (re-read Daytimemap|
 | 1.4.1 | Cosmetic changes, cleanup relay function|
 | 1.4.0 | GPIO for time/day based switch added|
 | 1.3.0 | Migration SPIFFS to LittleFS (not published release) |
