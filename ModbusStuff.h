@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Header file: ModbusStuff.h
-**  Version 1.2.0
+**  Version 1.4.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -13,9 +13,9 @@
 #include <ModbusRTU.h>
 #include "Debug.h"
 // Modbus RTU Specific API
-#define MODBUS_RX 13   // RX  D7 = GPIO 13
-#define MODBUS_TX 14   // TX  D5 = GPIO 14
-#define MODBUS_RXTX 12 // TX Enable D6 = GPIO 12 , use in Modbus.begin(*Serial,RXTX_PIN)
+#define MODBUS_RX D7 // RX  D7 = GPIO 13
+#define MODBUS_TX D5   // TX  D5 = GPIO 14
+#define MODBUS_RXTX D6 // TX Enable D6 = GPIO 12 , use in Modbus.begin(*Serial,RXTX_PIN)
 
 #define MODBUSCOUNT 40  // max number of registers in config file
 
@@ -50,11 +50,19 @@
 //            EX_CANCEL               = 0xE6  // Custom. Transaction/request canceled
 //
 
-
+struct DaytimemapStruct_t
+    {
+      uint16_t day = 0;
+      uint16_t starthour = 0;
+      uint16_t startmin = 0;
+      uint16_t endhour = 0;
+      uint16_t endmin = 0;
+    };
+DaytimemapStruct_t* Daytimemap;
 
 #define MODBUS_COMMAND_TOPIC "command"
 
-typedef struct {
+        typedef struct {
 	uint16_t 	LastResult = 0;
   uint16_t  ModbusErrors = 0;
   uint16_t  NumberRegisters = 0;

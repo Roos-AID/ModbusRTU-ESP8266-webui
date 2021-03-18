@@ -1,7 +1,8 @@
 /*
 ***************************************************************************
-**  Program  : restAPI
-**  Version 1.2.0
+**  Program  : restAPI.ino
+**  Version 1.4.1
+**
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -10,7 +11,6 @@
 **  TERMS OF USE: MIT License. See bottom of file.
 ***************************************************************************
 */
-
 
 //=======================================================================
 void processAPI()
@@ -205,13 +205,24 @@ void sendModbusmonitor()
 //  sendJsonModbusmonObj("Number read errors", ModbusdataObject.ModbusErrors,"");
 //  sendJsonModbusmonObj("Last result", ModbusdataObject.LastResult,"");
 
+  if (settingTimebasedSwitch && settingNTPenable) {
+    if (statusRelay) {
+      sendJsonModbusmonObj("Relay output status", "ON", "");
+    } else
+    {
+      sendJsonModbusmonObj("Relay output status", "OFF", "");
+    }
+  } else if (!settingNTPenable) {
+    sendJsonModbusmonObj("Timebasedswitching", "NO NTP", "ERR");
+  }
+
   for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
   //  DebugTf("Record: %d, id %d, oper: %d, format: %d \r\n", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
   //  DebugTf("Address: %d, phase: %d, Valuefloat %f\r\n ", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
   //  DebugTf("Label: %s, Friendlyname %s, Unit: %s\r\n ", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
   //  DebugTf("Factor %f, MQEnable %d \r\n", Modbusmap[i].factor,Modbusmap[i].mqenable);
     // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
-    if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
+    if (!settingModbusSinglephase || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
         switch (Modbusmap[i].regformat) {
           case Modbus_short:
             sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short*Modbusmap[i].factor, Modbusmap[i].unit);
@@ -278,8 +289,8 @@ void sendDeviceInfo()
   sendNestedJsonObj("flashchipsize", formatFloat((ESP.getFlashChipSize() / 1024.0 / 1024.0), 3));
   sendNestedJsonObj("flashchiprealsize", formatFloat((ESP.getFlashChipRealSize() / 1024.0 / 1024.0), 3));
 
-  SPIFFS.info(SPIFFSinfo);
-  sendNestedJsonObj("spiffssize", formatFloat( (SPIFFSinfo.totalBytes / (1024.0 * 1024.0)), 0));
+  LittleFS.info(LittleFSinfo);
+  sendNestedJsonObj("littlefssize", formatFloat((LittleFSinfo.totalBytes / (1024.0 * 1024.0)), 1));
 
   sendNestedJsonObj("flashchipspeed", formatFloat((ESP.getFlashChipSpeed() / 1000.0 / 1000.0), 0));
 
@@ -339,18 +350,28 @@ void sendDeviceSettings()
 
   //sendJsonSettingObj("string",   settingString,   "s", sizeof(settingString)-1);
   //sendJsonSettingObj("float",    settingFloat,    "f", 0, 10,  5);
-  //sendJsonSettingObj("intager",  settingInteger , "i", 2, 60);
+  // integer : shortname, value, "i", min, max, step 
+  //sendJsonSettingObj("intager",  settingInteger , "i", 2, 60, 1);
 
   sendJsonSettingObj("hostname", CSTR(settingHostname), "s", 32);
+  sendJsonSettingObj("mqttenable", settingMQTTenable, "b");
   sendJsonSettingObj("mqttbroker", CSTR(settingMQTTbroker), "s", 32);
-  sendJsonSettingObj("mqttbrokerport", settingMQTTbrokerPort, "i", 0, 65535);
+  sendJsonSettingObj("mqttbrokerport", settingMQTTbrokerPort, "i", 0, 65535, 1);
   sendJsonSettingObj("mqttuser", CSTR(settingMQTTuser), "s", 32);
   sendJsonSettingObj("mqttpasswd", CSTR(settingMQTTpasswd), "s", 32);
   sendJsonSettingObj("mqtttoptopic", CSTR(settingMQTTtopTopic), "s", 15);
-  sendJsonSettingObj("modbusbaudrate", settingModbusBaudrate, "i", 9600, 115200);
-  sendJsonSettingObj("modbusslaveadres", settingModbusSlaveAdr, "i", 1, 255);
-  sendJsonSettingObj("modbussinglephase", settingModbusSinglephase, "i", 0, 1);
-
+  sendJsonSettingObj("mqtthaprefix", CSTR(settingMQTThaprefix), "s", 20);
+  sendJsonSettingObj("ntpenable", settingNTPenable, "b");
+  sendJsonSettingObj("ntptimezone", CSTR(settingNTPtimezone), "s", 50);
+  sendJsonSettingObj("ledblink", settingLEDblink, "b");
+  sendJsonSettingObj("modbusbaudrate", settingModbusBaudrate, "i", 9600, 115200, 9600);
+  sendJsonSettingObj("modbusslaveadres", settingModbusSlaveAdr, "i", 1, 254, 1);
+  sendJsonSettingObj("modbussinglephase", settingModbusSinglephase, "b");
+  // if (settingNTPenable) {
+    sendJsonSettingObj("timebasedswitch", settingTimebasedSwitch, "b");
+  // } else {
+  //   sendJsonSettingObj("timebasedswitch","Unsupported (no NTP)","s",20);
+  // }
   sendEndJsonObj();
 
 } // sendDeviceSettings()

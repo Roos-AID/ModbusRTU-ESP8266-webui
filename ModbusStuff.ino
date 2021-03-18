@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.1.1
+**  Version 1.4.2
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -136,13 +136,13 @@ void toMQTT_float(int id)
 {
   //function to push float data to MQTT
   float _value = round(Modbusmap[id].Modbus_float * 100.0) / 100.0; // round float 2 digits, like this: x.xx
- 
+
   char _msg[15]{0};
   dtostrf(_value, 3, 2, _msg);
   // DebugTf("To MQTT_float %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
   //SendMQTT
   sendMQTTData(Modbusmap[id].label, _msg);
-  
+
 }
 void toMQTT_short(int id)
 {
@@ -160,7 +160,7 @@ void Modbus2MQTT() {
   for (int i = 1; i <= ModbusdataObject.NumberRegisters; i++)
   {
     if (Modbusmap[i].mqenable == 1) {
-      if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4)
+      if (!settingModbusSinglephase || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4)
       {
         switch (Modbusmap[i].regformat)
         {
@@ -187,10 +187,10 @@ void Modbus2MQTT() {
           break;
         }
       }
-    }   
+    }
   }
 
-  
+
 }
 
 void readModbus()
@@ -202,7 +202,7 @@ void readModbus()
 //    Debugf("readModbus started\r\n");
 
     for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
-       if (settingModbusSinglephase == 0 || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
+       if (!settingModbusSinglephase || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
           switch (Modbusmap[i].regformat) {
             case Modbus_short:
                TempShort = Modbus_ReadShort(Modbusmap[i].address) ;
@@ -299,13 +299,115 @@ int sendModbus(const char* buf, int len)
  }
 
  // =============TO DO==============================================================================
- //===========================================================================================
 
+ void doInitDaytimemap()
+ {
+
+   const char *cfgFilename = "/Daytimemap.cfg";
+   // Comment lines start with # or //
+   // 
+  
+   Daytimemap = new DaytimemapStruct_t[8]; // 7 days, but days start at 1 , need 8 slots therefore
+
+   int id = 1;
+   int daynum = 0;
+   int Index1, Index2, Index3, Index4;
+   String sDay;
+   String sStarthour;
+   String sStartmin;
+   String sEndhour;
+   String sEndmin;
+
+   File fh; //filehandle
+   //Let's open the Modbus config file
+   LittleFS.begin();
+   if (LittleFS.exists(cfgFilename))
+   {
+     fh = LittleFS.open(cfgFilename, "r");
+     if (fh)
+     {
+       //Lets go read the config and store in modbusmap line by line
+       while (fh.available() && id <= 7)
+       { //read file line by line, split and send to MQTT (topic, msg)
+         String sLine = fh.readStringUntil('\n');
+
+         if (sLine.startsWith("#") || sLine.startsWith("//"))
+         {
+            // DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
+         }
+         else
+         {
+           // DebugTf("sline[%s]\r\n", sLine.c_str());
+           // #file format is CSV, all values as string without "", fields are
+           // #day, starthour, startmin, endhour, endmin
+           // #day = daynumber, Numeric representation of the day of the week(1 = Sunday)
+           // #starthour = start hour of relay on
+           // #startmin = start min of relay on
+           // #endhour = end hour of relay off
+           // #endmin = end minute of relay off
+
+           Index1 = sLine.indexOf(',');
+           Index2 = sLine.indexOf(',', Index1 + 1);
+           Index3 = sLine.indexOf(',', Index2 + 1);
+           Index4 = sLine.indexOf(',', Index3 + 1);
+          
+
+           sDay = sLine.substring(0, Index1);
+           sStarthour = sLine.substring(Index1 + 1, Index2);
+           sStartmin = sLine.substring(Index2 + 1, Index3);
+           sEndhour = sLine.substring(Index3 + 1, Index4);
+           sEndmin = sLine.substring(Index4 + 1);
+           
+           sDay.trim();
+           sStarthour.trim();
+           sStartmin.trim();
+           sEndhour.trim();
+           sEndmin.trim();
+         
+
+          //  DebugTf("sDay[%s], sStarthour[%s], sStartmin[%s], sEndhour[%s], sEndmin[%s]\r\n", sDay.c_str(), sStarthour.c_str(), sStartmin.c_str(), sEndhour.c_str(), sEndmin.c_str());
+          //  delay(10);
+
+           daynum = sDay.toInt();
+           if (daynum >7 || daynum != id ) {
+              DebugTf("DAYNUM NOT IN SEQUENCE sDay[%s], sStarthour[%s], sStartmin[%s], sEndhour[%s], sEndmin[%s]\r\n", sDay.c_str(), sStarthour.c_str(), sStartmin.c_str(), sEndhour.c_str(), sEndmin.c_str());
+           }
+           else
+           {
+             Daytimemap[daynum].day = sDay.toInt();
+             Daytimemap[daynum].starthour = sStarthour.toInt();
+             Daytimemap[daynum].startmin = sStartmin.toFloat();
+             Daytimemap[daynum].endhour = sEndhour.toInt();
+             Daytimemap[daynum].endmin = sEndmin.toInt();
+           }
+           id++;
+         }
+
+       } // while available()
+       DebugTf("Number of Daytimemap registers initialized:, %d \r\n", id-1);
+       fh.close();
+     }
+   }
+ }
+ //===========================================================================================
+ void printDaytimemap()
+ {
+   DebugTf("printDaytimemap begin for: %d, records \r\n",7);
+   for (int i = 1; i <= 7; i++)
+   {
+     DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+   }
+   DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+  
+  checkactivateRelay(false) ;
+
+ }
 
  void doInitModbusMap()
  {
 
    const char* cfgFilename = "/Modbusmap.cfg";
+   // Comment lines start with # or //
    // Configuration file to map modbus registers
    // file format is CSV , all values as string without "" ,  fields are
    // reg = register address
@@ -341,21 +443,21 @@ int sendModbus(const char* buf, int len)
 
    File fh; //filehandle
    //Let's open the Modbus config file
-   SPIFFS.begin();
-   if (SPIFFS.exists(cfgFilename))
+   LittleFS.begin();
+   if (LittleFS.exists(cfgFilename))
    {
-     fh = SPIFFS.open(cfgFilename, "r");
+     fh = LittleFS.open(cfgFilename, "r");
      if (fh) {
        //Lets go read the config and store in modbusmap line by line
        while(fh.available() && id <= MODBUSCOUNT)
        {  //read file line by line, split and send to MQTT (topic, msg)
           String sLine = fh.readStringUntil('\n');
 
-          if (sLine.startsWith("//") )
+          if (sLine.startsWith("#") || sLine.startsWith("//") )
           {
-            DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
+            // DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
           } else {
-            DebugTf("sline[%s]\r\n", sLine.c_str());
+            // DebugTf("sline[%s]\r\n", sLine.c_str());
             // reg, format, type, label, friendlyname, unit, phase
             Index1 = sLine.indexOf(',');
             Index2 = sLine.indexOf(',', Index1 + 1);
@@ -426,7 +528,7 @@ int sendModbus(const char* buf, int len)
              Modbusmap[id].label = clabel ;
              Modbusmap[id].friendlyname = cname ;
              Modbusmap[id].unit = cunit;
-            // delete [] clabel;  // do not delete, is required during runtime !
+            // delete [] clabel;  // do not delete object, is still required during runtime !
             // delete [] cname;
             // delete [] cunit;
 
@@ -463,7 +565,65 @@ String getModbusValue(int modbusreg)
 {
 
    return "Modbus not implemented yet!";
+}
+
+// Relay functions
+
+
+
+void checkactivateRelay(bool activaterelay)
+{
+  int16_t dagcurmin, dagstartmin, dagendmin = 0;
+  if (settingTimebasedSwitch && settingNTPenable)
+  {
+
+    DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+
+    dagcurmin = hour() * 60 + minute();
+    dagstartmin = Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin;
+    dagendmin = Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin ;
+
+    if (dagstartmin < dagendmin)
+    {
+      if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
+      {
+        DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+        DebugTf("statusRelay[%d]\r\n", statusRelay);
+        if (activaterelay && statusRelay == RELAYOFF)
+          setRelay(RELAYON);
+      }
+      else
+      {
+        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
+        if (activaterelay && statusRelay == RELAYON)
+          setRelay(RELAYOFF);
+      }
+    }
+    else
+    {
+      if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
+      {
+        DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+        if (activaterelay && statusRelay == RELAYOFF)
+          setRelay(RELAYON);
+      }
+      else
+      {
+        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
+        if (activaterelay && statusRelay == RELAYON)
+          setRelay(RELAYOFF);
+      }
+    }
   }
+}
+
+void setRelay(uint8_t status)
+{
+  pinMode(RELAY, OUTPUT);
+  digitalWrite(RELAY, status);
+  DebugTf("Relay set to %d \r\n", status);
+  statusRelay = status;
+}
 
 /***************************************************************************
 *

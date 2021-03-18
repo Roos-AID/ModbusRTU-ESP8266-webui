@@ -12,15 +12,15 @@ static const char UpdateServerIndex[] PROGMEM =
           <input type='submit' value='Flash Firmware'>
       </form>
       <form method='POST' action='?cmd=100' enctype='multipart/form-data'> 
-          Selecteer een "<b>.spiffs.bin</b>" bestand<br/>
-          <input type='file' accept='spiffs.bin' name='filesystem'>
-          <input type='submit' value='Flash Spiffs'>
+          Selecteer een "<b>.littlefs.bin</b>" bestand<br/>
+          <input type='file' accept='littlefs.bin' name='filesystem'>
+          <input type='submit' value='Flash LittleFS'>
       </form>
       <hr>
       <br/><font color='red'>Let op!!!</font>
-      <br/>Bij het flashen van SPIFFS raakt u uw bestanden kwijt. 
+      <br/>Bij het flashen van LittleFS raakt u uw bestanden kwijt. 
       <br/>Maak daarom eerst een kopie van deze bestanden (met de FSexplorer) 
-      en zet deze na het flashen van SPIFFS weer terug.
+      en zet deze na het flashen van LittleFS weer terug.
       <hr>
       <br/>
       <br/>Wacht nog <span style='font-size: 1.3em;' id="waitSeconds">60</span> seconden ..

@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.ino
-**  Version 1.2.0
+**  Version 1.4.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -39,56 +39,65 @@
 
 #include "Modbus-Janitza.h"
 
+#define ON LOW
+#define OFF HIGH
+#define RELAYON HIGH
+#define RELAYOFF LOW
+
 //=====================================================================
 void setup()
 {
 
-  rebootCount = updateRebootCount();
-
   Serial.begin(115400, SERIAL_8N1);
   while (!Serial) {} //Wait for OK
+  Serial.println(F("\r\n[Modbus-Janitza firmware version]\r\n"));
+  Serial.printf("Booting....[%s]\r\n\r\n", String(_FW_VERSION).c_str());
+  
+
+  rebootCount = updateRebootCount();
 
   //setup randomseed the right way
   randomSeed(RANDOM_REG32); //This is 8266 HWRNG used to seed the Random PRNG: Read more: https://config9.com/arduino/getting-a-truly-random-number-in-arduino/
 
   lastReset     = ESP.getResetReason();
+  Serial.printf("Last reset reason: [%s]\r\n", CSTR(ESP.getResetReason()));
+
+//Set relay initially off 
+  setRelay(RELAYOFF);
 
   //setup the status LED
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH); //OFF
+  setLed(LED1, ON);
+  setLed(LED2, ON);
 
-  //start the debug port 23
-  startTelnet();
-
-  Serial.println(F("\r\n[Modbus-Janitza firmware version]\r\n"));
-  Serial.printf("Booting....[%s]\r\n\r\n", String(_FW_VERSION).c_str());
-
-//================ SPIFFS ===========================================
-  if (SPIFFS.begin())
-  {
-    Serial.println(F("SPIFFS Mount succesfull\r"));
-    SPIFFSmounted = true;
-  } else {
-    Serial.println(F("SPIFFS Mount failed\r"));   // Serious problem with SPIFFS
-    SPIFFSmounted = false;
-  }
-
+  LittleFS.begin();
   readSettings(true);
-
-  // Connect to and initialise WiFi network
+  
   Serial.println(F("Attempting to connect to WiFi network\r"));
-  digitalWrite(LED_BUILTIN, HIGH);
+  setLed(LED1, ON);
   startWiFi(_HOSTNAME, 240);  // timeout 240 seconds
-  digitalWrite(LED_BUILTIN, LOW);
-  Serial.println(F("WiFi network initialized\r"));
+  blinkLED(LED1, 3, 100);
+  setLed(LED1, OFF);
 
   startMDNS(CSTR(settingHostname));
-
-  delay(1000);
-
-  //============== Setup Ping ======================================
-
+  startLLMNR(CSTR(settingHostname));
+  startTelnet(); //start the debug port 23
+  delayms(3000);
+  startMQTT(); 
+  startNTP();
+  setupFSexplorer();
+  startWebserver();
   setupPing();
+
+  //============== Setup Modbus ======================================
+  setupModbus();
+  doInitModbusMap();
+  doInitDaytimemap();
+  printDaytimemap();
+  //  printModbusmap() ;
+  //  readModbusSetup();
+  readModbus();
+  
+  // Double check if Wifi is still alive (seems sometimes problematic)
 
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -116,90 +125,60 @@ void setup()
     startTelnet();
   }
 
-  // Start MQTT connection
-  startMQTT();
 
-  // Initialisation ezTime
-  Serial.println("Initialize ezTime");
-  setDebug(INFO);
-  // setDebug(ERROR);
-  waitForSync();
-  CET.setLocation(F("Europe/Amsterdam"));
-  CET.setDefault();
-
-  Serial.println("UTC time: "+ UTC.dateTime());
-  Serial.println("CET time: "+ CET.dateTime());
-
-  Serial.printf("Last reset reason: [%s]\r\n", ESP.getResetReason().c_str());
-  Serial.print("Gebruik 'telnet ");
-  Serial.print(WiFi.localIP());
-  Serial.println("' voor verdere debugging");
-
-
-//================ Start HTTP Server ================================
-setupFSexplorer();
-if (!SPIFFS.exists("/index.html")) {
-httpServer.serveStatic("/",           SPIFFS, "/FSexplorer.html");
-httpServer.serveStatic("/index",      SPIFFS, "/FSexplorer.html");
-httpServer.serveStatic("/index.html", SPIFFS, "/FSexplorer.html");
-} else{
-httpServer.serveStatic("/",           SPIFFS, "/index.html");
-httpServer.serveStatic("/index",      SPIFFS, "/index.html");
-httpServer.serveStatic("/index.html", SPIFFS, "/index.html");
-}
-// httpServer.on("/",          sendIndexPage);
-// httpServer.on("/index",     sendIndexPage);
-// httpServer.on("/index.html",sendIndexPage);
-httpServer.serveStatic("/FSexplorer.png",   SPIFFS, "/FSexplorer.png");
-httpServer.serveStatic("/index.css", SPIFFS, "/index.css");
-httpServer.serveStatic("/index.js",  SPIFFS, "/index.js");
-// all other api calls are catched in FSexplorer onNotFounD!
-httpServer.on("/api", HTTP_ANY, processAPI);  //was only HTTP_GET (20210110)
-
-httpServer.begin();
-Debugln("\nHTTP Server started\r");
-
-  // Set up first message as the IP address
-  sprintf(cMsg, "%03d.%03d.%d.%d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
-  Debugf("\nAssigned IP[%s]\r\n", cMsg);
-
-
-
-
-
-//============== Setup Modbus ======================================
-
-  setupModbus();
-
-  doInitModbusMap();
-
-//  printModbusmap() ;
-
-//  readModbusSetup();
-
-  readModbus();
 
   Debugf("Reboot count = [%d]\r\n", rebootCount);
   Debugln(F("Setup finished!"));
 
-
+  //Blink LED2 to signal setup done
+  setLed(LED1, OFF);
+  blinkLED(LED2, 3, 100);
+  setLed(LED2, OFF);
 
 }  // End setup
 
 //=====================================================================
 
+
+//=====================================================================
 //===[ blink status led ]===
-void blinkLEDms(uint32_t iDelay){
+
+void setLed(uint8_t led, uint8_t status)
+{
+  pinMode(led, OUTPUT);
+  digitalWrite(led, status);
+}
+
+void blinkLEDms(uint32_t delay)
+{
   //blink the statusled, when time passed
-  DECLARE_TIMER_MS(timerBlink, iDelay);
-  if (DUE(timerBlink)) {
+  DECLARE_TIMER_MS(timerBlink, delay);
+  if (DUE(timerBlink))
+  {
     blinkLEDnow();
   }
 }
 
-void blinkLEDnow(){
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+void blinkLED(uint8_t led, int nr, uint32_t waittime_ms)
+{
+  for (int i = nr; i > 0; i--)
+  {
+    blinkLEDnow(led);
+    delayms(waittime_ms);
+    blinkLEDnow(led);
+    delayms(waittime_ms);
+  }
+}
+
+void blinkLEDnow()
+{
+  blinkLEDnow(LED1);
+}
+
+void blinkLEDnow(uint8_t led = LED1)
+{
+  pinMode(led, OUTPUT);
+  digitalWrite(led, !digitalRead(led));
 }
 
 //===[ no-blocking delay with running background tasks in ms ]===
@@ -226,7 +205,7 @@ void doTaskEvery5s(){
 //===[ Do task every 30s ]===
 void doTaskEvery30s(){
   //== do tasks ==
-
+  if (settingLEDblink)  blinkLEDnow(LED1);
   readModbus();
   Modbus2MQTT();
 }
@@ -234,6 +213,7 @@ void doTaskEvery30s(){
 //===[ Do task every 60s ]===
 void doTaskEvery60s(){
   //== do tasks ==
+  checkactivateRelay(true);
   //if no wifi, try reconnecting (once a minute)
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -258,7 +238,6 @@ void doTaskEvery60s(){
     //check telnet
     startTelnet();
   }
-  
 
 }
 // end doTaskEvery60s()
@@ -272,8 +251,8 @@ void doBackgroundTasks()
   httpServer.handleClient();
   MDNS.update();
   events();                     // trigger ezTime update etc.
-  blinkLEDms(1000);             // 'blink' the status led every x ms
   delay(1);
+  handleDebug();
 }
 
 void loop()

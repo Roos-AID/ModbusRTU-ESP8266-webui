@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.js, part of Modbus-firmware project
-**  Version 1.2.0
+**  Version 1.4.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -10,61 +10,65 @@
 **  TERMS OF USE: MIT License. See bottom of file.
 ***************************************************************************
 */
-  const APIGW='http://'+window.location.host+'/api/';
+const localURL = 'http://' + window.location.host;
+const APIGW = 'http://' + window.location.host + '/api/';
 
 "use strict";
 
-  let needReload  = true;
-  refreshDevTime();
+let needReload = true;
+refreshDevTime();
 
-  window.onload=bootsTrapMain;
-  window.onfocus = function() {
-    if (needReload) {
-      window.location.reload(true);
-    }
-  };
+console.log("Hash=" + window.location.hash);
+window.onload = initMainPage;
 
 
-  var tid = 0;
-  var timeupdate = setInterval(function(){refreshDevTime(); }, 1000); //delay is in milliseconds
+window.onfocus = function () {
+  if (needReload) {
+    window.location.reload(true);
+  }
+};
 
-  //============================================================================
-  function bootsTrapMain() {
-    console.log("bootsTrapMain()");
 
-    document.getElementById('M_FSexplorer').addEventListener('click',function()
-                                                { console.log("newTab: goFSexplorer");
-                                                  location.href = "/FSexplorer";
-                                                });
-    document.getElementById('D_FSexplorer').addEventListener('click',function()
-                                                { console.log("newTab: goFSexplorer");
-                                                  location.href = "/FSexplorer";
-                                                });
-    document.getElementById('S_FSexplorer').addEventListener('click',function()
-                                                { console.log("newTab: goFSexplorer");
-                                                  location.href = "/FSexplorer";
-                                                });
-    document.getElementById('D_back').addEventListener('click',function()
-                                                { console.log("newTab: goBack");
-                                                location.href = "/";
-                                                });
-    document.getElementById('S_back').addEventListener('click',function()
-                                                { console.log("newTab: goBack");
-                                                location.href = "/";
-                                                });
-    document.getElementById('S_saveSettings').addEventListener('click',function(){saveSettings();});
-    document.getElementById('tabDeviceInfo').addEventListener('click',function(){deviceinfoPage();});
-    document.getElementById('tabSettings').addEventListener('click',function(){settingsPage();});
-    needReload = false;
-    refreshDevInfo();
-    refreshModbusmonitor();
-    tid = setInterval(function(){refreshModbusmonitor(); }, 1000); //delay is in milliseconds
+var tid = 0;
+var timeupdate = setInterval(function () { refreshDevTime(); }, 4000); //delay is in milliseconds
 
-    document.getElementById("displayMainPage").style.display       = "block";
-    document.getElementById("displaySettingsPage").style.display   = "none";
-    document.getElementById("displayDeviceInfo").style.display     = "none";
+//============================================================================
+function initMainPage() {
+  console.log("initMainPage()");
 
-  } // bootsTrapMain()
+  document.getElementById('M_FSexplorer').addEventListener('click', function () {
+    console.log("newTab: goFSexplorer");
+    location.href = "/FSexplorer";
+  });
+  document.getElementById('D_FSexplorer').addEventListener('click', function () {
+    console.log("newTab: goFSexplorer");
+    location.href = "/FSexplorer";
+  });
+  document.getElementById('S_FSexplorer').addEventListener('click', function () {
+    console.log("newTab: goFSexplorer");
+    location.href = "/FSexplorer";
+  });
+  document.getElementById('D_back').addEventListener('click', function () {
+    console.log("newTab: goBack");
+    location.href = "/";
+  });
+  document.getElementById('S_back').addEventListener('click', function () {
+    console.log("newTab: goBack");
+    location.href = "/";
+  });
+  document.getElementById('S_saveSettings').addEventListener('click', function () { saveSettings(); });
+  document.getElementById('tabDeviceInfo').addEventListener('click', function () { deviceinfoPage(); });
+  document.getElementById('tabSettings').addEventListener('click', function () { settingsPage(); });
+  needReload = false;
+  refreshDevInfo();
+  refreshModbusmonitor();
+  tid = setInterval(function () { refreshModbusmonitor(); }, 1000); //delay is in milliseconds
+
+  document.getElementById("displayMainPage").style.display = "block";
+  document.getElementById("displaySettingsPage").style.display = "none";
+  document.getElementById("displayDeviceInfo").style.display = "none";
+
+} // initMainPage()
 
   function deviceinfoPage()
   {
@@ -76,7 +80,7 @@
     refreshDeviceInfo();
     document.getElementById("displayDeviceInfo").style.display     = "block";
 
-  } // settingsPage()
+  } // devicesinfoPage()
 
   function settingsPage()
   {
@@ -84,7 +88,7 @@
     refreshDevTime();
     document.getElementById("displayMainPage").style.display       = "none";
     document.getElementById("displayDeviceInfo").style.display     = "none";
-    var settingsPage = document.getElementById("settingsPage");
+    // var settingsPage = document.getElementById("settingsPage");
     refreshSettings();
     document.getElementById("displaySettingsPage").style.display   = "block";
 
@@ -104,6 +108,7 @@
               //console.log("Got new time ["+json.devtime[i].value+"]");
               document.getElementById('theTime').innerHTML = json.devtime[i].value;
             }
+          if (json.devtime[i].name == "message") document.getElementById('message').innerHTML = json.devtime[i].value;
           }
       })
       .catch(function(error) {
@@ -250,192 +255,164 @@
 
   } // refreshDeviceInfo()
 
-  //============================================================================
-  function refreshSettings()
-  {
-    console.log("refreshSettings() ..");
-    data = {};
-    fetch(APIGW+"v0/settings")
-      .then(response => response.json())
-      .then(json => {
-        console.log("then(json => ..)");
-        console.log("parsed .., data is ["+ JSON.stringify(json)+"]");
-        data = json.settings;
-        document.getElementById("settingMessage").innerHTML = "";
-        for( let i in data )
-        {
-          console.log("["+data[i].name+"]=>["+data[i].value+"]");
-          var settings = document.getElementById('settingsPage');
-          if( ( document.getElementById("D_"+data[i].name)) == null )
-          {
-            var rowDiv = document.createElement("div");
-            rowDiv.setAttribute("class", "settingDiv");
-      //----rowDiv.setAttribute("id", "settingR_"+data[i].name);
-            rowDiv.setAttribute("id", "D_"+data[i].name);
-            rowDiv.setAttribute("style", "text-align: right;");
-            rowDiv.style.marginLeft = "10px";
-            rowDiv.style.marginRight = "10px";
-            rowDiv.style.width = "850px";
-            rowDiv.style.border = "thick solid lightblue";
-            rowDiv.style.background = "lightblue";
-            //--- field Name ---
-              var fldDiv = document.createElement("div");
-                  fldDiv.setAttribute("style", "margin-right: 10px;");
-                  fldDiv.style.width = "270px";
-                  fldDiv.style.float = 'left';
-                  fldDiv.textContent = translateToHuman(data[i].name);
-                  rowDiv.appendChild(fldDiv);
-            //--- input ---
-              var inputDiv = document.createElement("div");
-                  inputDiv.setAttribute("style", "text-align: left;");
+function refreshSettings() {
+  console.log("refreshSettings() ..");
+  data = {};
+  fetch(APIGW + "v0/settings")
+    .then(response => response.json())
+    .then(json => {
+      console.log("then(json => ..)");
+      console.log("parsed .., data is [" + JSON.stringify(json) + "]");
+      data = json.settings;
+      document.getElementById("settingMessage").innerHTML = "";
+      for (let i in data) {
+        // console.log("[" + data[i].name + "]=>[" + data[i].value + "]" + " type=[" + data[i].type + "]");
+        var settings = document.getElementById('settingsPage');
+        if ((document.getElementById("D_" + data[i].name)) == null) {
+          // console.log("D_" + data[i].name + "is not here, create");
+          var rowDiv = document.createElement("div");
+          rowDiv.setAttribute("class", "settingDiv");
+          //----rowDiv.setAttribute("id", "settingR_"+data[i].name);
+          rowDiv.setAttribute("id", "D_" + data[i].name);
+          rowDiv.setAttribute("style", "text-align: right;");
+          rowDiv.style.marginLeft = "10px";
+          rowDiv.style.marginRight = "10px";
+          rowDiv.style.width = "850px";
+          rowDiv.style.border = "thick solid lightblue";
+          rowDiv.style.background = "lightblue";
+          //--- field Name ---
+          var fldDiv = document.createElement("div");
+          fldDiv.setAttribute("style", "margin-right: 10px;");
+          fldDiv.style.width = "270px";
+          fldDiv.style.float = 'left';
+          fldDiv.textContent = translateToHuman(data[i].name);
+          rowDiv.appendChild(fldDiv);
+          //--- input ---
+          var inputDiv = document.createElement("div");
+          inputDiv.setAttribute("style", "text-align: left;");
 
-                    var sInput = document.createElement("INPUT");
-              //----sInput.setAttribute("id", "setFld_"+data[i].name);
-                    sInput.setAttribute("id", data[i].name);
-
-                    if (data[i].type == "s")
-                    {
-                      sInput.setAttribute("type", "text");
-                      sInput.setAttribute("maxlength", data[i].maxlen);
-                      sInput.setAttribute("size", data[i].maxlen);
-                    }
-                    else if (data[i].type == "f")
-                    {
-                      sInput.setAttribute("type", "number");
-                      sInput.max = data[i].max;
-                      sInput.min = data[i].min;
-                      sInput.step = (data[i].min + data[i].max) / 1000;
-                    }
-                    else if (data[i].type == "i")
-                    {
-                      sInput.setAttribute("type", "number");
-                      sInput.setAttribute("size", 10);
-                      sInput.max = data[i].max;
-                      sInput.min = data[i].min;
-                      //sInput.step = (data[i].min + data[i].max) / 1000;
-                      sInput.step = 1;
-                    }
-                    sInput.setAttribute("value", data[i].value);
-                    sInput.addEventListener('change',
-                                function() { setBackGround(data[i].name, "lightgray"); },
-                                            false
-                                );
-                    sInput.addEventListener('keydown',
-                                function() { setBackGround(data[i].name, "lightgray"); },
-                                            false
-                                );
-                  inputDiv.appendChild(sInput);
-
-            rowDiv.appendChild(inputDiv);
-            settings.appendChild(rowDiv);
+          var sInput = document.createElement("input");
+          //----sInput.setAttribute("id", "setFld_"+data[i].name);
+          sInput.setAttribute("id", data[i].name);
+          if (data[i].type == "b") {
+            sInput.setAttribute("type", "checkbox");
+            sInput.checked = strToBool(data[i].value);
           }
-          else
-          {
-      //----document.getElementById("setFld_"+data[i].name).style.background = "white";
-            document.getElementById(data[i].name).style.background = "white";
-      //----document.getElementById("setFld_"+data[i].name).value = data[i].value;
-            document.getElementById(data[i].name).value = data[i].value;
+          else if (data[i].type == "s") {
+            sInput.setAttribute("type", "text");
+            sInput.setAttribute("maxlength", data[i].maxlen);
+            sInput.setAttribute("size", (data[i].maxlen > 20 ? 20 : data[i].maxlen));
           }
+          else if (data[i].type == "f") {
+            sInput.setAttribute("type", "number");
+            sInput.max = data[i].max;
+            sInput.min = data[i].min;
+            sInput.step = (data[i].min + data[i].max) / 1000;
+          }
+          else if (data[i].type == "i") {
+            sInput.setAttribute("type", "number");
+            sInput.setAttribute("size", 10);
+            sInput.max = data[i].max;
+            sInput.min = data[i].min;
+            sInput.step =data[i].step;
+          }
+          sInput.setAttribute("value", data[i].value);
+          sInput.addEventListener('change',
+            function () { setBackGround(data[i].name, "lightgray"); },
+            false
+          );
+          sInput.addEventListener('keydown',
+            function () { setBackGround(data[i].name, "lightgray"); },
+            false
+          );
+          inputDiv.appendChild(sInput);
+
+          rowDiv.appendChild(inputDiv);
+          settings.appendChild(rowDiv);
         }
-        //console.log("-->done..");
-      })
-      .catch(function(error) {
-        var p = document.createElement('p');
-        p.appendChild(
-          document.createTextNode('Error: ' + error.message)
-        );
-      });
+        else {
+          console.log("D_" + data[i].name + " exists update value");
 
-  } // refreshSettings()
-
-
-  //============================================================================
-  function saveSettings()
-  {
-    console.log("saveSettings() ...");
-    let changes = false;
-
-    //--- has anything changed?
-    var page = document.getElementById("settingsPage");
-    var mRow = page.getElementsByTagName("input");
-    //var mRow = document.getElementById("mainPage").getElementsByTagName('div');
-    for(var i = 0; i < mRow.length; i++)
-    {
-      //do something to each div like
-      var modbusreg = mRow[i].getAttribute("id");
-      var field = modbusreg;
-      console.log("modbusreg["+modbusreg+", msgNr["+field+"]");
-      value = document.getElementById(modbusreg).value;
-      console.log("==> name["+field+"], value["+value+"]");
-      changes = false;
-      if   (getBackGround(field) == "lightgray")
-      {
-        setBackGround(field, "white");
-        changes = true;
+          //----document.getElementById("setFld_"+data[i].name).style.background = "white";
+          document.getElementById(data[i].name).style.background = "white";
+          //----document.getElementById("setFld_"+data[i].name).value = data[i].value;
+          
+          // FIX If checkbox change checked iso value
+          if (data[i].type == "b") 
+            document.getElementById(data[i].name).checked = strToBool(data[i].value);
+          else  document.getElementById(data[i].name).value = data[i].value;
+        }
       }
-      if (changes) {
-        console.log("Changes where made in ["+field+"]["+value+"]");
-        //processWithTimeout([(data.length -1), 0], 2, data, sendPostReading);
-        document.getElementById("settingMessage").innerHTML = "Saving changes...";
-        setTimeout(function(){ document.getElementById("settingMessage").innerHTML = ""; }, 1000); //and clear the message
-        sendPostSetting(field, value);
-      }
+      // console.log("-->done..");
+    })
+    .catch(function (error) {
+      var p = document.createElement('p');
+      p.appendChild(
+        document.createTextNode('Error: ' + error.message)
+      );
+    });
+
+} // refreshSettings()
+
+
+//============================================================================
+function saveSettings() {
+  console.log("saveSettings() ...");
+  // let changes = false;
+
+  //--- has anything changed?
+  var page = document.getElementById("settingsPage");
+  var inputs = page.getElementsByTagName("input");
+  //var mRow = document.getElementById("mainPage").getElementsByTagName('div');
+  for (var i = 0; i < inputs.length; i++) {
+    //do something to each div like
+    var field = inputs[i].getAttribute("id");
+    console.log("InputNr[" + i + "], InputId[" + field + "]");
+    if (inputs[i].type == "checkbox") {
+      value = document.getElementById(field).checked;
+    } else {
+      value = document.getElementById(field).value;
     }
-  } // saveSettings()
-
-
-/****
-  //============================================================================
-  function saveSettings()
-  {
-    console.log("saveSettings() ...");
-    var settings = document.getElementById("settingsPage").getElementsByTagName('div');;
-    for(var i = 0; i < settings.length; i++){
-      //do something to each div like
-      //console.log(settings[i].innerHTML);
-      Dname = settings[i].getAttribute("id");
-      if (Dname != null)
-      {
-        //console.log("Dname["+Dname+"]");
-        field = Dname.substr(2);
-        value = document.getElementById(field).value;
-        console.log("==> name["+field+"], value["+value+"]");
-        sendPostSetting(field, value)
-        //console.log("value["+value+"]");
-      }
+    console.log("==> name[" + field + "], value[" + value + "]");
+    if (getBackGround(field).includes("lightgray")) { //then it was changes, and needs to be saved
+      setBackGround(field, "white");
+      console.log("Changes where made in [" + field + "][" + value + "]");
+      //processWithTimeout([(data.length -1), 0], 2, data, sendPostReading);
+      document.getElementById("settingMessage").innerHTML = "Saving changes...";
+      setTimeout(function () { document.getElementById("settingMessage").innerHTML = ""; }, 1000); //and clear the message
+      sendPostSetting(field, value);
     }
+  }
+  // FIX Refresh settings page to show modified parms
+  settingsPage();
+} // saveSettings()
 
-  } // saveSettings()
-****/
 
+//============================================================================
+function sendPostSetting(field, value) {
+  const jsonString = { "name": field, "value": value };
+  console.log("sending: " + JSON.stringify(jsonString));
+  const other_params = {
+    headers: { "content-type": "application/json; charset=UTF-8" },
+    body: JSON.stringify(jsonString),
+    method: "POST",
+    mode: "cors"
+  };
 
+  fetch(APIGW + "v0/settings", other_params)
+    .then(function (response) {
+      //console.log(response.status );    //=> number 100–599
+      //console.log(response.statusText); //=> String
+      //console.log(response.headers);    //=> Headers
+      //console.log(response.url);        //=> String
+      //console.log(response.text());
+      //return response.text()
+    }, function (error) {
+      console.log("Error[" + error.message + "]"); //=> String
+    });
 
+} // sendPostSetting()
 
-  //============================================================================
-  function sendPostSetting(field, value)
-  {
-    const jsonString = {"name" : field, "value" : value};
-    console.log("sending: "+JSON.stringify(jsonString));
-    const other_params = {
-        headers : { "content-type" : "application/json; charset=UTF-8"},
-        body : JSON.stringify(jsonString),
-        method : "POST",
-        mode : "cors"
-    };
-
-    fetch(APIGW+"v0/settings", other_params)
-      .then(function(response) {
-            //console.log(response.status );    //=> number 100–599
-            //console.log(response.statusText); //=> String
-            //console.log(response.headers);    //=> Headers
-            //console.log(response.url);        //=> String
-            //console.log(response.text());
-            //return response.text()
-      }, function(error) {
-        console.log("Error["+error.message+"]"); //=> String
-      });
-
-  } // sendPostSetting()
 
 
   //============================================================================
@@ -489,74 +466,67 @@
     }
   } // printAllVals()
 
+  //============================================================================
+  function strToBool(s) {
+    // will match one and only one of the string 'true','1', or 'on' rerardless
+    // of capitalization and regardless off surrounding white-space.
+    regex = /^\s*(true|1|on)\s*$/i
+
+    return regex.test(s);
+  }
+  //============================================================================
 
   var translateFields = [
-
-    [ "hostname",                  "HostName" ]
-   ,[ "mqttbroker",                "MQTT Broker IP/URL" ]
-   ,[ "mqttbrokerport",            "MQTT Broker Poort" ]
-   ,[ "mqttuser",                  "MQTT Gebruiker" ]
-   ,[ "mqttpasswd",                "Password MQTT Gebruiker" ]
-   ,[ "mqtttoptopic",              "MQTT Top Topic" ]
-   ,[ "influxdbhostname",          "InfluxDB hostname"]
-   ,[ "influxdbport",              "InfluxDB port (default: 8086)"]
-   ,[ "influxdbdatabasename",      "InfluxDB database name"]
-   ,[ "flamestatus",               "Flame status"]
-   ,[ "chmodus",                   "Central Heating Status"]
-   ,[ "chenable",                  "Central Heating Enabled"]
-   ,[ "dhwmode",                   "Domestic Hot Water Status"]
-   ,[ "dhwenable",                 "Domestic Hot Water Enabled"]
-   ,[ "diagnosticindicator",       "Diagnostic Indicator"]
-   ,[ "faultindicator",            "Fault Indicator"]
-   ,[ "outsidetemperature",        "Outside Temperature"]
-   ,[ "roomtemperatature",         "Room Temperature"]
-   ,[ "roomsetpoint",              "Room Temperature Setpoint"]
-   ,[ "remoteroomsetpoint",        "Remote Room Temperature Setpoint"]
-   ,[ "relmodlvl",                 "Relative Modulation Level"]
-   ,[ "maxrelmodlvl",              "Max. Rel. Modulation Level"]
-   ,[ "chwaterpressure",           "Central Heating Water Pressure"]
-   ,[ "boilertemperature",         "Boiler Temperature"]
-   ,[ "returnwatertemperature",    "Return Water Temperature"]
-   ,[ "controlsetpoint",           "Control Setpoint"]
-   ,[ "maxchwatersetpoint",        "Max. CH Water Setpoint"]
-   ,[ "dhwtemperature",            "Domestic Hotwater Temperature"]
-   ,[ "dhwsetpoint",               "Domestic Hotwater Setpoint"]
-   ,[ "oemfaultcode",              "OEM Fault Code"]
-
-   ,[ "author",                     "Developer"]
-   ,[ "fwversion",                  "Firmware Version"]
-   ,[ "compiled",                   "Compiled on (date/time)"]
-   ,[ "HostName",                   "Hostname (add .local)"]
-   ,[ "ipaddress",                  "IP address"]
-   ,[ "macaddress",                 "MAC address"]
-   ,[ "freeheap",                   "Free Heap Memory (bytes)"]
-   ,[ "maxfreeblock",               "Max. Free Memory (bytes)"]
-   ,[ "chipid",                     "Unique Chip ID"]
-   ,[ "coreversion",                "Arduino Core Version"]
-   ,[ "sdkversion",                 "Espressif SDK Version"]
-   ,[ "cpufreq",                    "CPU speed (MHz)"]
-   ,[ "sketchsize",                 "Sketch Size (bytes)"]
-   ,[ "freesketchspace",            "Free Sketch Space (bytes)"]
-   ,[ "flashchipid",                "Flash ID"]
-   ,[ "flashchipsize",              "Flash Chip Size (MB)"]
-   ,[ "flashchiprealsize",          "Real Flash Chip Size (MB)"]
-   ,[ "spiffssize",                 "SPIFF size (MB)"]
-   ,[ "flashchipspeed",             "Flash Chip Speed (MHz)"]
-   ,[ "flashchipmode",              "Flash Mode"]
-   ,[ "boardtype",                  "Board Type"]
-   ,[ "ssid",                       "Wifi Network (SSID)"]
-   ,[ "wifirssi",                   "Wifi Receive Power (dB)"]
-   ,[ "uptime",                     "Up Time [dagen] - [hh:mm]" ]
-   ,[ "lastreset",                  "Last Reset Reason"]
-   ,[ "modbusbaudrate",             "Modbus Baudrate (serial 8N1)" ]
-   ,[ "modbusslaveadres",           "Modbus Slave address" ]
-   ,[ "modbussinglephase",          "Modbus Single Phase (1 for single)" ]
-   ,[ "wifireconnect",              "Wifi reconnect count (reset at reboot)" ]
-   ,[ "wifirestart",                "Wifi restart count (reset at reboot)" ]
-   ,[ "rebootcount",                "ESP reboot count" ]
-   ,[ "modbusreaderrors",           "Modbus read errors" ]
-
-
+    ["hostname", "HostName"]
+    , ["mqttbroker", "MQTT Broker IP/URL"]
+    , ["mqttbrokerport", "MQTT Broker Poort"]
+    , ["mqttuser", "MQTT Gebruiker"]
+    , ["mqttpasswd", "Password MQTT Gebruiker"]
+    , ["mqtttoptopic", "MQTT Top Topic"]
+    , ["influxdbhostname", "InfluxDB hostname"]
+    , ["influxdbport", "InfluxDB port (default: 8086)"]
+    , ["influxdbdatabasename", "InfluxDB database name"]
+    , ["author", "Developer"]
+    , ["fwversion", "Firmware Version"]
+    , ["compiled", "Compiled on (date/time)"]
+    , ["HostName", "Hostname (add .local)"]
+    , ["ipaddress", "IP address"]
+    , ["macaddress", "MAC address"]
+    , ["freeheap", "Free Heap Memory (bytes)"]
+    , ["maxfreeblock", "Max. Free Memory (bytes)"]
+    , ["chipid", "Unique Chip ID"]
+    , ["coreversion", "Arduino Core Version"]
+    , ["sdkversion", "Espressif SDK Version"]
+    , ["cpufreq", "CPU speed (MHz)"]
+    , ["sketchsize", "Sketch Size (bytes)"]
+    , ["freesketchspace", "Free Sketch Space (bytes)"]
+    , ["flashchipid", "Flash ID"]
+    , ["flashchipsize", "Flash Chip Size (MB)"]
+    , ["flashchiprealsize", "Real Flash Chip Size (MB)"]
+    , ["littlefssize", "LittleFS size (MB)"]
+    , ["flashchipspeed", "Flash Chip Speed (MHz)"]
+    , ["flashchipmode", "Flash Mode"]
+    , ["boardtype", "Board Type"]
+    , ["ssid", "Wifi Network (SSID)"]
+    , ["wifirssi", "Wifi Receive Power (dB)"]
+    , ["uptime", "Up Time [dagen] - [hh:mm]"]
+    , ["lastreset", "Last Reset Reason"]
+    , ["mqttconnected", "MQTT Connected"]
+    , ["mqttenable", "MQTT Enable"]
+    , ["mqtthaprefix", "MQTT Home Assistant prefix"]
+    , ["ntpenable", "NTP Enable"]
+    , ["ntptimezone", "NTP Timezone"]
+    , ["uptime", "Uptime since boot"]
+    , ["bootcount", "Nr. Reboots"]
+    , ["ledblink", "Heartbeat LED (on/off)"]
+    , ["modbusbaudrate", "Modbus Baudrate (serial 8N1)"]
+    , ["modbusslaveadres", "Modbus Slave address"]
+    , ["modbussinglephase", "Modbus Single Phase"]
+    , ["timebasedswitch", "Day and timebased switching"]
+    , ["wifireconnect", "Wifi reconnect count (reset at reboot)"]
+    , ["wifirestart", "Wifi restart count (reset at reboot)"]
+    , ["rebootcount", "ESP reboot count"]
+    , ["modbusreaderrors", "Modbus read errors"]
                  ];
 
 /*
