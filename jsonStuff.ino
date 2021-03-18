@@ -210,11 +210,12 @@ void sendJsonSettingObj(const char *cName, float fValue, const char *fType, int 
 } // sendJsonSettingObj(*char, float, *char, int, int, int)
 
 //=======================================================================
-void sendJsonSettingObj(const char *cName, bool bValue, const char *sType)
+void sendJsonSettingObj(const char *cName, bool bValue, const char *bType)
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\":\"%s\", \"type\": \"%s\"}", objSprtr, cName, CBOOLEAN(bValue), sType);
+  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\":\"%s\", \"type\": \"%s\"}"
+                                    , objSprtr, cName, CBOOLEAN(bValue), bType);
 
   httpServer.sendContent(jsonBuff);
   sprintf(objSprtr, ",\r\n");
@@ -226,7 +227,7 @@ void sendJsonSettingObj(const char *cName, int iValue, const char *iType, int mi
   char jsonBuff[200] = "";
 
   snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %d, \"type\": \"%s\", \"min\": %d, \"max\": %d, \"step\": %d}" 
-                                        ,objSprtr, cName, iValue, iType, minValue, maxValue, stepValue);
+                                      ,objSprtr, cName, iValue, iType, minValue, maxValue, stepValue);
 
   httpServer.sendContent(jsonBuff);
   sprintf(objSprtr, ",\r\n");

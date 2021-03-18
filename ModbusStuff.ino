@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.4.0
+**  Version 1.4.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -341,10 +341,10 @@ int sendModbus(const char* buf, int len)
            // #file format is CSV, all values as string without "", fields are
            // #day, starthour, startmin, endhour, endmin
            // #day = daynumber, Numeric representation of the day of the week(1 = Sunday)
-           // #starthour = start hour of relay off
-           // #startmin = start min of relay off
-           // #endhour = end hour of relay on
-           // #endmin = end minute of relay on
+           // #starthour = start hour of relay on
+           // #startmin = start min of relay on
+           // #endhour = end hour of relay off
+           // #endmin = end minute of relay off
 
            Index1 = sLine.indexOf(',');
            Index2 = sLine.indexOf(',', Index1 + 1);
@@ -392,19 +392,15 @@ int sendModbus(const char* buf, int len)
  //===========================================================================================
  void printDaytimemap()
  {
-   int16_t dagcurmin = 0;
    DebugTf("printDaytimemap begin for: %d, records \r\n",7);
    for (int i = 1; i <= 7; i++)
    {
      DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
    }
    DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
-   dagcurmin = hour() * 60 + minute();
-   if (dagcurmin >= Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin &&
-       dagcurmin <= Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin)
-   {
-     DebugTln("Binnen tijdslot");
-   }
+  
+  checkactivateRelay(false) ;
+
  }
 
  void doInitModbusMap()
@@ -569,45 +565,65 @@ String getModbusValue(int modbusreg)
 {
 
    return "Modbus not implemented yet!";
-  }
+}
 
-  // Relay functions
+// Relay functions
 
-  void checkactivateRelay()
+
+
+void checkactivateRelay(bool activaterelay)
+{
+  int16_t dagcurmin, dagstartmin, dagendmin = 0;
+  if (settingTimebasedSwitch && settingNTPenable)
   {
-    int16_t dagcurmin = 0;
-    if (settingTimebasedSwitch && settingNTPenable)
+
+    DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+
+    dagcurmin = hour() * 60 + minute();
+    dagstartmin = Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin;
+    dagendmin = Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin ;
+
+    if (dagstartmin < dagendmin)
     {
-
-      DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
-      DebugTf("CurHour[%d], CurMin[%d] \r\n", hour(), minute());
-
-      dagcurmin = hour() * 60 + minute();
-      if (dagcurmin >= Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin &&
-          dagcurmin <= Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin)
+      if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
       {
-        DebugTln("Binnen tijdslot");
-        DebugTf("statusRelay[%d]\r\n", statusRelay) ;
-
-        if (statusRelay==RELAYON)
+        DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+        DebugTf("statusRelay[%d]\r\n", statusRelay);
+        if (activaterelay && statusRelay == RELAYOFF)
+          setRelay(RELAYON);
+      }
+      else
+      {
+        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay on\r\n", hour(), minute());
+        if (activaterelay && statusRelay == RELAYON)
           setRelay(RELAYOFF);
       }
-      else {
-        DebugTln("Buiten tijdslot");
-        DebugTf("statusRelay[%d]\r\n", statusRelay) ;
-        if (statusRelay==RELAYOFF) 
-            setRelay(RELAYON);
-      }  
+    }
+    else
+    {
+      if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
+      {
+        DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+        if (activaterelay && statusRelay == RELAYOFF)
+          setRelay(RELAYON);
+      }
+      else
+      {
+        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay on\r\n", hour(), minute());
+        if (activaterelay && statusRelay == RELAYON)
+          setRelay(RELAYOFF);
+      }
     }
   }
+}
 
-  void setRelay(uint8_t status)
-  {
-    pinMode(RELAY, OUTPUT);
-    digitalWrite(RELAY, status);
-    DebugTf("Relay set to %d \r\n", status);
-    statusRelay = status;
-  }
+void setRelay(uint8_t status)
+{
+  pinMode(RELAY, OUTPUT);
+  digitalWrite(RELAY, status);
+  DebugTf("Relay set to %d \r\n", status);
+  statusRelay = status;
+}
 
 /***************************************************************************
 *

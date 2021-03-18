@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program : networkStuff.h
-**  Version 1.2.0
+**  Version 1.4.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -163,7 +163,8 @@ void startNTP()
   if (!settingNTPenable)    return;
 
   setDebug(INFO);
-  setServer("time.google.com");
+  // setServer("time.google.com");
+  setServer("europe.pool.ntp.org");
 
   if (settingNTPtimezone.length() == 0)     settingNTPtimezone = DEFAULT_TIMEZONE; //set back to default timezone
 

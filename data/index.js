@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.js, part of Modbus-firmware project
-**  Version 1.4.0
+**  Version 1.4.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -266,9 +266,10 @@ function refreshSettings() {
       data = json.settings;
       document.getElementById("settingMessage").innerHTML = "";
       for (let i in data) {
-        console.log("[" + data[i].name + "]=>[" + data[i].value + "]");
+        // console.log("[" + data[i].name + "]=>[" + data[i].value + "]" + " type=[" + data[i].type + "]");
         var settings = document.getElementById('settingsPage');
         if ((document.getElementById("D_" + data[i].name)) == null) {
+          // console.log("D_" + data[i].name + "is not here, create");
           var rowDiv = document.createElement("div");
           rowDiv.setAttribute("class", "settingDiv");
           //----rowDiv.setAttribute("id", "settingR_"+data[i].name);
@@ -313,10 +314,7 @@ function refreshSettings() {
             sInput.setAttribute("size", 10);
             sInput.max = data[i].max;
             sInput.min = data[i].min;
-            //sInput.step = (data[i].min + data[i].max) / 1000;
-            // sInput.step = 1;
             sInput.step =data[i].step;
-
           }
           sInput.setAttribute("value", data[i].value);
           sInput.addEventListener('change',
@@ -333,13 +331,19 @@ function refreshSettings() {
           settings.appendChild(rowDiv);
         }
         else {
+          console.log("D_" + data[i].name + " exists update value");
+
           //----document.getElementById("setFld_"+data[i].name).style.background = "white";
           document.getElementById(data[i].name).style.background = "white";
           //----document.getElementById("setFld_"+data[i].name).value = data[i].value;
-          document.getElementById(data[i].name).value = data[i].value;
+          
+          // FIX If checkbox change checked iso value
+          if (data[i].type == "b") 
+            document.getElementById(data[i].name).checked = strToBool(data[i].value);
+          else  document.getElementById(data[i].name).value = data[i].value;
         }
       }
-      //console.log("-->done..");
+      // console.log("-->done..");
     })
     .catch(function (error) {
       var p = document.createElement('p');
@@ -354,7 +358,7 @@ function refreshSettings() {
 //============================================================================
 function saveSettings() {
   console.log("saveSettings() ...");
-  let changes = false;
+  // let changes = false;
 
   //--- has anything changed?
   var page = document.getElementById("settingsPage");
@@ -379,6 +383,7 @@ function saveSettings() {
       sendPostSetting(field, value);
     }
   }
+  // FIX Refresh settings page to show modified parms
   settingsPage();
 } // saveSettings()
 

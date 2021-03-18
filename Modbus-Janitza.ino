@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.ino
-**  Version 1.4.0
+**  Version 1.4.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -80,9 +80,10 @@ void setup()
 
   startMDNS(CSTR(settingHostname));
   startLLMNR(CSTR(settingHostname));
+  startTelnet(); //start the debug port 23
+  delayms(3000);
   startMQTT(); 
   startNTP();
-  startTelnet();  //start the debug port 23
   setupFSexplorer();
   startWebserver();
   setupPing();
@@ -204,7 +205,7 @@ void doTaskEvery5s(){
 //===[ Do task every 30s ]===
 void doTaskEvery30s(){
   //== do tasks ==
-
+  if (settingLEDblink)  blinkLEDnow(LED1);
   readModbus();
   Modbus2MQTT();
 }
@@ -212,7 +213,7 @@ void doTaskEvery30s(){
 //===[ Do task every 60s ]===
 void doTaskEvery60s(){
   //== do tasks ==
-  checkactivateRelay();
+  checkactivateRelay(true);
   //if no wifi, try reconnecting (once a minute)
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -250,7 +251,6 @@ void doBackgroundTasks()
   httpServer.handleClient();
   MDNS.update();
   events();                     // trigger ezTime update etc.
-  // if (settingLEDblink)  blinkLEDnow(LED1);
   delay(1);
   handleDebug();
 }

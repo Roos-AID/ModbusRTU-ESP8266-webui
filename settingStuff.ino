@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : settingStuff.ino
-**  Version 1.4.0
+**  Version 1.4.1
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -189,13 +189,13 @@ void updateSetting(const char *field, const char *newValue)
   if (stricmp(field, "modbusslaveadres")==0)  settingModbusSlaveAdr = atoi(newValue);
   if (stricmp(field, "modbusbaudrate")==0)  settingModbusBaudrate = atoi(newValue);
   if (stricmp(field, "modbussinglephase")==0)  settingModbusSinglephase = EVALBOOLEAN(newValue);
-  if (stricmp(field, "timebasedswitch")==0) { 
-    settingTimebasedSwitch = EVALBOOLEAN(newValue);
-    if (!settingNTPenable) { 
-      settingTimebasedSwitch = OFF ;
-      setRelay(OFF);
-    }
-  }
+  if (stricmp(field, "timebasedswitch")==0)    settingTimebasedSwitch = EVALBOOLEAN(newValue);
+  
+  // without NTP no timebased switching 
+  if (!settingNTPenable) {
+      settingTimebasedSwitch = false;
+      setRelay(RELAYOFF);
+  }    
   //finally update write settings
   writeSettings(false);
 

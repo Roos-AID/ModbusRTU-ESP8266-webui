@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.4.0
+**  Version 1.4.1
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -207,13 +207,13 @@ void sendModbusmonitor()
 
   if (settingTimebasedSwitch && settingNTPenable) {
     if (statusRelay) {
-      sendJsonModbusmonObj("Relay output status", statusRelay, "ON");
+      sendJsonModbusmonObj("Relay output status", "ON", "");
     } else
     {
-      sendJsonModbusmonObj("Relay output status", statusRelay, "OFF");
+      sendJsonModbusmonObj("Relay output status", "OFF", "");
     }
   } else if (!settingNTPenable) {
-    sendJsonModbusmonObj("Timebasedswitching NO NTP", 999, "ERR");
+    sendJsonModbusmonObj("Timebasedswitching", "NO NTP", "ERR");
   }
 
   for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
@@ -367,11 +367,11 @@ void sendDeviceSettings()
   sendJsonSettingObj("modbusbaudrate", settingModbusBaudrate, "i", 9600, 115200, 9600);
   sendJsonSettingObj("modbusslaveadres", settingModbusSlaveAdr, "i", 1, 254, 1);
   sendJsonSettingObj("modbussinglephase", settingModbusSinglephase, "b");
-  if (settingNTPenable) {
+  // if (settingNTPenable) {
     sendJsonSettingObj("timebasedswitch", settingTimebasedSwitch, "b");
-  } else {
-    sendJsonSettingObj("timebasedswitch","Unsupported (no NTP)","s",20);
-  }
+  // } else {
+  //   sendJsonSettingObj("timebasedswitch","Unsupported (no NTP)","s",20);
+  // }
   sendEndJsonObj();
 
 } // sendDeviceSettings()
