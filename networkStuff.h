@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program : networkStuff.h
-**  Version 1.4.1
+**  Version 1.4.3
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -26,20 +26,17 @@
 // included in main program: #include <TelnetStream.h>       // Version 0.0.1 - https://github.com/jandrassy/TelnetStream
 // #include<FS.h> // part of ESP8266 Core https://github.com/esp8266/Arduino
 #include <LittleFS.h>
-
+ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater(true);
 // Ping logic
 #include <Pinger.h>
 
-    extern "C" {
+extern "C" {  
   #include <lwip/icmp.h> // needed for icmp packet definitions
     }
 
-    // Set global to avoid object removing after setup() routine
-    Pinger pinger;
-
-
-ESP8266WebServer        httpServer (80);
-ESP8266HTTPUpdateServer httpUpdater(true);
+// Set global to avoid object removing after setup() routine
+Pinger pinger;
 
 static      FSInfo LittleFSinfo;
 bool        LittleFSmounted;
@@ -131,14 +128,14 @@ void startTelnet()
 //=======================================================================
 void startMDNS(const char *Hostname)
 {
-  DebugTf("[1] mDNS setup as [%s.local]\r\n", Hostname);
+  DebugTf("mDNS setup as [%s.local]\r\n", Hostname);
   if (MDNS.begin(Hostname))               // Start the mDNS responder for Hostname.local
   {
-    DebugTf("[2] mDNS responder started as [%s.local]\r\n", Hostname);
+    DebugTf("mDNS responder started as [%s.local]\r\n", Hostname);
   }
   else
   {
-    DebugTln(F("[3] Error setting up MDNS responder!\r\n"));
+    DebugTln(F("Error setting up MDNS responder!\r\n"));
   }
   MDNS.addService("http", "tcp", 80);
 
@@ -210,7 +207,7 @@ String getMacAddress()
 
 String getUniqueId()
 {
-  String uniqueId = "otgw-" + (String)getMacAddress();
+  String uniqueId = settingHostname + (String)getMacAddress();
   return String(uniqueId);
 }
 

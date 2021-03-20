@@ -33,7 +33,7 @@ void setLed(int8_t, uint8_t);
 
 //Defaults and macro definitions
 
-#define _HOSTNAME   "Modbus-Janitza"
+#define _HOSTNAME   "ModbusRTU"
 #define SETTINGS_FILE   "/settings.ini"
 #define DEFAULT_TIMEZONE "Europe/Amsterdam"
 
@@ -58,7 +58,7 @@ uint32_t    reconnectWiFiCount=0;
 uint32_t    restartWiFiCount=0;
 Timezone    myTZ;
 String      sMessage = "";
-
+String      NodeId = "";
 
 const char *weekDayName[]  {  "Unknown", "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Unknown" };
 const char *flashMode[]    { "QIO", "QOUT", "DIO", "DOUT", "Unknown" };
@@ -77,9 +77,11 @@ int16_t   settingMQTTbrokerPort = 1883;
 String    settingMQTTuser = "";
 String    settingMQTTpasswd = "";
 String    settingMQTThaprefix = HOME_ASSISTANT_DISCOVERY_PREFIX;
-String    settingMQTTtopTopic = "Modbus-Janitza";
-String    settingMQTTPubNamespace = "";
-String    settingMQTTSubNamespace = "";
+String    settingMQTTtopTopic = "ModbusRTUrdr";
+// bool      settingMQTTOTmessage = false;
+bool      settingNTPenable = true;
+String    settingNTPtimezone = DEFAULT_TIMEZONE;
+bool      settingLEDblink = true;
 
 //Modbus Settings
 int16_t   settingModbusSlaveAdr = 2;
@@ -90,9 +92,6 @@ bool      settingTimebasedSwitch = false;
 uint8_t   statusRelay = false;
 
 //
-bool      settingNTPenable = true;
-String    settingNTPtimezone = DEFAULT_TIMEZONE;
-bool      settingLEDblink = true;
 
 #include "networkStuff.h"
 // eof

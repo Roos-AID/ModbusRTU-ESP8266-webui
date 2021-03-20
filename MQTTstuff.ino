@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : MQTTstuff
-**  Version 1.4.0
+**  Version 1.4.3
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -29,7 +29,7 @@
   String            MQTTclientId;
   String            MQTTPubNamespace = "";
   String            MQTTSubNamespace = "";
-  String            NodeId = "";
+  // String            NodeId = "";
 
   //===========================================================================================
   void startMQTT()
@@ -37,7 +37,7 @@
     if (!settingMQTTenable)       return;
     stateMQTT = MQTT_STATE_INIT;
     //setup for mqtt discovery
-    NodeId = getUniqueId();
+    // NodeId = getUniqueId();  
     MQTTPubNamespace = settingMQTTtopTopic + "/value/" + NodeId;
     MQTTSubNamespace = settingMQTTtopTopic + "/set/" + NodeId;
 
@@ -57,7 +57,7 @@ void handleMQTTcallback(char* topic, byte* payload, unsigned int length) {
 
   char subscribeTopic[100];
   // naming convention <mqtt top>/set/<node id>/<command>
-  snprintf(subscribeTopic, sizeof(subscribeTopic), "%s/", settingMQTTSubNamespace.c_str());
+  snprintf(subscribeTopic, sizeof(subscribeTopic), "%s/", MQTTSubNamespace.c_str());
   strlcat(subscribeTopic, MODBUS_COMMAND_TOPIC, sizeof(subscribeTopic));
   //what is the incoming message?
   if (stricmp(topic, subscribeTopic) == 0)
@@ -86,8 +86,10 @@ void handleMQTT()
         MQTTclient.disconnect();
         MQTTclient.setServer(MQTTbrokerIPchar, settingMQTTbrokerPort);
         MQTTclient.setCallback(handleMQTTcallback);
-        MQTTclient.setSocketTimeout(4);
-        MQTTclientId  = String(_HOSTNAME) + WiFi.macAddress();
+        MQTTclient.setSocketTimeout(10);
+        // MQTTclientId  = String(_HOSTNAME) + WiFi.macAddress();
+        MQTTclientId  = NodeId ;
+
         //skip try to connect
         stateMQTT = MQTT_STATE_TRY_TO_CONNECT;
       }
@@ -102,7 +104,10 @@ void handleMQTT()
 
     case MQTT_STATE_TRY_TO_CONNECT:
       DebugTln(F("MQTT State: MQTT try to connect"));
-      //DebugTf("MQTT server is [%s], IP[%s]\r\n", settingMQTTbroker.c_str(), MQTTbrokerIPchar);
+
+      DebugTf("MQTT server is [%s], IP[%s]\r\n", settingMQTTbroker.c_str(), MQTTbrokerIPchar);
+      DebugTf("MQTT clientid [%s] \r\n", MQTTclientId.c_str());
+      DebugTf("MQTT PubNamespace [%s], SubNamespace [%s]\r\n", MQTTPubNamespace.c_str(), MQTTSubNamespace.c_str());
 
       DebugT(F("Attempting MQTT connection .. "));
       reconnectAttempts++;
@@ -110,13 +115,13 @@ void handleMQTT()
       //If no username, then anonymous connection to broker, otherwise assume username/password.
       if (settingMQTTuser.length() == 0)
       {
-        Debug(F("without a Username/Password "));
-        MQTTclient.connect(CSTR(MQTTclientId), CSTR(settingMQTTPubNamespace), 0, true, "offline");
+        DebugTln(F("without a Username/Password "));
+        MQTTclient.connect(CSTR(MQTTclientId), CSTR(MQTTPubNamespace), 0, true, "offline");
       }
       else
       {
         Debugf("Username [%s] ", CSTR(settingMQTTuser));
-        MQTTclient.connect(CSTR(MQTTclientId), CSTR(settingMQTTuser), CSTR(settingMQTTpasswd), CSTR(settingMQTTPubNamespace), 0, true, "offline");
+        MQTTclient.connect(CSTR(MQTTclientId), CSTR(settingMQTTuser), CSTR(settingMQTTpasswd), CSTR(MQTTPubNamespace), 0, true, "offline");
       }
 
       //If connection was made succesful, move on to next state...
@@ -127,12 +132,12 @@ void handleMQTT()
         stateMQTT = MQTT_STATE_IS_CONNECTED;
         //DebugTln(F("Next State: MQTT_STATE_IS_CONNECTED"));
         // birth message, sendMQTT retains  by default
-        sendMQTT(CSTR(settingMQTTPubNamespace), "online");
+        sendMQTT(CSTR(MQTTPubNamespace), "online");
         //First do AutoConfiguration for Homeassistant
         doAutoConfigure();
         //Subscribe to topics
         char topic[100];
-        strcpy(topic, CSTR(settingMQTTSubNamespace));
+        strcpy(topic, CSTR(MQTTSubNamespace));
         strlcat(topic, "/#", sizeof(topic));
         DebugTf("Subscribe to MQTT: TopicId [%s]\r\n", topic);
         if (MQTTclient.subscribe(topic)){
@@ -257,7 +262,7 @@ void sendMQTTData(const String topic, const String json, const bool retain = fal
 * json:   <string> , payload to send
 * retain: <bool> , retain mqtt message
 */
-void sendMQTTData(const char* topic, const char *json, const bool *retain)
+void sendMQTTData(const char* topic, const char *json, const bool retain = false)
 {
 /*
 * The maximum message size, including header, is 128 bytes by default.
@@ -272,9 +277,9 @@ void sendMQTTData(const char* topic, const char *json, const bool *retain)
   if (!MQTTclient.connected() || !isValidIP(MQTTbrokerIP)) return;
   // DebugTf("Sending data to MQTT server [%s]:[%d]\r\n", settingMQTTbroker.c_str(), settingMQTTbrokerPort);
   char full_topic[100];
-  snprintf(full_topic, sizeof(full_topic), "%s/", CSTR(settingMQTTPubNamespace));
+  snprintf(full_topic, sizeof(full_topic), "%s/", CSTR(MQTTPubNamespace));
   strlcat(full_topic, topic, sizeof(full_topic));
-  //DebugTf("Sending MQTT: TopicId [%s] Message [%s]\r\n", full_topic, json);
+  DebugTf("Sending MQTT: TopicId [%s] Message [%s]\r\n", full_topic, json);
   if (!MQTTclient.publish(full_topic, json, retain)) DebugTln("MQTT publish failed.");
 //  feedWatchDog();//feed the dog
 } // sendMQTTData()
@@ -293,8 +298,8 @@ void sendMQTT(const char* topic, const char *json, const size_t len)
 {
   if (!settingMQTTenable) return;
   if (!MQTTclient.connected() || !isValidIP(MQTTbrokerIP)) return;
-  //DebugTf("Sending data to MQTT server [%s]:[%d] ", settingMQTTbroker.c_str(), settingMQTTbrokerPort);
-  //DebugTf("Sending MQTT: TopicId [%s] Message [%s]\r\n", topic, json);
+  // DebugTf("Sending data to MQTT server [%s]:[%d] ", settingMQTTbroker.c_str(), settingMQTTbrokerPort);
+  // DebugTf("Sending MQTT: TopicId [%s] Message [%s]\r\n", topic, json);
   if (MQTTclient.getBufferSize() < len) MQTTclient.setBufferSize(len); //resize buffer when needed
 
   if (MQTTclient.beginPublish(topic, len, true)){
@@ -370,10 +375,10 @@ void resetMQTTBufferSize()
             sMsg.replace("%version%", CSTR(String(_VERSION)));
 
             // pub topics prefix
-            sMsg.replace("%mqtt_pub_topic%", CSTR(settingMQTTPubNamespace));
+            sMsg.replace("%mqtt_pub_topic%", CSTR(MQTTPubNamespace));
 
             // sub topics
-            sMsg.replace("%mqtt_sub_topic%", CSTR(settingMQTTSubNamespace));
+            sMsg.replace("%mqtt_sub_topic%", CSTR(MQTTSubNamespace));
             Debugf("[%s]\r\n", CSTR(sMsg)); DebugFlush();
 
             //sendMQTT(CSTR(sTopic), CSTR(sMsg), (sTopic.length() + sMsg.length()+2));
