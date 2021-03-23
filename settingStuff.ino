@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : settingStuff.ino
-**  Version 1.4.1
+**  Version 1.5.0
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -46,6 +46,7 @@ void writeSettings(bool show)
   root["modbusbaudrate"] = settingModbusBaudrate;
   root["modbussinglephase"] = settingModbusSinglephase;
   root["timebasedswitch"] = settingTimebasedSwitch;
+  root["relayallwayson"] = settingRelayAllwaysOnSwitch;
 
   serializeJsonPretty(root, TelnetStream);
   serializeJsonPretty(root, file);
@@ -73,7 +74,7 @@ void readSettings(bool show)
   }
 
   // Deserialize the JSON document
-  StaticJsonDocument<512> doc;
+  StaticJsonDocument<1024> doc;
   DeserializationError error = deserializeJson(doc, file);
   if (error)
   {
@@ -106,7 +107,8 @@ void readSettings(bool show)
   settingModbusSlaveAdr   = doc["modbusslaveadres"];
   settingModbusBaudrate   = doc["modbusbaudrate"];
   settingModbusSinglephase = doc["modbussinglephase"]|settingModbusSinglephase;
-  settingTimebasedSwitch = doc["timebasedswitch"]|settingTimebasedSwitch;
+  settingTimebasedSwitch  = doc["timebasedswitch"] | settingTimebasedSwitch;
+  settingRelayAllwaysOnSwitch = doc["relayallwayson"] | settingRelayAllwaysOnSwitch;
 
   if (settingMQTTtopTopic.length()==0) settingMQTTtopTopic = _HOSTNAME;
 
@@ -134,7 +136,8 @@ void readSettings(bool show)
     Debugf("Modbus slaveadr : %d\r\n",  settingModbusSlaveAdr);
     Debugf("Modbus baudrate : %d\r\n",  settingModbusBaudrate);
     Debugf("Modbus singlephase : %s\r\n",  CBOOLEAN(settingModbusSinglephase));
-    Debugf("Timebased switch : %s\r\n",  CBOOLEAN(settingTimebasedSwitch));
+    Debugf("Timebased switch : %s\r\n", CBOOLEAN(settingTimebasedSwitch));
+    Debugf("Relay Allways On switch : %s\r\n", CBOOLEAN(settingRelayAllwaysOnSwitch));
   }
 
   Debugln(F("-\r"));
@@ -190,7 +193,11 @@ void updateSetting(const char *field, const char *newValue)
   if (stricmp(field, "modbusbaudrate")==0)  settingModbusBaudrate = atoi(newValue);
   if (stricmp(field, "modbussinglephase")==0)  settingModbusSinglephase = EVALBOOLEAN(newValue);
   if (stricmp(field, "timebasedswitch")==0)    settingTimebasedSwitch = EVALBOOLEAN(newValue);
-  
+  if (stricmp(field, "relayallwayson") == 0)  { 
+     settingRelayAllwaysOnSwitch = EVALBOOLEAN(newValue); 
+     checkactivateRelay(true) ;
+     }
+
   // without NTP no timebased switching 
   if (!settingNTPenable) {
       settingTimebasedSwitch = false;

@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.4.4
+**  Version 1.5.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -146,7 +146,7 @@ void toMQTT_float(int id)
 }
 void toMQTT_short(int id)
 {
-  //function to push float data to MQTT
+  //function to push short data to MQTT
   int16_t _value = Modbusmap[id].Modbus_short;
 
   char _msg[15]{0};
@@ -622,6 +622,11 @@ void checkactivateRelay(bool activaterelay)
       }
     }
   }
+  if (settingRelayAllwaysOnSwitch) {
+    DebugTln("WARNING, Relay set to ON");
+    DebugTln("WARNING, Relay set to ON");
+    setRelay(RELAYON) ;
+  }  
 }
 
 void setRelay(uint8_t status)
