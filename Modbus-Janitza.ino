@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.ino
-**  Version 1.4.1
+**  Version 1.4.4
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -71,19 +71,22 @@ void setup()
 
   LittleFS.begin();
   readSettings(true);
+
+  NodeId = getUniqueId() ;
   
   Serial.println(F("Attempting to connect to WiFi network\r"));
   setLed(LED1, ON);
-  startWiFi(_HOSTNAME, 240);  // timeout 240 seconds
+  startWiFi(NodeId.c_str(), 240);  // timeout 240 seconds
   blinkLED(LED1, 3, 100);
   setLed(LED1, OFF);
+  startTelnet(); //start the debug port 23
+  delayms(3000);
 
   startMDNS(CSTR(settingHostname));
   startLLMNR(CSTR(settingHostname));
-  startTelnet(); //start the debug port 23
-  delayms(3000);
   startMQTT(); 
   startNTP();
+
   setupFSexplorer();
   startWebserver();
   setupPing();
@@ -104,7 +107,7 @@ void setup()
     //disconnected, try to reconnect then...
     DebugTln("Wifi not Connected !!!  Restart Wifi");
     reconnectWiFiCount++;
-    restartWiFi(_HOSTNAME, 240);
+    restartWiFi(NodeId.c_str(), 240);
     //check telnet
     startTelnet();
   }
@@ -120,7 +123,7 @@ void setup()
     {
       doRestart("IP Ping failed to often, restart ESP");
     }
-    restartWiFi(_HOSTNAME, 240);
+    restartWiFi(NodeId.c_str(), 240);
     //check telnet
     startTelnet();
   }
@@ -207,7 +210,7 @@ void doTaskEvery30s(){
   //== do tasks ==
   if (settingLEDblink)  blinkLEDnow(LED1);
   readModbus();
-  Modbus2MQTT();
+  // Modbus2MQTT();  This is put into readModbus 
 }
 
 //===[ Do task every 60s ]===
@@ -219,7 +222,7 @@ void doTaskEvery60s(){
   {
     //disconnected, try to reconnect then...
     reconnectWiFiCount++;
-    startWiFi(_HOSTNAME, 240);
+    startWiFi(NodeId.c_str(), 240);
     //check telnet
     startTelnet();
   }
@@ -234,7 +237,7 @@ void doTaskEvery60s(){
     if (restartWiFiCount > 5) {
       doRestart("IP Ping failed to often, restart ESP");
     }
-    restartWiFi(_HOSTNAME, 240);
+    restartWiFi(NodeId.c_str(), 240);
     //check telnet
     startTelnet();
   }

@@ -1,7 +1,7 @@
 /* 
 ***************************************************************************  
 **  Program : FSexplorer
-**  Version 1.4.0
+**  Version 1.4.3
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -303,7 +303,7 @@ bool freeSpace(uint16_t const& printsize)
 void reBootESP()
 {
   DebugTln(F("Redirect and ReBoot .."));
-  doRedirect("Reboot OTGW firmware ..", 120, "/", true);   
+  doRedirect("Reboot ModbusRTU firmware ..", 120, "/", true);   
 } // reBootESP()
 
 //=====================================================================================

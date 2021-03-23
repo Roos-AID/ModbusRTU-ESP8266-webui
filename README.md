@@ -24,6 +24,8 @@ To do:
 Looking for the documentation, go here (work in progress):  TODO
 
 | Version | Release notes |
+| 1.4.4 | MQ updates after reading Modbus register|
+| 1.4.3 | MQ Pub/Sub name space repaired|
 | 1.4.2 | Typo in debug info, additional telnet command (re-read Daytimemap|
 | 1.4.1 | Cosmetic changes, cleanup relay function|
 | 1.4.0 | GPIO for time/day based switch added|
