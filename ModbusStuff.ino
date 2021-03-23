@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.4.2
+**  Version 1.4.4
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -209,6 +209,9 @@ void readModbus()
 
               if (ModbusdataObject.LastResult == 0) {
                  Modbusmap[i].Modbus_short = TempShort ;
+                 if (settingMQTTenable) {
+                   toMQTT_short(i) ;
+                 }
                }
                break;
             case Modbus_ushort:
@@ -225,6 +228,10 @@ void readModbus()
 
               if (ModbusdataObject.LastResult == 0) {
                  Modbusmap[i].Modbus_float = TempFloat ;
+                 if (settingMQTTenable)
+                 {
+                   toMQTT_float(i);
+                 }
                }
                break;
             case Modbus_undef:

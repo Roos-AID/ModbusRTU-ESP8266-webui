@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.ino
-**  Version 1.4.1
+**  Version 1.4.4
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -210,7 +210,7 @@ void doTaskEvery30s(){
   //== do tasks ==
   if (settingLEDblink)  blinkLEDnow(LED1);
   readModbus();
-  Modbus2MQTT();
+  // Modbus2MQTT();  This is put into readModbus 
 }
 
 //===[ Do task every 60s ]===

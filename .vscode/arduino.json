@@ -5,5 +5,5 @@
     "output": "../build",
     "port": "/dev/tty.usbserial-0001",
     "prebuild": "/Users/robroos/Documents/Arduino/autoinc-semver-master/semver-incr-build.sh ./version.h",
-    "postbuild": "cp ../build/Mondbus-Janitza.bin ./"
+    "postbuild": "cp ../build/Modbus-Janitza.ino.bin ./"
 }
