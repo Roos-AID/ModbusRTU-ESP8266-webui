@@ -1,6 +1,6 @@
 /*
 ***************************************************************************
-**  Program  : Debug.h, part of Modbus-Janitza
+**  Program  : Debug.h, part of ModbusRTU-webui
 **  Version 1.4.0
 **
 **  Copyright (c) 2021 Rob Roos

@@ -1,8 +1,8 @@
 
 /*
 ***************************************************************************
-**  Program  : Modbus-firmware.ino
-**  Version 1.4.4
+**  Program  : ModbusRTU-webui.ino
+**  Version 1.5.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -13,7 +13,7 @@
 */
 
 /*
- *  How to install the Modbus=Janitza on your nodeMCU
+ *  How to install the ModbusRTU-webui on your nodeMCU
  *
  *  Make sure you have all required library's installed:
  *  - ezTime - https://github.com/ropg/ezTime
@@ -31,13 +31,14 @@
  *  - CPU frequentcy: 160MHz
  *  - Normal defaults should work fine.
  *  First time: Make sure to flash sketch + wifi or flash ALL contents.
+ *  Then load the LittleFS filesystem with the contents of the data folder 
  *
  */
 
 #include "version.h"
 #define _FW_VERSION _VERSION
 
-#include "Modbus-Janitza.h"
+#include "ModbusRTU-webui.h"
 
 #define ON LOW
 #define OFF HIGH
@@ -50,7 +51,7 @@ void setup()
 
   Serial.begin(115400, SERIAL_8N1);
   while (!Serial) {} //Wait for OK
-  Serial.println(F("\r\n[Modbus-Janitza firmware version]\r\n"));
+  Serial.println(F("\r\n[ModbusRTU-webui firmware version]\r\n"));
   Serial.printf("Booting....[%s]\r\n\r\n", String(_FW_VERSION).c_str());
   
 
@@ -62,9 +63,9 @@ void setup()
   lastReset     = ESP.getResetReason();
   Serial.printf("Last reset reason: [%s]\r\n", CSTR(ESP.getResetReason()));
 
-//Set relay initially off 
-  setRelay(RELAYOFF);
-
+  if (settingRelayAllwaysOnSwitch) setRelay(RELAYON);  else
+    setRelay(RELAYOFF);
+  
   //setup the status LED
   setLed(LED1, ON);
   setLed(LED2, ON);
@@ -74,9 +75,10 @@ void setup()
 
   NodeId = getUniqueId() ;
   
+  
   Serial.println(F("Attempting to connect to WiFi network\r"));
   setLed(LED1, ON);
-  startWiFi(NodeId.c_str(), 240);  // timeout 240 seconds
+  startWiFi(CSTR(settingHostname), 240);  // timeout 240 seconds
   blinkLED(LED1, 3, 100);
   setLed(LED1, OFF);
   startTelnet(); //start the debug port 23
@@ -107,7 +109,7 @@ void setup()
     //disconnected, try to reconnect then...
     DebugTln("Wifi not Connected !!!  Restart Wifi");
     reconnectWiFiCount++;
-    restartWiFi(NodeId.c_str(), 240);
+    restartWiFi(CSTR(settingHostname), 240);
     //check telnet
     startTelnet();
   }
@@ -123,7 +125,7 @@ void setup()
     {
       doRestart("IP Ping failed to often, restart ESP");
     }
-    restartWiFi(NodeId.c_str(), 240);
+    restartWiFi(CSTR(settingHostname), 240);
     //check telnet
     startTelnet();
   }
@@ -222,7 +224,7 @@ void doTaskEvery60s(){
   {
     //disconnected, try to reconnect then...
     reconnectWiFiCount++;
-    startWiFi(NodeId.c_str(), 240);
+    startWiFi(CSTR(settingHostname), 240);
     //check telnet
     startTelnet();
   }
@@ -237,7 +239,7 @@ void doTaskEvery60s(){
     if (restartWiFiCount > 5) {
       doRestart("IP Ping failed to often, restart ESP");
     }
-    restartWiFi(NodeId.c_str(), 240);
+    restartWiFi(CSTR(settingHostname), 240);
     //check telnet
     startTelnet();
   }

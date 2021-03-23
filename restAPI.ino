@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.4.1
+**  Version 1.5.0
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -206,6 +206,9 @@ void sendModbusmonitor()
 //  sendJsonModbusmonObj("Last result", ModbusdataObject.LastResult,"");
 
   if (settingTimebasedSwitch && settingNTPenable) {
+    if (settingRelayAllwaysOnSwitch) {
+      sendJsonModbusmonObj("Warning: Relay set to allways", "ON", "");
+    }
     if (statusRelay) {
       sendJsonModbusmonObj("Relay output status", "ON", "");
     } else
@@ -367,11 +370,8 @@ void sendDeviceSettings()
   sendJsonSettingObj("modbusbaudrate", settingModbusBaudrate, "i", 9600, 115200, 9600);
   sendJsonSettingObj("modbusslaveadres", settingModbusSlaveAdr, "i", 1, 254, 1);
   sendJsonSettingObj("modbussinglephase", settingModbusSinglephase, "b");
-  // if (settingNTPenable) {
-    sendJsonSettingObj("timebasedswitch", settingTimebasedSwitch, "b");
-  // } else {
-  //   sendJsonSettingObj("timebasedswitch","Unsupported (no NTP)","s",20);
-  // }
+  sendJsonSettingObj("timebasedswitch", settingTimebasedSwitch, "b");
+  sendJsonSettingObj("relayallwayson", settingRelayAllwaysOnSwitch, "b");
   sendEndJsonObj();
 
 } // sendDeviceSettings()
