@@ -38,7 +38,7 @@
 #include "version.h"
 #define _FW_VERSION _VERSION
 
-#include "ModbusRTU-webui.h"
+#include "ModbusRTU-ESP8266-webui.h"
 
 #define ON LOW
 #define OFF HIGH

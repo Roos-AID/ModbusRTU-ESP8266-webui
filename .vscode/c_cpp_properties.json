@@ -7,7 +7,7 @@
             "compilerArgs": [],
             "intelliSenseMode": "${default}",
             "includePath": [
-                "/Users/robroos/Documents/Arduino/ModbusRTU-webui/**",
+                "/Users/robroos/Documents/Arduino/ModbusRTU-ESP8266-webui/**",
                 "${workspaceFolder}/**",
                 "/Users/robroos/Documents/Arduino/libraries/**",
                 "/Users/robroos/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.4/**",

@@ -22,14 +22,14 @@ To do:
 
 Looking for the documentation, go here (work in progress):  TODO
 
-| Version | Release notes |
-| 1.5.0 | Rename and cleanup, added Relay Allways On switch|
-| 1.4.4 | MQ updates after reading Modbus register|
-| 1.4.3 | MQ Pub/Sub name space repaired|
-| 1.4.2 | Typo in debug info, additional telnet command (re-read Daytimemap|
-| 1.4.1 | Cosmetic changes, cleanup relay function|
-| 1.4.0 | GPIO for time/day based switch added|
-| 1.3.0 | Migration SPIFFS to LittleFS (not published release) |
-| 1.2.0 | MQTT enabled and calculation factor added to config file-|
-| 1.1.0 | Modbus registers config in external file|
-| 1.0.1 | Initial version, based on OTGW-firmware from Robert van den Breemen|
+ Version 	 Release notes 
+ 1.5.0 	 Rename and cleanup, added Relay Allways On switch
+ 1.4.4 	 MQ updates after reading Modbus register
+ 1.4.3 	 MQ Pub/Sub name space repaired
+ 1.4.2 	 Typo in debug info, additional telnet command (re-read Daytimemap
+ 1.4.1 	 Cosmetic changes, cleanup relay function
+ 1.4.0 	 GPIO for time/day based switch added
+ 1.3.0 	 Migration SPIFFS to LittleFS (not published release) 
+ 1.2.0 	 MQTT enabled and calculation factor added to config file-
+ 1.1.0 	 Modbus registers config in external file
+ 1.0.1 	 Initial version, based on OTGW-firmware from Robert van den Breemen
