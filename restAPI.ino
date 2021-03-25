@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.5.0
+**  Version 1.6.0
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -21,24 +21,22 @@ void processAPI()
 
   strlcpy( URI, httpServer.uri().c_str(), sizeof(URI) );
 
-//  if (httpServer.method() == HTTP_GET)
-//        DebugTf("from[%s] URI[%s] method[GET] \r\n"
-//                                  , httpServer.client().remoteIP().toString().c_str()
-//                                        , URI);
-//  else  DebugTf("from[%s] URI[%s] method[PUT] \r\n"
-//                                  , httpServer.client().remoteIP().toString().c_str()
-//                                        , URI);
+  if (httpServer.method() == HTTP_GET)
+    if (bDebugRestAPI)
+      DebugTf("from[%s] URI[%s] method[GET] \r\n", httpServer.client().remoteIP().toString().c_str(), URI);
+    else if (bDebugRestAPI)
+      DebugTf("from[%s] URI[%s] method[PUT] \r\n", httpServer.client().remoteIP().toString().c_str(), URI);
 
   if (ESP.getFreeHeap() < 8500) // to prevent firmware from crashing!
   {
-    DebugTf("==> Bailout due to low heap (%d bytes))\r\n", ESP.getFreeHeap() );
+    if (bDebugRestAPI) DebugTf("==> Bailout due to low heap (%d bytes))\r\n", ESP.getFreeHeap());
     httpServer.send(500, "text/plain", "500: internal server error (low heap)\r\n");
     return;
   }
 
   int8_t wc = splitString(URI, '/', words, 10);
 
-  if (Verbose)
+  if (bDebugRestAPI)
   {
     DebugT(">>");
     for (int w=0; w<wc; w++)

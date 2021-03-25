@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.5.0
+**  Version 1.6.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -48,7 +48,6 @@ void setLed(int8_t, uint8_t);
 #define EVALBOOLEAN(x) (stricmp(x, "true") == 0 || stricmp(x, "on") == 0 || stricmp(x, "1") == 0)
 
 WiFiClient  wifiClient;
-bool        Verbose = false;
 char        cMsg[CMSG_SIZE];
 char        fChar[10];
 String      lastReset   = "";
@@ -78,7 +77,6 @@ String    settingMQTTuser = "";
 String    settingMQTTpasswd = "";
 String    settingMQTThaprefix = HOME_ASSISTANT_DISCOVERY_PREFIX;
 String    settingMQTTtopTopic = "ModbusRTUrdr";
-// bool      settingMQTTOTmessage = false;
 bool      settingNTPenable = true;
 String    settingNTPtimezone = DEFAULT_TIMEZONE;
 bool      settingLEDblink = true;
@@ -92,7 +90,11 @@ bool      settingTimebasedSwitch = false;
 bool      settingRelayAllwaysOnSwitch = false;
 uint8_t   statusRelay = false;
 
-//
+//debug flags
+bool bDebugMBmsg = false;
+bool bDebugRestAPI = false;
+bool bDebugMQTT = false;
 
+//Now load network suff
 #include "networkStuff.h"
 // eof

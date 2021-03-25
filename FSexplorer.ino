@@ -1,7 +1,7 @@
 /* 
 ***************************************************************************  
 **  Program : FSexplorer
-**  Version 1.5.0
+**  Version 1.6.0
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -111,10 +111,10 @@ void setupFSexplorer(){
  
   httpServer.onNotFound([]() 
   {
-    if (Verbose) DebugTf("in 'onNotFound()'!! [%s] => \r\n", String(httpServer.uri()).c_str());
+    if (bDebugRestAPI) DebugTf("in 'onNotFound()'!! [%s] => \r\n", String(httpServer.uri()).c_str());
     if (httpServer.uri().indexOf("/api/") == 0) 
     {
-      if (Verbose) DebugTf("next: processAPI(%s)\r\n", String(httpServer.uri()).c_str());
+      if (bDebugRestAPI) DebugTf("next: processAPI(%s)\r\n", String(httpServer.uri()).c_str());
       processAPI();
     }
     // else if (httpServer.uri() == "/")
@@ -124,8 +124,8 @@ void setupFSexplorer(){
     // }
     else
     {
-      DebugTf("next: handleFile(%s)\r\n"
-                      , String(httpServer.urlDecode(httpServer.uri())).c_str());
+      if (bDebugRestAPI) DebugTf("next: handleFile(%s)\r\n"
+                        , String(httpServer.urlDecode(httpServer.uri())).c_str());
       if (!handleFile(httpServer.urlDecode(httpServer.uri())))
       {
         httpServer.send(404, "text/plain", "FileNotFound\r\n");

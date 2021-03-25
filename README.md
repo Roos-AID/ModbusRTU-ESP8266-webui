@@ -15,6 +15,7 @@ The features of this ModbusRTU-webui firmware are:
 - Telnet commands are s = switch relay (to test function), t = list Daytime map , r = re-read Daytimemap.cfg
 
 To do:
+- Dynamic MQ Autoconfigure from the Modbusmap.cfg file
 - InfluxDB client to do direct logging
 - Update of specific registers through MQTT (low prio)
 
@@ -23,6 +24,7 @@ To do:
 Looking for the documentation, go here (work in progress):  TODO
 
  Version 	 Release notes 
+ 1.6.0 	 Dynamic MQ Autoconfigure from the Modbusmap.cfg file
  1.5.0 	 Rename and cleanup, added Relay Allways On switch
  1.4.4 	 MQ updates after reading Modbus register
  1.4.3 	 MQ Pub/Sub name space repaired
