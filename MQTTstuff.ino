@@ -53,6 +53,7 @@ void startMQTT()
 {
   if (!settingMQTTenable)
     return;
+  MQTTDebugTln(F("MQTT State: MQTT Start setup"));
   stateMQTT = MQTT_STATE_INIT;
   //setup for mqtt discovery
   // NodeId = getUniqueId();
@@ -136,6 +137,8 @@ void handleMQTT()
   case MQTT_STATE_TRY_TO_CONNECT:
     MQTTDebugTln(F("MQTT State: MQTT try to connect"));
     MQTTDebugTf("MQTT server is [%s], IP[%s]\r\n", settingMQTTbroker.c_str(), MQTTbrokerIPchar);
+    MQTTDebugTf("MQTT clientid [%s] \r\n", MQTTclientId.c_str());
+    MQTTDebugTf("MQTT PubNamespace [%s], SubNamespace [%s]\r\n", MQTTPubNamespace.c_str(), MQTTSubNamespace.c_str());
 
     MQTTDebugT(F("Attempting MQTT connection .. "));
     reconnectAttempts++;

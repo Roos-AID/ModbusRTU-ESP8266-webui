@@ -162,7 +162,10 @@ void updateSetting(const char *field, const char *newValue)
     Debugln();
     DebugTf("Need reboot before new %s.local will be available!\r\n\n", CSTR(settingHostname));
   }
-  if (stricmp(field, "MQTTenable")==0)      settingMQTTenable = EVALBOOLEAN(newValue);
+  if (stricmp(field, "MQTTenable")==0)   
+  {   settingMQTTenable = EVALBOOLEAN(newValue); 
+      if (settingMQTTenable) startMQTT();
+  }
   if (stricmp(field, "MQTTbroker")==0)      settingMQTTbroker = String(newValue);
   if (stricmp(field, "MQTTbrokerPort")==0)  settingMQTTbrokerPort = atoi(newValue);
   if (stricmp(field, "MQTTuser")==0)        settingMQTTuser = String(newValue);

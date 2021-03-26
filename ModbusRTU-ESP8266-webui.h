@@ -93,7 +93,7 @@ uint8_t   statusRelay = false;
 //debug flags
 bool bDebugMBmsg = false;
 bool bDebugRestAPI = false;
-bool bDebugMQTT = false;
+bool bDebugMQTT = true;
 
 //Now load network suff
 #include "networkStuff.h"
