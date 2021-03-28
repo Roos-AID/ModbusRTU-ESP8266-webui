@@ -210,7 +210,7 @@ void readModbus()
               if (ModbusdataObject.LastResult == 0) {
                  Modbusmap[i].Modbus_short = TempShort ;
                  if (settingMQTTenable) {
-//                   toMQTT_short(i) ;
+                  toMQTT_short(i) ;
                  }
                }
                break;
@@ -230,7 +230,7 @@ void readModbus()
                  Modbusmap[i].Modbus_float = TempFloat ;
                  if (settingMQTTenable)
                  {
-//                   toMQTT_float(i);
+                  toMQTT_float(i);
                  }
                }
                break;

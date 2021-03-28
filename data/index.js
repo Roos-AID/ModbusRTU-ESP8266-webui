@@ -514,6 +514,7 @@ function sendPostSetting(field, value) {
     , ["mqttconnected", "MQTT Connected"]
     , ["mqttenable", "MQTT Enable"]
     , ["mqtthaprefix", "MQTT Home Assistant prefix"]
+    , ["mqttuniqueid", "MQTT Uniqueid"]
     , ["ntpenable", "NTP Enable"]
     , ["ntptimezone", "NTP Timezone"]
     , ["uptime", "Uptime since boot"]

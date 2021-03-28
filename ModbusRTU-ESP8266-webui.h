@@ -76,6 +76,7 @@ int16_t   settingMQTTbrokerPort = 1883;
 String    settingMQTTuser = "";
 String    settingMQTTpasswd = "";
 String    settingMQTThaprefix = HOME_ASSISTANT_DISCOVERY_PREFIX;
+String    settingMQTTuniqueid = ""; // Intialized in readsettings
 String    settingMQTTtopTopic = "ModbusRTUrdr";
 bool      settingNTPenable = true;
 String    settingNTPtimezone = DEFAULT_TIMEZONE;

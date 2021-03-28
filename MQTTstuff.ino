@@ -57,30 +57,24 @@ void startMQTT()
   stateMQTT = MQTT_STATE_INIT;
   //setup for mqtt discovery
   // NodeId = getUniqueId();
-  MQTTPubNamespace = settingMQTTtopTopic + "/value/" + NodeId;
-  MQTTSubNamespace = settingMQTTtopTopic + "/set/" + NodeId;
-
+  MQTTPubNamespace = settingMQTTtopTopic + "/value/" + settingMQTTuniqueid;
+  MQTTSubNamespace = settingMQTTtopTopic + "/set/" + settingMQTTuniqueid;
   handleMQTT(); //initialize the MQTT statemachine
   // handleMQTT(); //then try to connect to MQTT
   // handleMQTT(); //now you should be connected to MQTT ready to send
 }
 
 // handles MQTT subscribe incoming stuff
-void handleMQTTcallback(char *topic, byte *payload, unsigned int length)
-{
-
-  DebugT("Message arrived on topic [");
-  Debug(topic);
-  Debug("] = [");
+void handleMQTTcallback(char *topic, byte *payload, unsigned int length) {
+  
+if (bDebugMQTT)   { 
+  DebugT("Message arrived on topic [");  Debug(topic); Debug("] = [");
   for (int i = 0; i < length; i++)
   {
     Debug((char)payload[i]);
   }
-  Debug("] (");
-  Debug(length);
-  Debug(")");
-  Debugln();
-
+  Debug("] ("); Debug(length);  Debug(")"); Debugln();
+}
   char subscribeTopic[100];
   // naming convention <mqtt top>/set/<node id>/<command>
   snprintf(subscribeTopic, sizeof(subscribeTopic), "%s/", MQTTSubNamespace.c_str());
@@ -96,8 +90,7 @@ void handleMQTTcallback(char *topic, byte *payload, unsigned int length)
 //===========================================================================================
 void handleMQTT()
 {
-  if (!settingMQTTenable)
-    return;
+  if (!settingMQTTenable)     return;
   DECLARE_TIMER_MIN(timerMQTTwaitforconnect, 10, CATCH_UP_MISSED_TICKS); // 10 minutes
   DECLARE_TIMER_SEC(timerMQTTwaitforretry, 3, CATCH_UP_MISSED_TICKS);    // 3 seconds backoff
 
@@ -287,17 +280,14 @@ void sendMQTTData(const String topic, const String json, const bool retain = fal
 */
 void sendMQTTData(const char *topic, const char *json, const bool retain = false)
 {
-  if (!settingMQTTenable)
-    return;
-  if (!MQTTclient.connected() || !isValidIP(MQTTbrokerIP))
-    return;
+  if (!settingMQTTenable) return;
+  if (!MQTTclient.connected() || !isValidIP(MQTTbrokerIP))  return;
   MQTTDebugTf("Sending data to MQTT server [%s]:[%d]\r\n", settingMQTTbroker.c_str(), settingMQTTbrokerPort);
   char full_topic[100];
   snprintf(full_topic, sizeof(full_topic), "%s/", CSTR(MQTTPubNamespace));
   strlcat(full_topic, topic, sizeof(full_topic));
   MQTTDebugTf("Sending MQTT: TopicId [%s] Message [%s]\r\n", full_topic, json);
-  if (!MQTTclient.publish(full_topic, json, retain))
-    DebugTln("MQTT publish failed.");
+  if (!MQTTclient.publish(full_topic, json, retain))  DebugTln("MQTT publish failed.");
   // feedWatchDog(); //feed the dog
 } // sendMQTTData()
 
@@ -308,17 +298,14 @@ void sendMQTTData(const char *topic, const char *json, const bool retain = false
 //===========================================================================================
 void sendMQTT(String topic, String json)
 {
-  if (!settingMQTTenable)
-    return;
+  if (!settingMQTTenable)  return;
   sendMQTT(CSTR(topic), CSTR(json), json.length());
 }
 
 void sendMQTT(const char *topic, const char *json, const size_t len)
 {
-  if (!settingMQTTenable)
-    return;
-  if (!MQTTclient.connected() || !isValidIP(MQTTbrokerIP))
-    return;
+  if (!settingMQTTenable)   return;
+  if (!MQTTclient.connected() || !isValidIP(MQTTbrokerIP))  return;
   MQTTDebugTf("Sending data to MQTT server [%s]:[%d] ", settingMQTTbroker.c_str(), settingMQTTbrokerPort);
   MQTTDebugTf("Sending MQTT: TopicId [%s] Message [%s]\r\n", topic, json);
   if (MQTTclient.getBufferSize() < len)
@@ -326,12 +313,10 @@ void sendMQTT(const char *topic, const char *json, const size_t len)
 
   if (MQTTclient.beginPublish(topic, len, true))
   {
-    for (size_t i = 0; i < len; i++)
-      MQTTclient.write(json[i]);
+    for (size_t i = 0; i < len; i++)  MQTTclient.write(json[i]);
     MQTTclient.endPublish();
   }
-  else
-    DebugTln("MQTT publish failed.");
+  else     DebugTln("MQTT publish failed.");
 
   // feedWatchDog();
 } // sendMQTTData()
@@ -342,14 +327,22 @@ Publish usefull firmware version information to MQTT broker.
 */
 void sendMQTTversioninfo()
 {
+  MQTTDebugln("sendMQTT versioninfo");
   sendMQTTData("ModbusRTU-webui/version", _VERSION);
-  sendMQTTData("ModbusRTU-webui/reboot_count", String(rebootCount));
+  MQTTDebugln("sendMQTT rebootcount");
+
+  sendMQTTData("ModbusRTU-webui/reboot_count", CSTR(String(rebootCount)));
+  // sendMQTTData("ModbusRTU-webui/reboot_count", rebootCount.c_str);
+  // int16_t _value = rebootCount ;
+  // char _msg[15]{0};
+  // itoa(_value, _msg, 10);
+  // sendMQTTData("ModbusRTU-webui/reboot_count", _msg);
+  MQTTDebugln("end versioninfo ");
 }
 //===========================================================================================
 void resetMQTTBufferSize()
 {
-  if (!settingMQTTenable)
-    return;
+  if (!settingMQTTenable)    return;
   MQTTclient.setBufferSize(256);
 }
 //===========================================================================================
@@ -372,20 +365,10 @@ bool splitString(String sIn, char del, String &cKey, String &cVal)
   return true;
 }
 //===========================================================================================
-void doAutoConfigure()
-{
-  if (!settingMQTTenable)
-    return;
-  if (!MQTTclient.connected())
-  {
-    DebugTln("ERROR: MQTT broker not connected.");
-    return;
-  }
-  if (!isValidIP(MQTTbrokerIP))
-  {
-    DebugTln("ERROR: MQTT broker IP not valid.");
-    return;
-  }
+void doAutoConfigure() {
+  if (!settingMQTTenable) return;
+  if (!MQTTclient.connected())  { DebugTln("ERROR: MQTT broker not connected."); return;}
+  if (!isValidIP(MQTTbrokerIP)) { DebugTln("ERROR: MQTT broker IP not valid."); return;}
   const char *cfgFilename = "/mqttha.cfg";
   String sTopic = "";
   String sMsg = "";
@@ -411,14 +394,14 @@ void doAutoConfigure()
           sTopic.replace("%homeassistant%", CSTR(settingMQTThaprefix));
 
           /// node
-          sTopic.replace("%node_id%", CSTR(NodeId));
+          sTopic.replace("%node_id%", CSTR(settingMQTTuniqueid));
           MQTTDebugf("[%s]\r\n", CSTR(sTopic));
           /// ----------------------
 
           MQTTDebugTf("sMsg[%s]==>", CSTR(sMsg));
 
           /// node
-          sMsg.replace("%node_id%", CSTR(NodeId));
+          sMsg.replace("%node_id%", CSTR(settingMQTTuniqueid));
 
           /// hostname
           sMsg.replace("%hostname%", CSTR(settingHostname));

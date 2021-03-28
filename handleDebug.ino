@@ -24,9 +24,9 @@ void handleDebug(){
             Debugln("t : Toggle Timebased Relay");
             Debugln("m : Configure MQTT Discovery");
             Debugln("r : Reconnecting to wifi");
-            Debugln("1 : Toggle debug Modbus msg");
-            Debugln("2 : Toggle debug RestAPI");
-            Debugln("3 : Toggle debug MQTT");
+            Debugf("1 : Toggle debug Modbus msg, status: %s\r\n", CBOOLEAN(bDebugMBmsg));
+            Debugf("2 : Toggle debug RestAPI status %s\r\n", CBOOLEAN(bDebugRestAPI));
+            Debugf("3 : Toggle debug MQTT, status: %s\r\n", CBOOLEAN(bDebugMQTT));
 
             break;
         case 'd':

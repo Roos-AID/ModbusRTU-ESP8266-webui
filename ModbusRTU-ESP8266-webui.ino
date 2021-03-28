@@ -212,7 +212,7 @@ void doTaskEvery30s(){
   //== do tasks ==
   if (settingLEDblink)  blinkLEDnow(LED1);
   readModbus();
-  // Modbus2MQTT();  This is put into readModbus 
+  // Modbus2MQTT();  // This is put into readModbus 
 }
 
 //===[ Do task every 60s ]===
