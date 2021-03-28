@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.6.0
+**  Version 1.6.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -94,7 +94,7 @@ uint8_t   statusRelay = false;
 //debug flags
 bool bDebugMBmsg = false;
 bool bDebugRestAPI = false;
-bool bDebugMQTT = true;
+bool bDebugMQTT = false;
 
 //Now load network suff
 #include "networkStuff.h"

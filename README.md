@@ -1,30 +1,34 @@
-# ModbusRTU-webui firmware
+# ModbusRTU-ESP8266-webui firmware
 
 
 
-The features of this ModbusRTU-webui firmware are:
-- Implementing the Modbus RTU protocol on the NodeMCU (8266)
-- Initially designed to read Jantitza UMG96RM energy monitor registers and display in webUI
-- enable telnet listening (for debugging and some commands)
+The features of this ModbusRTU-ESP8266-webui firmware are:
+- Implementing the Modbus RTU protocol on the NodeMCU (ESP8266) to display in webUI and publish to MQTT
+- Registers and formats to be read can be configured in config file Modbusmap.cfg 
+- Register values can be converted by a set factor in the config file for display in Webui (eg. read Wh and display kWh)
+- Dynamic MQ Autoconfigure for homeassistant based on registers defined in Modbusmap.cfg
+
+- Enable telnet listening (for debugging and some commands, enter h for help)
+- Telnet commands are t = toggle relay, l = list Daytime map , d = re-read Daytimemap.cfg, m = Configure MQTT Discovery
+
 - a REST API (http://<ip>/api/v1/Modbus/Modbusmonitor
 - settings for Hostname, MQTT and NTP in the webUI 
 - settings for Modbus baudrate, RTU slave address in the webUI
-- Registers and formats to be read can be configured in config file Modbusmap.cfg 
-- Register values can be converted by a set factor in the config file for display in Webui (eg. read Wh and display kWh)
 - Time/day based GPIO setting to enable external relay to allow for day/night energy monitoring/use
-- Telnet commands are s = switch relay (to test function), t = list Daytime map , r = re-read Daytimemap.cfg
+- Initially designed to read Jantitza UMG96RM energy monitor registers and display in webUI
+
 
 To do:
-- Dynamic MQ Autoconfigure from the Modbusmap.cfg file
+- Documentation (hardware schematic, configuration and operation)
 - InfluxDB client to do direct logging
 - Update of specific registers through MQTT (low prio)
 
 
 
 Looking for the documentation, go here (work in progress):  TODO
-
  Version 	 Release notes 
- 1.6.0 	 Dynamic MQ Autoconfigure from the Modbusmap.cfg file
+ 1.6.1	 Dynamic MQ Autoconfigure from the Modbusmap.cfg file
+ 1.6.0	 Implement MQTT Uniqueid setting, additional debug options
  1.5.0 	 Rename and cleanup, added Relay Allways On switch
  1.4.4 	 MQ updates after reading Modbus register
  1.4.3 	 MQ Pub/Sub name space repaired

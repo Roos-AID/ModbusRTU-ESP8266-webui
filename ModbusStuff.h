@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Header file: ModbusStuff.h
-**  Version 1.5.0
+**  Version 1.6.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -92,6 +92,7 @@ struct Modbuslookup_t
         char* label;
         char* friendlyname;
         char* unit;
+        char* devclass;
     };
 
 Modbuslookup_t* Modbusmap;

@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : MQTTstuff
-**  Version 1.6.0
+**  Version 1.6.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -152,7 +152,7 @@ void handleMQTT()
     if (MQTTclient.connected())
     {
       reconnectAttempts = 0;
-      Debugln(F(" .. connected\r"));
+      MQTTDebugln(F(" .. connected\r"));
       stateMQTT = MQTT_STATE_IS_CONNECTED;
       MQTTDebugTln(F("Next State: MQTT_STATE_IS_CONNECTED"));
       // birth message, sendMQTT retains  by default
@@ -365,73 +365,88 @@ bool splitString(String sIn, char del, String &cKey, String &cVal)
   return true;
 }
 //===========================================================================================
-void doAutoConfigure() {
-  if (!settingMQTTenable) return;
-  if (!MQTTclient.connected())  { DebugTln("ERROR: MQTT broker not connected."); return;}
-  if (!isValidIP(MQTTbrokerIP)) { DebugTln("ERROR: MQTT broker IP not valid."); return;}
-  const char *cfgFilename = "/mqttha.cfg";
+void doAutoConfigure()
+{
+  if (!settingMQTTenable)
+    return;
+  if (!MQTTclient.connected())
+  {
+    DebugTln("ERROR: MQTT broker not connected.");
+    return;
+  }
+  if (!isValidIP(MQTTbrokerIP))
+  {
+    DebugTln("ERROR: MQTT broker IP not valid.");
+    return;
+  }
+
+  MQTTDebugln("Start doAutoConfigureMB");
+
+  String sTopic_template = "%homeassistant%/sensor/%node_id%/%label%/config";
+  String sMsg_template = "\"{\"avty_t\":\"%mqtt_pub_topic%\",\"dev\":{\"identifiers\":\"%node_id%\",\"manufacturer\":\"Rob Roos\",\"model\":\"modbusRTUrdr\",\"name\":\"ModbusRTU reader(%hostname%)\",\"sw_version\":\"%version%\"},\"uniq_id\":\"%node_id%-%label%\",\"device_class\":\"%devclass%\",\"name\":\"%hostname%_%friendlyname%\", \"stat_t\":\"%mqtt_pub_topic%/%label%\",\"unit_of_measurement\": \"%unit%\", \"value_template\": \"{{ value }}\" }\"";
   String sTopic = "";
   String sMsg = "";
-  File fh; //filehandle
-  //Let's open the MQTT autoconfig file
-  LittleFS.begin();
-  if (LittleFS.exists(cfgFilename))
+  // first convert sTopic_template and sMsg_template to unique MQTT Topic and Msg templates
+  // discovery topic prefix
+  sTopic_template.replace("%homeassistant%", CSTR(settingMQTThaprefix));
+  // node
+  sTopic_template.replace("%node_id%", CSTR(settingMQTTuniqueid));
+  MQTTDebugTf("sTopic_template[%s]\r\n", CSTR(sTopic_template));
+
+  /// node
+  sMsg_template.replace("%node_id%", CSTR(settingMQTTuniqueid));
+
+  /// hostname
+  sMsg_template.replace("%hostname%", CSTR(settingHostname));
+
+  /// version
+  sMsg_template.replace("%version%", CSTR(String(_VERSION)));
+
+  // pub topics prefix
+  sMsg_template.replace("%mqtt_pub_topic%", CSTR(MQTTPubNamespace));
+
+  // sub topics
+  sMsg_template.replace("%mqtt_sub_topic%", CSTR(MQTTSubNamespace));
+
+  MQTTDebugTf("sMsg_template[%s]\r\n", CSTR(sMsg_template));
+  /// ----------------------
+  // Now for all records in Modbusmap, convert sTopic and sMsg
+
+  for (int i = 1; i < ModbusdataObject.NumberRegisters; i++)
   {
-    fh = LittleFS.open(cfgFilename, "r");
-    if (fh)
+    if ((Modbusmap[i].oper == Modbus_READ || Modbusmap[i].oper == Modbus_RW) && Modbusmap[i].mqenable == 1 )
     {
-      //Lets go read the config and send it out to MQTT line by line
-      while (fh.available())
-      { //read file line by line, split and send to MQTT (topic, msg)
-        // feedWatchDog(); //start with feeding the dog
+      MQTTDebugTf("Record: %d, id %d, oper: %d, label:%s \r\n", i, Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].label);
+      
+      sTopic = sTopic_template;
+      sMsg = sMsg_template;
 
-        String sLine = fh.readStringUntil('\n');
-        // DebugTf("sline[%s]\r\n", CSTR(sLine));
-        if (splitString(sLine, ',', sTopic, sMsg))
-        {
-          // discovery topic prefix
-          MQTTDebugTf("sTopic[%s]==>", CSTR(sTopic));
-          sTopic.replace("%homeassistant%", CSTR(settingMQTThaprefix));
+      // label
+      sTopic.replace("%label%", Modbusmap[i].label);
 
-          /// node
-          sTopic.replace("%node_id%", CSTR(settingMQTTuniqueid));
-          MQTTDebugf("[%s]\r\n", CSTR(sTopic));
-          /// ----------------------
+      sMsg.replace("%label%", Modbusmap[i].label);
+      // friendlyname 
+      sMsg.replace("%friendlyname%", Modbusmap[i].friendlyname);
+      // deviceclass
+      sMsg.replace("%devclass%", Modbusmap[i].devclass);
+      // unit
+      sMsg.replace("%unit%", Modbusmap[i].unit);
 
-          MQTTDebugTf("sMsg[%s]==>", CSTR(sMsg));
+      MQTTDebugTf("sTopic[%s]\r\n", CSTR(sTopic));
+      MQTTDebugTf("sMsg[%s]==>\r\n", CSTR(sMsg));
+      DebugFlush();
 
-          /// node
-          sMsg.replace("%node_id%", CSTR(settingMQTTuniqueid));
-
-          /// hostname
-          sMsg.replace("%hostname%", CSTR(settingHostname));
-
-          /// version
-          sMsg.replace("%version%", CSTR(String(_VERSION)));
-
-          // pub topics prefix
-          sMsg.replace("%mqtt_pub_topic%", CSTR(MQTTPubNamespace));
-
-          // sub topics
-          sMsg.replace("%mqtt_sub_topic%", CSTR(MQTTSubNamespace));
-
-          Debugf("[%s]\r\n", CSTR(sMsg));
-          DebugFlush();
-
-          //sendMQTT(CSTR(sTopic), CSTR(sMsg), (sTopic.length() + sMsg.length()+2));
-          sendMQTT(sTopic, sMsg);
-          resetMQTTBufferSize();
-          delay(10);
-        }
-        else
-          MQTTDebugTf("Either comment or invalid config line: [%s]\r\n", CSTR(sLine));
-      } // while available()
-      fh.close();
-
-      // HA discovery msg's are rather large, reset the buffer size to release some memory
+      //sendMQTT(CSTR(sTopic), CSTR(sMsg), (sTopic.length() + sMsg.length()+2));
+      sendMQTT(sTopic, sMsg);
       resetMQTTBufferSize();
+      delay(10);
     }
   }
+
+  // HA discovery msg's are rather large, reset the buffer size to release some memory
+  resetMQTTBufferSize();
+    
+  
 }
 
 /***************************************************************************

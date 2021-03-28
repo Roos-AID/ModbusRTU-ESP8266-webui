@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : handleDebug
-**  Version 1.6.0
+**  Version 1.6.1
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -61,7 +61,7 @@ void handleDebug(){
                 DebugTln("Reconnecting to wifi");
                 restartWiFi(CSTR(settingHostname), 240);
                 startTelnet();
-            }
+            } 
             else
                 DebugTln("Wifi is connected");
 
