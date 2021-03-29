@@ -27,6 +27,7 @@ To do:
 
 Looking for the documentation, go here (work in progress):  TODO
  Version 	 Release notes 
+ 1.6.2	 Attempt to get Autoconfigure working for Openhab
  1.6.1	 Dynamic MQ Autoconfigure from the Modbusmap.cfg file
  1.6.0	 Implement MQTT Uniqueid setting, additional debug options
  1.5.0 	 Rename and cleanup, added Relay Allways On switch

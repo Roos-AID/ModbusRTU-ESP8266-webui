@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : handleDebug
-**  Version 1.6.1
+**  Version 1.6.2
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -19,6 +19,7 @@ void handleDebug(){
         switch (c){
         case 'h':
             Debugln("Available commands are:");
+            Debugln("p : Print (list) Modbusmap ");
             Debugln("l : List Daytimemap");
             Debugln("d : Re-read Daytimemap from Daytimemap.cfg");
             Debugln("t : Toggle Timebased Relay");
@@ -37,6 +38,10 @@ void handleDebug(){
         case 'l':
             DebugTln("List Daytimemap");
             printDaytimemap();
+            break;
+        case 'p':
+            DebugTln("Print Modbusmap");
+            printModbusmap();
             break;
         case 't':
             DebugTln("Toggle Timebased Relay");

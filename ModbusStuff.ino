@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.6.1
+**  Version 1.6.2
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -583,7 +583,7 @@ int sendModbus(const char* buf, int len)
 
 void printModbusmap() {
   DebugTf("printModbusmap begin for: %d, records", ModbusdataObject.NumberRegisters) ;
-  for (int i = 1; i < ModbusdataObject.NumberRegisters ; i++) {
+  for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
     // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
 
        DebugTf("Record[%d], id[%d]  oper[%d] format[%d]", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
