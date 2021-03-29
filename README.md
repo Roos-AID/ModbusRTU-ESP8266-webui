@@ -5,7 +5,8 @@
 The features of this ModbusRTU-ESP8266-webui firmware are:
 - Implementing the Modbus RTU protocol on the NodeMCU (ESP8266) to display in webUI and publish to MQTT
 - Registers and formats to be read can be configured in config file Modbusmap.cfg 
-- Register values can be converted by a set factor in the config file for display in Webui (eg. read Wh and display kWh)
+- Register values can be converted by a set factor in the config file for display in Webui and MQTT (eg. read Wh and display kWh)
+- Warning : Conversion of int values are rounded to int when factor is applied
 - Dynamic MQ Autoconfigure for homeassistant based on registers defined in Modbusmap.cfg
 
 - Enable telnet listening (for debugging and some commands, enter h for help)
@@ -27,6 +28,7 @@ To do:
 
 Looking for the documentation, go here (work in progress):  TODO
  Version 	 Release notes 
+ 1.6.3	 Conversion of factor also for MQTT values, plus smaller bug fixes
  1.6.2	 Attempt to get Autoconfigure working for Openhab
  1.6.1	 Dynamic MQ Autoconfigure from the Modbusmap.cfg file
  1.6.0	 Implement MQTT Uniqueid setting, additional debug options

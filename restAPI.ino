@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.6.0
+**  Version 1.6.3
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -226,7 +226,7 @@ void sendModbusmonitor()
     if (!settingModbusSinglephase || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
         switch (Modbusmap[i].regformat) {
           case Modbus_short:
-            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short*Modbusmap[i].factor, Modbusmap[i].unit);
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short, Modbusmap[i].unit);
             break;
           case Modbus_ushort:
             DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
@@ -247,7 +247,7 @@ void sendModbusmonitor()
             // {
             //   sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
             // }
-            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float*Modbusmap[i].factor,Modbusmap[i].unit);
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
             break;
           case Modbus_undef:
             DebugTf("Error undef type %s = %s \r\n", i, Modbusmap[i].label) ;

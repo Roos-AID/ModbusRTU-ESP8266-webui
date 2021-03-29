@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.6.2
+**  Version 1.6.3
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -74,20 +74,17 @@ int16_t Modbus_ReadShort(uint16_t readreg) {
       delay(10);
       mb.task();
     }
-
-    if (bDebugMBmsg)  Debugf("Modbus ReadShort Result: 0x%02X , \r\n",ModbusdataObject.LastResult);
-    if (ModbusdataObject.LastResult == 0)
-    {
-      //      for (int i = 0 ; i < 1 ; i++) {
-      //          Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]);
-      //      }
-     } else {
+    if (bDebugMBmsg)  Debugf("Modbus ReadShort Result: 0x%02X , \r\n", ModbusdataObject.LastResult);
+      if (ModbusdataObject.LastResult == 0) 
+      {  
+      //  only for multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
+      } else {
           DebugTf("Modbus ReadShort Reg: %d , Result: 0x%02X \r\n",readreg, ModbusdataObject.LastResult);
       }
   }  else {
       DebugTln("Error: Modbus Read while transaction active");
       ModbusdataObject.LastResult = 99 ;
-    }
+ } 
 
 // Debugf("Modbus ReadShort ended\r\n");
  return shortres[0];
@@ -159,7 +156,8 @@ void toMQTT_short(int id)
 void Modbus2MQTT() {
   for (int i = 1; i <= ModbusdataObject.NumberRegisters; i++)
   {
-    if (Modbusmap[i].mqenable == 1) {
+    if (settingMQTTenable && Modbusmap[i].mqenable == 1)
+    {
       if (!settingModbusSinglephase || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4)
       {
         switch (Modbusmap[i].regformat)
@@ -208,9 +206,11 @@ void readModbus()
                TempShort = Modbus_ReadShort(Modbusmap[i].address) ;
 
               if (ModbusdataObject.LastResult == 0) {
-                 Modbusmap[i].Modbus_short = TempShort ;
-                 if (settingMQTTenable) {
-                  toMQTT_short(i) ;
+                if (Modbusmap[i].factor != 1) 
+                  Modbusmap[i].Modbus_short = round( TempShort * Modbusmap[i].factor) ;
+                else Modbusmap[i].Modbus_short = TempShort ;
+                if (settingMQTTenable && Modbusmap[i].mqenable == 1 ) {
+                    toMQTT_short(i) ;
                  }
                }
                break;
@@ -227,8 +227,8 @@ void readModbus()
               TempFloat = Modbus_ReadFloat(Modbusmap[i].address) ;
 
               if (ModbusdataObject.LastResult == 0) {
-                 Modbusmap[i].Modbus_float = TempFloat ;
-                 if (settingMQTTenable)
+                 Modbusmap[i].Modbus_float = TempFloat * Modbusmap[i].factor ;
+                 if (settingMQTTenable && Modbusmap[i].mqenable == 1)
                  {
                   toMQTT_float(i);
                  }
@@ -582,15 +582,21 @@ int sendModbus(const char* buf, int len)
  }
 
 void printModbusmap() {
-  DebugTf("printModbusmap begin for: %d, records", ModbusdataObject.NumberRegisters) ;
+  Debugf("printModbusmap begin for: %d, records\r\n", ModbusdataObject.NumberRegisters) ;
   for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
-    // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
-
-       DebugTf("Record[%d], id[%d]  oper[%d] format[%d]", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
-       DebugTf("Address[%d] phase[%d] Valuefloat[%f]\r\n", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
-       DebugTf("Label[%s] Friendlyname[%s] Deviceclass[%s]", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].devclass);
-       DebugTf("Unit[%s] Factor[%f], MQEnable[%d]\r\n", Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
-  }
+      Debugf("Record[%d], id[%d]  oper[%d] format[%d] ", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
+      switch (Modbusmap[i].regformat)  {
+        case Modbus_short:  Debugf("Valueshort[%d]", Modbusmap[i].Modbus_short);               break;
+        case Modbus_float:  Debugf("Valuefloat[%f]", Modbusmap[i].Modbus_float);               break;
+        case Modbus_ushort: DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
+        case Modbus_int:    DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
+        case Modbus_uint:   DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
+        case Modbus_undef:  DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label);      break;
+        default:            DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label);      break;
+      } 
+      Debugf(" Address[%d] Label[%s] Friendlyname[%s] phase[%d] ", Modbusmap[i].address, Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].phase);
+      Debugf("Devclass[%s] Unit[%s] Factor[%f] MQEnable[%d]\r\n", Modbusmap[i].devclass, Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
+      }
 }
 
 

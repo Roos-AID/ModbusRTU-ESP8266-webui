@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusRTU-webui.ino
-**  Version 1.6.1
+**  Version 1.6.3
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -212,6 +212,8 @@ void doTaskEvery30s(){
   //== do tasks ==
   if (settingLEDblink)  blinkLEDnow(LED1);
   readModbus();
+  if (settingLEDblink)  blinkLEDnow(LED1);
+
   // Modbus2MQTT();  // This is put into readModbus 
 }
 
