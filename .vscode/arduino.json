@@ -4,6 +4,5 @@
     "sketch": "ModbusRTU-ESP8266-webui.ino",
     "output": "../build",
     "port": "/dev/tty.usbserial-0001",
-    "prebuild": "/Users/robroos/Documents/Arduino/autoinc-semver-master/semver-incr-build.sh ./version.h",
-    "postbuild": "cp ../build/ModbusRTU-ESP8266-webui.ino.bin ./"
+    "prebuild": "/Users/robroos/Documents/Arduino/autoinc-semver-master/semver-incr-build.sh ./version.h"
 }

@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.5.0
+**  Version 1.6.3
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -21,24 +21,22 @@ void processAPI()
 
   strlcpy( URI, httpServer.uri().c_str(), sizeof(URI) );
 
-//  if (httpServer.method() == HTTP_GET)
-//        DebugTf("from[%s] URI[%s] method[GET] \r\n"
-//                                  , httpServer.client().remoteIP().toString().c_str()
-//                                        , URI);
-//  else  DebugTf("from[%s] URI[%s] method[PUT] \r\n"
-//                                  , httpServer.client().remoteIP().toString().c_str()
-//                                        , URI);
+  if (httpServer.method() == HTTP_GET)
+    if (bDebugRestAPI)
+      DebugTf("from[%s] URI[%s] method[GET] \r\n", httpServer.client().remoteIP().toString().c_str(), URI);
+    else if (bDebugRestAPI)
+      DebugTf("from[%s] URI[%s] method[PUT] \r\n", httpServer.client().remoteIP().toString().c_str(), URI);
 
   if (ESP.getFreeHeap() < 8500) // to prevent firmware from crashing!
   {
-    DebugTf("==> Bailout due to low heap (%d bytes))\r\n", ESP.getFreeHeap() );
+    if (bDebugRestAPI) DebugTf("==> Bailout due to low heap (%d bytes))\r\n", ESP.getFreeHeap());
     httpServer.send(500, "text/plain", "500: internal server error (low heap)\r\n");
     return;
   }
 
   int8_t wc = splitString(URI, '/', words, 10);
 
-  if (Verbose)
+  if (bDebugRestAPI)
   {
     DebugT(">>");
     for (int w=0; w<wc; w++)
@@ -228,7 +226,7 @@ void sendModbusmonitor()
     if (!settingModbusSinglephase || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
         switch (Modbusmap[i].regformat) {
           case Modbus_short:
-            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short*Modbusmap[i].factor, Modbusmap[i].unit);
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short, Modbusmap[i].unit);
             break;
           case Modbus_ushort:
             DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
@@ -249,7 +247,7 @@ void sendModbusmonitor()
             // {
             //   sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
             // }
-            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float*Modbusmap[i].factor,Modbusmap[i].unit);
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
             break;
           case Modbus_undef:
             DebugTf("Error undef type %s = %s \r\n", i, Modbusmap[i].label) ;
@@ -364,6 +362,7 @@ void sendDeviceSettings()
   sendJsonSettingObj("mqttpasswd", CSTR(settingMQTTpasswd), "s", 32);
   sendJsonSettingObj("mqtttoptopic", CSTR(settingMQTTtopTopic), "s", 15);
   sendJsonSettingObj("mqtthaprefix", CSTR(settingMQTThaprefix), "s", 20);
+  sendJsonSettingObj("mqttuniqueid", CSTR(settingMQTTuniqueid), "s", 20);
   sendJsonSettingObj("ntpenable", settingNTPenable, "b");
   sendJsonSettingObj("ntptimezone", CSTR(settingNTPtimezone), "s", 50);
   sendJsonSettingObj("ledblink", settingLEDblink, "b");

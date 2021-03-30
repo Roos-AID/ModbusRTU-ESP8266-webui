@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.css,
-**  Version 1.5.0
+**  Version 1.6.3
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
@@ -313,7 +313,7 @@ input {
 .devinfocolumn2 {
   display: table-cell;
   float: left;
-  width: 160px;
+  width: 158px;
   text-align: left;
   font-size: 12px;
 }

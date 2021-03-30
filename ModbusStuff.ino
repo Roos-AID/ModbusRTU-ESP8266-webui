@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.5.0
+**  Version 1.6.3
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -40,10 +40,10 @@ float f32(uint16_t u1, uint16_t u2)
 void setupModbus()
 {
 
-    Debugf("Init Serial with baudrate:\r\n");
-    Debugln(settingModbusBaudrate);
+  if (bDebugMBmsg) Debugf("Init Serial with baudrate:\r\n");
+  if (bDebugMBmsg) Debugln(settingModbusBaudrate);
 
-    #if defined(ESP8266)
+#if defined(ESP8266)
 
       S.begin(settingModbusBaudrate, SWSERIAL_8N1, MODBUS_RX, MODBUS_TX);
       mb.begin(&S,MODBUS_RXTX);
@@ -74,20 +74,17 @@ int16_t Modbus_ReadShort(uint16_t readreg) {
       delay(10);
       mb.task();
     }
-
-//   Debugf("Modbus ReadShort Result: 0x%02X , \r\n",ModbusdataObject.LastResult);
-   if (ModbusdataObject.LastResult == 0) {
-
-//      for (int i = 0 ; i < 1 ; i++) {
-//          Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]);
-//      }
-     } else {
-          DebugTf("Modbus ReadShort Reg: %d , Result: 0x%02X \r\n",readreg, ModbusdataObject.LastResult);
-      }
+    // if (bDebugMBmsg)  Debugf("Modbus ReadShort Result: 0x%02X , \r\n", ModbusdataObject.LastResult);
+    if (ModbusdataObject.LastResult == 0) 
+    {  
+    //  only for multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
+    } else {
+        DebugTf("Modbus ReadShort Reg: %d , Result: 0x%02X \r\n",readreg, ModbusdataObject.LastResult);
+    }
   }  else {
       DebugTln("Error: Modbus Read while transaction active");
       ModbusdataObject.LastResult = 99 ;
-    }
+ } 
 
 // Debugf("Modbus ReadShort ended\r\n");
  return shortres[0];
@@ -139,7 +136,7 @@ void toMQTT_float(int id)
 
   char _msg[15]{0};
   dtostrf(_value, 3, 2, _msg);
-  // DebugTf("To MQTT_float %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
+  if (bDebugMBmsg) DebugTf("To MQTT_float %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
   //SendMQTT
   sendMQTTData(Modbusmap[id].label, _msg);
 
@@ -151,7 +148,7 @@ void toMQTT_short(int id)
 
   char _msg[15]{0};
   itoa(_value, _msg, 10);
-  // DebugTf("To MQTT_short %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
+  if (bDebugMBmsg) DebugTf("To MQTT_short %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
   //SendMQTT
   sendMQTTData(Modbusmap[id].label, _msg);
 }
@@ -159,7 +156,8 @@ void toMQTT_short(int id)
 void Modbus2MQTT() {
   for (int i = 1; i <= ModbusdataObject.NumberRegisters; i++)
   {
-    if (Modbusmap[i].mqenable == 1) {
+    if (settingMQTTenable && Modbusmap[i].mqenable == 1)
+    {
       if (!settingModbusSinglephase || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4)
       {
         switch (Modbusmap[i].regformat)
@@ -168,22 +166,22 @@ void Modbus2MQTT() {
           toMQTT_short(i);
           break;
         case Modbus_ushort:
-          DebugTf("MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
+          DebugTf("ERROR: MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
           break;
         case Modbus_int:
-          DebugTf("MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
+          DebugTf("ERROR: MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
           break;
         case Modbus_uint:
-          DebugTf("MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
+          DebugTf("ERROR: MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
           break;
         case Modbus_float:
           toMQTT_float(i);
           break;
         case Modbus_undef:
-          DebugTf("MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
+          DebugTf("ERROR: MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label);
           break;
         default:
-          DebugTf("MQTT Error undef type %d = %s \r\n", i, Modbusmap[i].label);
+          DebugTf("ERROR: MQTT Error undef type %d = %s \r\n", i, Modbusmap[i].label);
           break;
         }
       }
@@ -208,37 +206,39 @@ void readModbus()
                TempShort = Modbus_ReadShort(Modbusmap[i].address) ;
 
               if (ModbusdataObject.LastResult == 0) {
-                 Modbusmap[i].Modbus_short = TempShort ;
-                 if (settingMQTTenable) {
-                   toMQTT_short(i) ;
+                if (Modbusmap[i].factor != 1) 
+                  Modbusmap[i].Modbus_short = round( TempShort * Modbusmap[i].factor) ;
+                else Modbusmap[i].Modbus_short = TempShort ;
+                if (settingMQTTenable && Modbusmap[i].mqenable == 1 ) {
+                    toMQTT_short(i) ;
                  }
                }
                break;
             case Modbus_ushort:
-              DebugTf("Not implemented %d = %s \r\n", i, Modbusmap[i].label) ;
+              DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label) ;
               break;
             case Modbus_int:
-              DebugTf("Not implemented %d = %s \r\n", i, Modbusmap[i].label) ;
+              DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label) ;
               break;
             case Modbus_uint:
-              DebugTf("Not implemented %d = %s \r\n", i, Modbusmap[i].label) ;
+              DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label) ;
               break;
             case Modbus_float:
               TempFloat = Modbus_ReadFloat(Modbusmap[i].address) ;
 
               if (ModbusdataObject.LastResult == 0) {
-                 Modbusmap[i].Modbus_float = TempFloat ;
-                 if (settingMQTTenable)
+                 Modbusmap[i].Modbus_float = TempFloat * Modbusmap[i].factor ;
+                 if (settingMQTTenable && Modbusmap[i].mqenable == 1)
                  {
-                   toMQTT_float(i);
+                  toMQTT_float(i);
                  }
                }
                break;
             case Modbus_undef:
-              DebugTf("Error undef type %d = %s \r\n", i, Modbusmap[i].label) ;
+              DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label) ;
               break;
             default:
-              DebugTf("Error undef type %d = %s \r\n", i, Modbusmap[i].label) ;
+              DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label) ;
               break;
           }
           if (ModbusdataObject.LastResult != 0) { Noerror = false ;  }
@@ -253,8 +253,7 @@ void readModbus()
 void readModbusSetup()
 {
 
-  Debugf("readModbus2 started\r\n");
-
+  if (bDebugMBmsg) Debugf("readModbus2 started\r\n");
 
   uint16_t offset = 0;
   uint16_t count = 8;
@@ -275,7 +274,7 @@ void readModbusSetup()
       // Debugln(resval[i]);
    }
  }
- Debugf("readModbus ended \r\n");
+ if (bDebugMBmsg) Debugf("readModbus ended \r\n");
 }
 
 
@@ -285,24 +284,24 @@ int sendModbus(const char* buf, int len)
    // Needs to be Mudbus RTU !!!
    //
 
-   DebugTf("sendModbus len: [%s] buf: [%s]\r\n",len,buf);
- //  if (Serial) {
- //    //check the write buffer
- //    Debugf("Serial Write Buffer space = [%d] - needed [%d]\r\n",Serial.availableForWrite(), (len+2));
- //    DebugT("Sending to Serial [");
- //    for (int i = 0; i < len; i++) {
- //      Debug((char)buf[i]);
- //    }
- //    Debug("] ("); Debug(len); Debug(")"); Debugln();
- //
- //    if (Serial.availableForWrite()>= (len+2)) {
- //      //write buffer to serial
- //      Serial.write(buf, len);
- //      // Serial.write("PS=0\r\n");
- //      Serial.write('\r');
- //      Serial.write('\n');
- //    } else Debugln("Error: Write buffer not big enough!");
- //  } else Debugln("Error: Serial device not found!");
+   if (bDebugMBmsg)  DebugTf("sendModbus len: [%s] buf: [%s]\r\n", len, buf);
+   //  if (Serial) {
+   //    //check the write buffer
+   //    Debugf("Serial Write Buffer space = [%d] - needed [%d]\r\n",Serial.availableForWrite(), (len+2));
+   //    DebugT("Sending to Serial [");
+   //    for (int i = 0; i < len; i++) {
+   //      Debug((char)buf[i]);
+   //    }
+   //    Debug("] ("); Debug(len); Debug(")"); Debugln();
+   //
+   //    if (Serial.availableForWrite()>= (len+2)) {
+   //      //write buffer to serial
+   //      Serial.write(buf, len);
+   //      // Serial.write("PS=0\r\n");
+   //      Serial.write('\r');
+   //      Serial.write('\n');
+   //    } else Debugln("Error: Write buffer not big enough!");
+   //  } else Debugln("Error: Serial device not found!");
  }
 
  // =============TO DO==============================================================================
@@ -340,11 +339,11 @@ int sendModbus(const char* buf, int len)
 
          if (sLine.startsWith("#") || sLine.startsWith("//"))
          {
-            // DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
+           if (bDebugMBmsg)  DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
          }
          else
          {
-           // DebugTf("sline[%s]\r\n", sLine.c_str());
+           if (bDebugMBmsg)  DebugTf("sline[%s]\r\n", sLine.c_str());
            // #file format is CSV, all values as string without "", fields are
            // #day, starthour, startmin, endhour, endmin
            // #day = daynumber, Numeric representation of the day of the week(1 = Sunday)
@@ -357,7 +356,18 @@ int sendModbus(const char* buf, int len)
            Index2 = sLine.indexOf(',', Index1 + 1);
            Index3 = sLine.indexOf(',', Index2 + 1);
            Index4 = sLine.indexOf(',', Index3 + 1);
-          
+           if (bDebugMBmsg)
+             DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d]\r\n", Index1, Index2, Index3, Index4);
+
+           if (Index4 <= 0)
+           {
+             if (bDebugMBmsg)
+             {
+               DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d]\r\n", Index1, Index2, Index3, Index4);
+               DebugTln("ERROR: Missing parameters in Daytimemap, skip line");
+             }
+             break;
+           }
 
            sDay = sLine.substring(0, Index1);
            sStarthour = sLine.substring(Index1 + 1, Index2);
@@ -370,10 +380,10 @@ int sendModbus(const char* buf, int len)
            sStartmin.trim();
            sEndhour.trim();
            sEndmin.trim();
-         
 
-          //  DebugTf("sDay[%s], sStarthour[%s], sStartmin[%s], sEndhour[%s], sEndmin[%s]\r\n", sDay.c_str(), sStarthour.c_str(), sStartmin.c_str(), sEndhour.c_str(), sEndmin.c_str());
-          //  delay(10);
+          if (bDebugMBmsg) { DebugTf("sDay[%s], sStarthour[%s], sStartmin[%s], sEndhour[%s], sEndmin[%s]\r\n", sDay.c_str(), sStarthour.c_str(), sStartmin.c_str(), sEndhour.c_str(), sEndmin.c_str());
+              delay(10); 
+          }
 
            daynum = sDay.toInt();
            if (daynum >7 || daynum != id ) {
@@ -391,7 +401,7 @@ int sendModbus(const char* buf, int len)
          }
 
        } // while available()
-       DebugTf("Number of Daytimemap registers initialized:, %d \r\n", id-1);
+       if (bDebugMBmsg) DebugTf("Number of Daytimemap registers initialized:, %d \r\n", id-1);
        fh.close();
      }
    }
@@ -404,7 +414,6 @@ int sendModbus(const char* buf, int len)
    {
      DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
    }
-   DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
   
   checkactivateRelay(false) ;
 
@@ -422,22 +431,24 @@ int sendModbus(const char* buf, int len)
    // operation = (Modbus_READ, Modbus_RW, Modbus_UNDEF)  (Only Modbus_READ implemented in rel 1)
    // label = Short label string
    // friendlyname = string in UI
+   // deviceclass = See Homeassistant https://www.home-assistant.io/integrations/sensor/#device-class 
    // unit = V, A, wH etc.
    // phase = 1,2,3 or 0 for generic and 4 for sum
    // factor = multiplication/division factor to apply. Specify 1 for no conversion , eg. 1000 for Wh to kWh
    // mqenable = set to 1 to enable sending to MQTT
-   // reg, format, operation, label, friendlyname, unit, phase, factor, mqenable
-   // 19000, Modbus_short, Modbus_READ, UL1N, Voltage L1-N, V, 1, 1, 1
+   // reg, format, operation, label, friendlyname, deviceclass, unit, phase, factor, mqenable
+   // 19000, Modbus_short, Modbus_READ, UL1N, Voltage L1-N, voltage, V, 1, 1, 1
 
    Modbusmap  = new  Modbuslookup_t[MODBUSCOUNT];
 
    int id = 0;
-   int Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8 ;
+   int Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9;
    String sReg;
    String sFormat;
    String sOper;
    String sLabel;
    String sName;
+   String sDevclass;
    String sUnit;
    String sPhase;
    String sFactor;
@@ -462,10 +473,10 @@ int sendModbus(const char* buf, int len)
 
           if (sLine.startsWith("#") || sLine.startsWith("//") )
           {
-            // DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
+            if (bDebugMBmsg) DebugTf("INFO: Either comment or invalid config line: [%s]\r\n", sLine.c_str());
           } else {
-            // DebugTf("sline[%s]\r\n", sLine.c_str());
-            // reg, format, type, label, friendlyname, unit, phase
+            if (bDebugMBmsg) DebugTf("sline[%s]\r\n", sLine.c_str());
+            // reg, format, type, label, friendlyname, devclass, unit, phase, mqenable
             Index1 = sLine.indexOf(',');
             Index2 = sLine.indexOf(',', Index1 + 1);
             Index3 = sLine.indexOf(',', Index2 + 1);
@@ -474,29 +485,42 @@ int sendModbus(const char* buf, int len)
             Index6 = sLine.indexOf(',', Index5 + 1);
             Index7 = sLine.indexOf(',', Index6 + 1);
             Index8 = sLine.indexOf(',', Index7 + 1);
+            Index9 = sLine.indexOf(',', Index8 + 1);
+            if (bDebugMBmsg)  DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d]\r\n", Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9);
 
-            sReg     = sLine.substring(0, Index1);
-            sFormat  = sLine.substring(Index1 + 1, Index2);
-            sOper    = sLine.substring(Index2 + 1, Index3);
-            sLabel   = sLine.substring(Index3 + 1, Index4);
-            sName    = sLine.substring(Index4 + 1, Index5);
-            sUnit    = sLine.substring(Index5 + 1, Index6);
-            sPhase   = sLine.substring(Index6 + 1, Index7);
-            sFactor  = sLine.substring(Index7 + 1, Index8);
-            sMQEnable = sLine.substring(Index8 + 1);
+            if (Index9 <= 0)
+            {
+              if (bDebugMBmsg) {
+                DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d]\r\n", Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9);
+                DebugTln("ERROR: Missing parameters in config line, skip line");
+              }
+              break;
+            }
+
+            sReg       = sLine.substring(0, Index1);
+            sFormat    = sLine.substring(Index1 + 1, Index2);
+            sOper      = sLine.substring(Index2 + 1, Index3);
+            sLabel     = sLine.substring(Index3 + 1, Index4);
+            sName      = sLine.substring(Index4 + 1, Index5);
+            sDevclass  = sLine.substring(Index5 + 1, Index6);
+            sUnit      = sLine.substring(Index6 + 1, Index7);
+            sPhase     = sLine.substring(Index7 + 1, Index8);
+            sFactor    = sLine.substring(Index8 + 1, Index9);
+            sMQEnable  = sLine.substring(Index9 + 1);
             sReg.trim();
             sFormat.trim();
             sOper.trim();
             sLabel.trim();
             sName.trim();
+            sDevclass.trim();
             sUnit.trim();
             sPhase.trim();
             sFactor.trim();
             sMQEnable.trim();
-
-          //  DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
-          //  delay(10);
-
+            if (bDebugMBmsg) {
+               DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+               delay(10);
+            }
             id++;
 
             Modbusmap[id].id = id ;
@@ -507,7 +531,7 @@ int sendModbus(const char* buf, int len)
                 Modbusmap[id].oper = Modbus_RW ;
             } else {
               Modbusmap[id].oper = Modbus_UNDEF ;
-//              DebugTln("Modbus_UNDEF detected");
+              if (bDebugMBmsg) DebugTln("WARNING: Not read or RW,  Modbus_UNDEF");
             }
 
             if (sFormat == "Modbus_short" ) {
@@ -517,7 +541,7 @@ int sendModbus(const char* buf, int len)
                 Modbusmap[id].regformat = Modbus_float ;
             } else {
               Modbusmap[id].regformat= Modbus_undef ;
-//              DebugTln("Modbus_undef detected");
+              if (bDebugMBmsg)  DebugTln("WARNING:  Modbus_undef detected");
             }
 
             // assign values to Modbusmap
@@ -528,16 +552,20 @@ int sendModbus(const char* buf, int len)
 
              char *clabel = new char[sLabel.length() + 1];
              char *cname = new char[sName.length() + 1];
+             char *cdevclass = new char[sDevclass.length() + 1];
              char *cunit = new char[sUnit.length() + 1];
              strcpy(clabel, sLabel.c_str());
              strcpy(cname, sName.c_str());
+             strcpy(cdevclass, sDevclass.c_str());
              strcpy(cunit, sUnit.c_str());
              Modbusmap[id].label = clabel ;
              Modbusmap[id].friendlyname = cname ;
+             Modbusmap[id].devclass = cdevclass;
              Modbusmap[id].unit = cunit;
-            // delete [] clabel;  // do not delete object, is still required during runtime !
-            // delete [] cname;
-            // delete [] cunit;
+             // delete [] clabel;  // do not delete objects, are still required during runtime !
+             // delete [] cname;
+             // delete [] cdevclass;
+             // delete [] cunit;
 
              Modbusmap[id].Modbus_short = 9999;
              Modbusmap[id].Modbus_float = 9999;
@@ -546,22 +574,37 @@ int sendModbus(const char* buf, int len)
        } // while available()
 
        ModbusdataObject.NumberRegisters = id ;
-       DebugTf("Number of Modbus registers initialized:, %d \r\n", ModbusdataObject.NumberRegisters);
+       if (bDebugMBmsg)  DebugTf("INFO: Number of Modbus registers initialized:, %d \r\n", ModbusdataObject.NumberRegisters);
        fh.close();
 
      }
    }
  }
+String getStringForModbusoper(int enum_val) {
+  String tmp(Modbusoper_str[enum_val]);
+  return tmp;
+}
+String getStringForModbusformat(int enum_val)
+{
+  String tmp(Modbusformat_str[enum_val]);
+  return tmp;
+}
 
 void printModbusmap() {
-  DebugTf("printModbusmap begin for: %d, records", ModbusdataObject.NumberRegisters) ;
-  for (int i = 1; i < ModbusdataObject.NumberRegisters ; i++) {
-    // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
-
-       DebugTf("Record: %d, id %d, oper: %d, format: %d ", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
-       DebugTf("Address: %d, phase: %d, Valuefloat %f \r\n", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
-       DebugTf("Label: %s, Friendlyname %s, Unit: %s ", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
-       DebugTf("Factor: %f, MQEnable %d \r\n", Modbusmap[i].factor, Modbusmap[i].mqenable, Modbusmap[i].unit);
+  Debugf("printModbusmap begin for: %d, records\r\n", ModbusdataObject.NumberRegisters) ;
+  for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
+    Debugf("Id[%d] Reg[%d] Oper[%s] Format[%s] ", Modbusmap[i].id, Modbusmap[i].address, CSTR(getStringForModbusoper(Modbusmap[i].oper)), CSTR(getStringForModbusformat(Modbusmap[i].regformat)));
+    switch (Modbusmap[i].regformat)     {
+    case Modbus_short:       Debugf("Value[%d]", Modbusmap[i].Modbus_short); break;
+    case Modbus_float:       Debugf("Value[%f]", Modbusmap[i].Modbus_float); break;
+    case Modbus_ushort:      DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
+    case Modbus_int:         DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
+    case Modbus_uint:        DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
+    case Modbus_undef:       DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label); break;
+    default:                 DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label); break;
+    } 
+  Debugf("  Label[%s] Name[%s] Phase[%d] ",  Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].phase);
+  Debugf("Devclass[%s] Unit[%s] Factor[%f] MQEnable[%d]\r\n", Modbusmap[i].devclass, Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
   }
 }
 
@@ -595,15 +638,12 @@ void checkactivateRelay(bool activaterelay)
       if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
       {
         DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
-        DebugTf("statusRelay[%d]\r\n", statusRelay);
-        if (activaterelay && statusRelay == RELAYOFF)
-          setRelay(RELAYON);
+        if (activaterelay && statusRelay == RELAYOFF)  setRelay(RELAYON);
       }
       else
       {
         DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
-        if (activaterelay && statusRelay == RELAYON)
-          setRelay(RELAYOFF);
+        if (activaterelay && statusRelay == RELAYON)  setRelay(RELAYOFF);
       }
     }
     else
@@ -611,14 +651,12 @@ void checkactivateRelay(bool activaterelay)
       if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
       {
         DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
-        if (activaterelay && statusRelay == RELAYOFF)
-          setRelay(RELAYON);
+        if (activaterelay && statusRelay == RELAYOFF)  setRelay(RELAYON);
       }
       else
       {
         DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
-        if (activaterelay && statusRelay == RELAYON)
-          setRelay(RELAYOFF);
+        if (activaterelay && statusRelay == RELAYON)   setRelay(RELAYOFF);
       }
     }
   }
@@ -626,14 +664,15 @@ void checkactivateRelay(bool activaterelay)
     DebugTln("WARNING, Relay set to ON");
     DebugTln("WARNING, Relay set to ON");
     setRelay(RELAYON) ;
-  }  
+  }
+  if (activaterelay) DebugTf("statusRelay[%d]\r\n", statusRelay);
 }
 
 void setRelay(uint8_t status)
 {
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, status);
-  DebugTf("Relay set to %d \r\n", status);
+  if (bDebugMBmsg)  DebugTf("INFO: Relay set to %d \r\n", status);
   statusRelay = status;
 }
 

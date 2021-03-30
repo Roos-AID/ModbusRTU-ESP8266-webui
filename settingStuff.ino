@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : settingStuff.ino
-**  Version 1.5.0
+**  Version 1.6.0
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -29,7 +29,7 @@ void writeSettings(bool show)
   DebugT(F("Start writing setting data "));
 
   //const size_t capacity = JSON_OBJECT_SIZE(6);  // save more setting, grow # of objects accordingly
-  DynamicJsonDocument doc(512);
+  DynamicJsonDocument doc(1024);
   JsonObject root  = doc.to<JsonObject>();
   root["hostname"] = settingHostname;
   root["MQTTenable"] = settingMQTTenable;
@@ -39,6 +39,7 @@ void writeSettings(bool show)
   root["MQTTpasswd"] = settingMQTTpasswd;
   root["MQTTtoptopic"] = settingMQTTtopTopic;
   root["MQTThaprefix"] = settingMQTThaprefix;
+  root["MQTTuniqueid"] = settingMQTTuniqueid;
   root["NTPenable"] = settingNTPenable;
   root["NTPtimezone"] = settingNTPtimezone;
   root["LEDblink"] = settingLEDblink;
@@ -76,9 +77,11 @@ void readSettings(bool show)
   // Deserialize the JSON document
   StaticJsonDocument<1024> doc;
   DeserializationError error = deserializeJson(doc, file);
+  
   if (error)
   {
     DebugTln(F("Failed to read file, use existing defaults."));
+    DebugTf("Settings Deserialisation error:  %s \r\n", error.c_str());
     return;
   }
 
@@ -99,6 +102,9 @@ void readSettings(bool show)
   settingMQTThaprefix = doc["MQTThaprefix"].as<String>();
   if (settingMQTThaprefix == "null")
     settingMQTThaprefix = HOME_ASSISTANT_DISCOVERY_PREFIX;
+  settingMQTTuniqueid = doc["MQTTuniqueid"].as<String>();
+  if (settingMQTTuniqueid == "null")
+    settingMQTTuniqueid = getUniqueId();
 
   settingNTPenable        = doc["NTPenable"];
   settingNTPtimezone      = doc["NTPtimezone"].as<String>();
@@ -110,13 +116,10 @@ void readSettings(bool show)
   settingTimebasedSwitch  = doc["timebasedswitch"] | settingTimebasedSwitch;
   settingRelayAllwaysOnSwitch = doc["relayallwayson"] | settingRelayAllwaysOnSwitch;
 
-  if (settingMQTTtopTopic.length()==0) settingMQTTtopTopic = _HOSTNAME;
 
   // Close the file (Curiously, File's destructor doesn't close the file)
   file.close();
 
-  //Update some settings right now
-  MDNS.setHostname(CSTR(settingHostname));    // start advertising with new(?) settingHostname
 
   DebugTln(F(" .. done\r"));
 
@@ -130,6 +133,7 @@ void readSettings(bool show)
     Debugf("MQTT password : %s\r\n",  CSTR(settingMQTTpasswd));
     Debugf("MQTT toptopic : %s\r\n",  CSTR(settingMQTTtopTopic));
     Debugf("HA prefix     : %s\r\n", CSTR(settingMQTThaprefix));
+    Debugf("MQTT uniqueid : %s\r\n", CSTR(settingMQTTuniqueid));
     Debugf("NTP enabled   : %s\r\n", CBOOLEAN(settingNTPenable));
     Debugf("NPT timezone  : %s\r\n", CSTR(settingNTPtimezone));
     Debugf("Led Blink     : %s\r\n", CBOOLEAN(settingLEDblink));
@@ -158,6 +162,9 @@ void updateSetting(const char *field, const char *newValue)
     if (pos){
       settingMQTTtopTopic = settingMQTTtopTopic.substring(0, pos-1);
     }
+    //Update some settings right now
+    startMDNS(CSTR(settingHostname));
+    startLLMNR(CSTR(settingHostname));
 
     Debugln();
     DebugTf("Need reboot before new %s.local will be available!\r\n\n", CSTR(settingHostname));
@@ -182,7 +189,14 @@ void updateSetting(const char *field, const char *newValue)
     if (settingMQTThaprefix.length() == 0)
       settingMQTThaprefix = HOME_ASSISTANT_DISCOVERY_PREFIX;
   }
-  if (stricmp(field, "NTPenable")==0)      settingNTPenable = EVALBOOLEAN(newValue);
+  if (stricmp(field, "MQTTuniqueid") == 0)
+  {
+    settingMQTTuniqueid = String(newValue);
+    if (settingMQTTuniqueid.length() == 0) 
+      settingMQTTuniqueid = getUniqueId();
+  }
+  if (stricmp(field, "NTPenable") == 0)
+    settingNTPenable = EVALBOOLEAN(newValue);
   if (stricmp(field, "NTPtimezone")==0)    {
     settingNTPtimezone = String(newValue);
     startNTP();  // update timezone if changed
@@ -205,6 +219,10 @@ void updateSetting(const char *field, const char *newValue)
   }    
   //finally update write settings
   writeSettings(false);
+
+
+  //Restart MQTT connection every "save settings"
+  if (settingMQTTenable)  startMQTT();
 
 } // updateSetting()
 

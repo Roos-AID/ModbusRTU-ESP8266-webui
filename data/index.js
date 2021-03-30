@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.js, part of Modbus-firmware project
-**  Version 1.5.0
+**  Version 1.6.3
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -30,7 +30,7 @@ window.onfocus = function () {
 
 
 var tid = 0;
-var timeupdate = setInterval(function () { refreshDevTime(); }, 4000); //delay is in milliseconds
+var timeupdate = setInterval(function () { refreshDevTime(); }, 1000); //delay is in milliseconds
 
 //============================================================================
 function initMainPage() {
@@ -514,6 +514,7 @@ function sendPostSetting(field, value) {
     , ["mqttconnected", "MQTT Connected"]
     , ["mqttenable", "MQTT Enable"]
     , ["mqtthaprefix", "MQTT Home Assistant prefix"]
+    , ["mqttuniqueid", "MQTT Uniqueid"]
     , ["ntpenable", "NTP Enable"]
     , ["ntptimezone", "NTP Timezone"]
     , ["uptime", "Uptime since boot"]

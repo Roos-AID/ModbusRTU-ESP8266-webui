@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Header file: ModbusStuff.h
-**  Version 1.5.0
+**  Version 1.6.3
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -76,7 +76,9 @@ static ModbusdataStruct ModbusdataObject;
 // Modbus register types  and registeradresses
 
 enum Modbusoper_t { Modbus_READ, Modbus_RW, Modbus_UNDEF };
-enum Modbusformat_t {  Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_undef};
+static const char *Modbusoper_str[] = {"Modbus_READ", "Modbus_RW", "Modbus_UNDEF"} ; 
+enum Modbusformat_t { Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_undef };
+static const char *Modbusformat_str[] = {"Modbus_short", "Modbus_ushort", "Modbus_int", "Modbus_uint", "Modbus_float", "Modbus_undef"};
 
 struct Modbuslookup_t
     {
@@ -92,6 +94,7 @@ struct Modbuslookup_t
         char* label;
         char* friendlyname;
         char* unit;
+        char* devclass;
     };
 
 Modbuslookup_t* Modbusmap;

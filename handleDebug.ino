@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : handleDebug
-**  Version 1.5.0
+**  Version 1.6.2
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -19,20 +19,31 @@ void handleDebug(){
         switch (c){
         case 'h':
             Debugln("Available commands are:");
-            Debugln("t : List Daytimemap");
-            Debugln("r : Re-read Daytimemap from Daytimemap.cfg");
-            Debugln("s : Toggle Timebased Relay");
+            Debugln("p : Print (list) Modbusmap ");
+            Debugln("l : List Daytimemap");
+            Debugln("d : Re-read Daytimemap from Daytimemap.cfg");
+            Debugln("t : Toggle Timebased Relay");
+            Debugln("m : Configure MQTT Discovery");
+            Debugln("r : Reconnecting to wifi");
+            Debugf("1 : Toggle debug Modbus msg, status: %s\r\n", CBOOLEAN(bDebugMBmsg));
+            Debugf("2 : Toggle debug RestAPI status %s\r\n", CBOOLEAN(bDebugRestAPI));
+            Debugf("3 : Toggle debug MQTT, status: %s\r\n", CBOOLEAN(bDebugMQTT));
+
             break;
-        case 'r':
+        case 'd':
             DebugTln("Read Daytimemap");
             doInitDaytimemap() ;
             printDaytimemap();
             break;
-        case 't':
+        case 'l':
             DebugTln("List Daytimemap");
             printDaytimemap();
             break;
-        case 's':
+        case 'p':
+            DebugTln("Print Modbusmap");
+            printModbusmap();
+            break;
+        case 't':
             DebugTln("Toggle Timebased Relay");
             if (settingTimebasedSwitch && settingNTPenable) {
                 DebugTf("Relay current status %d \r\n", statusRelay);
@@ -44,6 +55,42 @@ void handleDebug(){
             } else {
                 DebugTln("NOT POSSIBLE, TIMEBASED SWITCHING NOT ACTIVATED");
             }
+        case 'm':
+            DebugTln("Configure MQTT Discovery");
+            DebugTf("Enable MQTT: %s", CBOOLEAN(settingMQTTenable));
+            doAutoConfigure();
+            break;
+        case 'r':
+            if (WiFi.status() != WL_CONNECTED)
+            {
+                DebugTln("Reconnecting to wifi");
+                restartWiFi(CSTR(settingHostname), 240);
+                startTelnet();
+            } 
+            else
+                DebugTln("Wifi is connected");
+
+            if (!statusMQTTconnection)
+            {
+                DebugTln("Reconnecting MQTT");
+                startMQTT();
+            }
+            else
+                DebugTln("MQTT is connected");
+            break;
+        case '1':
+            bDebugMBmsg = !bDebugMBmsg;
+            DebugTf("\r\nDebug Modbus msg: %s\r\n", CBOOLEAN(bDebugMBmsg));
+            break;
+        case '2':
+            bDebugRestAPI = !bDebugRestAPI;
+            DebugTf("\r\nDebug RestAPI: %s\r\n", CBOOLEAN(bDebugRestAPI));
+            break;
+        case '3':
+            bDebugMQTT = !bDebugMQTT;
+            DebugTf("\r\nDebug MQTT: %s\r\n", CBOOLEAN(bDebugMQTT));
+            break;
+
             break;
         default:
         break;
