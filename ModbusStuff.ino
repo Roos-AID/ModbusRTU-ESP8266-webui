@@ -74,13 +74,13 @@ int16_t Modbus_ReadShort(uint16_t readreg) {
       delay(10);
       mb.task();
     }
-    if (bDebugMBmsg)  Debugf("Modbus ReadShort Result: 0x%02X , \r\n", ModbusdataObject.LastResult);
-      if (ModbusdataObject.LastResult == 0) 
-      {  
-      //  only for multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
-      } else {
-          DebugTf("Modbus ReadShort Reg: %d , Result: 0x%02X \r\n",readreg, ModbusdataObject.LastResult);
-      }
+    // if (bDebugMBmsg)  Debugf("Modbus ReadShort Result: 0x%02X , \r\n", ModbusdataObject.LastResult);
+    if (ModbusdataObject.LastResult == 0) 
+    {  
+    //  only for multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
+    } else {
+        DebugTf("Modbus ReadShort Reg: %d , Result: 0x%02X \r\n",readreg, ModbusdataObject.LastResult);
+    }
   }  else {
       DebugTln("Error: Modbus Read while transaction active");
       ModbusdataObject.LastResult = 99 ;
@@ -580,23 +580,32 @@ int sendModbus(const char* buf, int len)
      }
    }
  }
+String getStringForModbusoper(int enum_val) {
+  String tmp(Modbusoper_str[enum_val]);
+  return tmp;
+}
+String getStringForModbusformat(int enum_val)
+{
+  String tmp(Modbusformat_str[enum_val]);
+  return tmp;
+}
 
 void printModbusmap() {
   Debugf("printModbusmap begin for: %d, records\r\n", ModbusdataObject.NumberRegisters) ;
   for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
-      Debugf("Record[%d], id[%d]  oper[%d] format[%d] ", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
-      switch (Modbusmap[i].regformat)  {
-        case Modbus_short:  Debugf("Valueshort[%d]", Modbusmap[i].Modbus_short);               break;
-        case Modbus_float:  Debugf("Valuefloat[%f]", Modbusmap[i].Modbus_float);               break;
-        case Modbus_ushort: DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
-        case Modbus_int:    DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
-        case Modbus_uint:   DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
-        case Modbus_undef:  DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label);      break;
-        default:            DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label);      break;
-      } 
-      Debugf(" Address[%d] Label[%s] Friendlyname[%s] phase[%d] ", Modbusmap[i].address, Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].phase);
-      Debugf("Devclass[%s] Unit[%s] Factor[%f] MQEnable[%d]\r\n", Modbusmap[i].devclass, Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
-      }
+    Debugf("Id[%d] Reg[%d] Oper[%s] Format[%s] ", Modbusmap[i].id, Modbusmap[i].address, CSTR(getStringForModbusoper(Modbusmap[i].oper)), CSTR(getStringForModbusformat(Modbusmap[i].regformat)));
+    switch (Modbusmap[i].regformat)     {
+    case Modbus_short:       Debugf("Value[%d]", Modbusmap[i].Modbus_short); break;
+    case Modbus_float:       Debugf("Value[%f]", Modbusmap[i].Modbus_float); break;
+    case Modbus_ushort:      DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
+    case Modbus_int:         DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
+    case Modbus_uint:        DebugTf("ERROR: Not implemented %d = %s \r\n", i, Modbusmap[i].label); break;
+    case Modbus_undef:       DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label); break;
+    default:                 DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label); break;
+    } 
+  Debugf("  Label[%s] Name[%s] Phase[%d] ",  Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].phase);
+  Debugf("Devclass[%s] Unit[%s] Factor[%f] MQEnable[%d]\r\n", Modbusmap[i].devclass, Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
+  }
 }
 
 
