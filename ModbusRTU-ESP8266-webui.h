@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.6.1
+**  Version 1.6.4
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -85,6 +85,7 @@ bool      settingLEDblink = true;
 //Modbus Settings
 int16_t   settingModbusSlaveAdr = 2;
 int32_t   settingModbusBaudrate = 115200;
+int16_t   settingModbusReadInterval = 30;
 bool      settingModbusSinglephase = false;
 
 bool      settingTimebasedSwitch = false;

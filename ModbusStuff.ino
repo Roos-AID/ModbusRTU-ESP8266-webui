@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.6.3
+**  Version 1.6.4
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -196,8 +196,9 @@ void readModbus()
     float TempFloat ;
     int16_t TempShort ;
     bool Noerror = true ;
+    if (settingLEDblink)  blinkLEDnow(LED1);
 
-//    Debugf("readModbus started\r\n");
+    //    Debugf("readModbus started\r\n");
 
     for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
        if (!settingModbusSinglephase || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
@@ -243,11 +244,11 @@ void readModbus()
           }
           if (ModbusdataObject.LastResult != 0) { Noerror = false ;  }
        }
-//      doBackgroundTasks();
-        yield();
+       yield() ;
     }
 
     if (!Noerror) { DebugTf("readModbus ended with error Mem: %d \r\n",ESP.getFreeHeap()); }
+    if (settingLEDblink) blinkLEDnow(LED1);
 }
 
 void readModbusSetup()

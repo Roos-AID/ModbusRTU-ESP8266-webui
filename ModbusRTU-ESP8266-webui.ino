@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusRTU-webui.ino
-**  Version 1.6.3
+**  Version 1.6.4
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -44,6 +44,8 @@
 #define OFF HIGH
 #define RELAYON HIGH
 #define RELAYOFF LOW
+
+DECLARE_TIMER_SEC(timerreadmodbus, settingModbusReadInterval, CATCH_UP_MISSED_TICKS);
 
 //=====================================================================
 void setup()
@@ -210,11 +212,6 @@ void doTaskEvery5s(){
 //===[ Do task every 30s ]===
 void doTaskEvery30s(){
   //== do tasks ==
-  if (settingLEDblink)  blinkLEDnow(LED1);
-  readModbus();
-  if (settingLEDblink)  blinkLEDnow(LED1);
-
-  // Modbus2MQTT();  // This is put into readModbus 
 }
 
 //===[ Do task every 60s ]===
@@ -252,14 +249,13 @@ void doTaskEvery60s(){
 //===[ Do the background tasks ]===
 void doBackgroundTasks()
 {
-
   handleMQTT();                 // MQTT transmissions
-
   httpServer.handleClient();
   MDNS.update();
   events();                     // trigger ezTime update etc.
   delay(1);
   handleDebug();
+  yield();
 }
 
 void loop()
@@ -274,6 +270,7 @@ void loop()
   if (DUE(timer5s))       doTaskEvery5s();
   if (DUE(timer30s))      doTaskEvery30s();
   if (DUE(timer60s))      doTaskEvery60s();
+  if (DUE(timerreadmodbus)) readModbus();
 
   doBackgroundTasks();
 }

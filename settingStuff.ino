@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : settingStuff.ino
-**  Version 1.6.0
+**  Version 1.6.4
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -45,6 +45,7 @@ void writeSettings(bool show)
   root["LEDblink"] = settingLEDblink;
   root["modbusslaveadres"] = settingModbusSlaveAdr;
   root["modbusbaudrate"] = settingModbusBaudrate;
+  root["modbusreadinterval"] = settingModbusReadInterval;
   root["modbussinglephase"] = settingModbusSinglephase;
   root["timebasedswitch"] = settingTimebasedSwitch;
   root["relayallwayson"] = settingRelayAllwaysOnSwitch;
@@ -112,6 +113,8 @@ void readSettings(bool show)
   settingLEDblink         = doc["LEDblink"]|settingLEDblink;
   settingModbusSlaveAdr   = doc["modbusslaveadres"];
   settingModbusBaudrate   = doc["modbusbaudrate"];
+  settingModbusReadInterval = doc["modbusreadinterval"];
+  if (settingModbusReadInterval== 0) settingModbusReadInterval = 30 ; 
   settingModbusSinglephase = doc["modbussinglephase"]|settingModbusSinglephase;
   settingTimebasedSwitch  = doc["timebasedswitch"] | settingTimebasedSwitch;
   settingRelayAllwaysOnSwitch = doc["relayallwayson"] | settingRelayAllwaysOnSwitch;
@@ -139,6 +142,7 @@ void readSettings(bool show)
     Debugf("Led Blink     : %s\r\n", CBOOLEAN(settingLEDblink));
     Debugf("Modbus slaveadr : %d\r\n",  settingModbusSlaveAdr);
     Debugf("Modbus baudrate : %d\r\n",  settingModbusBaudrate);
+    Debugf("Modbus read interval : %d\r\n",  settingModbusReadInterval);
     Debugf("Modbus singlephase : %s\r\n",  CBOOLEAN(settingModbusSinglephase));
     Debugf("Timebased switch : %s\r\n", CBOOLEAN(settingTimebasedSwitch));
     Debugf("Relay Allways On switch : %s\r\n", CBOOLEAN(settingRelayAllwaysOnSwitch));
@@ -205,6 +209,12 @@ void updateSetting(const char *field, const char *newValue)
 
   if (stricmp(field, "modbusslaveadres")==0)  settingModbusSlaveAdr = atoi(newValue);
   if (stricmp(field, "modbusbaudrate")==0)  settingModbusBaudrate = atoi(newValue);
+  if (stricmp(field, "modbusreadinterval") == 0)
+  {
+    settingModbusReadInterval = atoi(newValue);
+    CHANGE_INTERVAL_SEC(timerreadmodbus, settingModbusReadInterval, CATCH_UP_MISSED_TICKS);
+  }
+
   if (stricmp(field, "modbussinglephase")==0)  settingModbusSinglephase = EVALBOOLEAN(newValue);
   if (stricmp(field, "timebasedswitch")==0)    settingTimebasedSwitch = EVALBOOLEAN(newValue);
   if (stricmp(field, "relayallwayson") == 0)  { 
