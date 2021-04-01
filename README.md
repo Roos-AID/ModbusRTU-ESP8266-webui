@@ -4,18 +4,21 @@
 
 The features of this ModbusRTU-ESP8266-webui firmware are:
 - Implementing the Modbus RTU protocol on the NodeMCU (ESP8266) to display in webUI and publish to MQTT
-- Registers and formats to be read can be configured in config file Modbusmap.cfg 
+- Registers and formats to be read can be configured in config file Modbusmap.cfg (see file for spec)
+- Dynamic MQ Autoconfigure for homeassistant based on registers defined in Modbusmap.cfg
+- When MQ is enabled, then read registers are send to MQTT when enabled in Modbusmap.cfg
+
 - Register values can be converted by a set factor in the config file for display in Webui and MQTT (eg. read Wh and display kWh)
 - Warning : Conversion of int values are rounded to int when factor is applied
-- Dynamic MQ Autoconfigure for homeassistant based on registers defined in Modbusmap.cfg
 
 - Enable telnet listening (for debugging and some commands, enter h for help)
 - Telnet commands are t = toggle relay, l = list Daytime map , d = re-read Daytimemap.cfg, m = Configure MQTT Discovery
 
 - a REST API (http://<ip>/api/v1/Modbus/Modbusmonitor
 - settings for Hostname, MQTT and NTP in the webUI 
-- settings for Modbus baudrate, RTU slave address in the webUI
-- Time/day based GPIO setting to enable external relay to allow for day/night energy monitoring/use
+- settings for Modbus baudrate, RTU slave address and read interval in the webUI
+
+- Time/day based setting to enable external relay (GPIO) to allow for day/night energy monitoring/use
 - Initially designed to read Jantitza UMG96RM energy monitor registers and display in webUI
 
 
@@ -28,7 +31,8 @@ To do:
 
 Looking for the documentation, go here (work in progress):  TODO
  Version 	 Release notes 
- 1.6.3	 Conversion of factor also for MQTT values, plus smaller bug fixes
+ 1.6.4	Read interval timer in settings
+ 1.6.3	Conversion of factor also for MQTT values, plus smaller bug fixes
  1.6.2	 Attempt to get Autoconfigure working for Openhab
  1.6.1	 Dynamic MQ Autoconfigure from the Modbusmap.cfg file
  1.6.0	 Implement MQTT Uniqueid setting, additional debug options

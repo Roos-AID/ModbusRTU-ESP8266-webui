@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.6.3
+**  Version 1.6.4
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -368,6 +368,7 @@ void sendDeviceSettings()
   sendJsonSettingObj("ledblink", settingLEDblink, "b");
   sendJsonSettingObj("modbusbaudrate", settingModbusBaudrate, "i", 9600, 115200, 9600);
   sendJsonSettingObj("modbusslaveadres", settingModbusSlaveAdr, "i", 1, 254, 1);
+  sendJsonSettingObj("modbusreadinterval", settingModbusReadInterval, "i", 5, 3600, 1);
   sendJsonSettingObj("modbussinglephase", settingModbusSinglephase, "b");
   sendJsonSettingObj("timebasedswitch", settingTimebasedSwitch, "b");
   sendJsonSettingObj("relayallwayson", settingRelayAllwaysOnSwitch, "b");
