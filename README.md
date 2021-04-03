@@ -28,21 +28,23 @@ To do:
 - Update of specific registers through MQTT (low prio)
 
 
-
 Looking for the documentation, go here (work in progress):  TODO
- Version 	 Release notes 
- 1.6.4	Read interval timer in settings
- 1.6.3	Conversion of factor also for MQTT values, plus smaller bug fixes
- 1.6.2	 Attempt to get Autoconfigure working for Openhab
- 1.6.1	 Dynamic MQ Autoconfigure from the Modbusmap.cfg file
- 1.6.0	 Implement MQTT Uniqueid setting, additional debug options
- 1.5.0 	 Rename and cleanup, added Relay Allways On switch
- 1.4.4 	 MQ updates after reading Modbus register
- 1.4.3 	 MQ Pub/Sub name space repaired
- 1.4.2 	 Typo in debug info, additional telnet command (re-read Daytimemap
- 1.4.1 	 Cosmetic changes, cleanup relay function
- 1.4.0 	 GPIO for time/day based switch added
- 1.3.0 	 Migration SPIFFS to LittleFS (not published release) 
- 1.2.0 	 MQTT enabled and calculation factor added to config file-
- 1.1.0 	 Modbus registers config in external file
- 1.0.1 	 Initial version, based on OTGW-firmware from Robert van den Breemen
+
+| Version | Release notes |
+|-|-|
+| 1.7.0 | Implement additional types for Solaredge, rework Modbus reader code|  
+| 1.6.4 | Read interval timer in settings|  
+| 1.6.3 | Conversion of factor also for MQTT values, plus smaller bug fixes|  
+| 1.6.2 | Attempt to get Autoconfigure working for Openhab|  
+| 1.6.1 | Dynamic MQ Autoconfigure from the Modbusmap.cfg file|  
+| 1.6.0 | Implement MQTT Uniqueid setting, additional debug options|  
+| 1.5.0 | Rename and cleanup, added Relay Allways On switch|  
+| 1.4.4 | MQ updates after reading Modbus register|  
+| 1.4.3 | MQ Pub/Sub name space repaired|  
+| 1.4.2 | Typo in debug info, additional telnet command (re-read Daytimemap|  
+| 1.4.1 | Cosmetic changes, cleanup relay function|  
+| 1.4.0 | GPIO for time/day based switch added|  
+| 1.3.0 | Migration SPIFFS to LittleFS (not published release)|  
+| 1.2.0 | MQTT enabled and calculation factor added to config file|  
+| 1.1.0 | Modbus registers config in external file|  
+| 1.0.1 | Initial version, based on OTGW-firmware from Robert van den Breemen|  

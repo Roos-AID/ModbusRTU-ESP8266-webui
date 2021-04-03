@@ -21,9 +21,9 @@
  *  - ArduinoJson - https://arduinojson.org/
  *  All the library's can be installed using the library manager.
  *
- *  How to upload to your SPIFF?
- *  Just install the SPIFF upload plugin (https://github.com/esp8266/arduino-esp8266fs-plugin)
- *  and upload it to your SPIFF after first flashing the device.
+ *  How to upload to your LittleFS?
+ *  Just install the LittleFS upload plugin (https://github.com/earlephilhower/arduino-esp8266littlefs-plugin)
+ *  and upload it to your LittleFS after first flashing the device.
  *
  *  How to compile this firmware?
  *  - NodeMCU v1.0
@@ -207,6 +207,7 @@ void doTaskEvery1s(){
 //===[ Do task every 5s ]===
 void doTaskEvery5s(){
   //== do tasks ==
+  yield();
 }
 
 //===[ Do task every 30s ]===
@@ -255,7 +256,7 @@ void doBackgroundTasks()
   events();                     // trigger ezTime update etc.
   delay(1);
   handleDebug();
-  yield();
+  // yield();
 }
 
 void loop()
