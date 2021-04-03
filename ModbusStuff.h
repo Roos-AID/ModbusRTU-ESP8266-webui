@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Header file: ModbusStuff.h
-**  Version 1.6.3
+**  Version 1.7.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -87,7 +87,10 @@ struct Modbuslookup_t
         Modbusformat_t regformat;  // type of data
         uint16_t address;  //register address
         uint16_t phase;           // 0 = generic ,  4 = sum
-        uint16_t Modbus_short;
+        int16_t Modbus_short;
+        uint16_t Modbus_ushort;
+        int32_t Modbus_int;
+        uint32_t Modbus_uint;
         float Modbus_float;
         float factor;
         uint16_t mqenable;
@@ -101,30 +104,30 @@ Modbuslookup_t* Modbusmap;
 
 
 bool cb(Modbus::ResultCode event, uint16_t transactionId, void* data) { // Callback to monitor errors
- #ifdef ESP8266
-  if (event != 0) {
-//    DebugTf("Modbus Request result: 0x%02X, Mem: %d\n", event, ESP.getFreeHeap());
-    ModbusdataObject.ModbusErrors = ModbusdataObject.ModbusErrors + 1;
-  }
-#elif ESP32
-  if (event != 0) {
-    DebugTf("Modbus Request result: 0x%02X, Mem: %d\n", event, ESP.getFreeHeap());
-    ModbusdataObject.ModbusErrors = ModbusdataObject.ModbusErrors + 1;
-  }
-#else
-   if (event != 0) {
-      DebugTf("Modbus Request result: 0x");
-      DebugTf(event, HEX);
-      ModbusdataObject.ModbusErrors = ModbusdataObject.ModbusErrors + 1;
-   }
-#endif
+    #ifdef ESP8266
+      if (event != 0) {
+    //    DebugTf("Modbus Request result: 0x%02X, Mem: %d\n", event, ESP.getFreeHeap());
+        ModbusdataObject.ModbusErrors = ModbusdataObject.ModbusErrors + 1;
+      }
+    #elif ESP32
+      if (event != 0) {
+        DebugTf("Modbus Request result: 0x%02X, Mem: %d\n", event, ESP.getFreeHeap());
+        ModbusdataObject.ModbusErrors = ModbusdataObject.ModbusErrors + 1;
+      }
+    #else
+      if (event != 0) {
+          DebugTf("Modbus Request result: 0x");
+          DebugTf(event, HEX);
+          ModbusdataObject.ModbusErrors = ModbusdataObject.ModbusErrors + 1;
+      }
+    #endif
 
-ModbusdataObject.LastResult = event ;
-//  if (event != 0) {
-//    Debugln("Modbus LastResult not 0") ;
-//  } else {
-//    Debugln("Modbus LastResult OK") ;
-//  }
+    ModbusdataObject.LastResult = event ;
+    //  if (event != 0) {
+    //    Debugln("Modbus LastResult not 0") ;
+    //  } else {
+    //    Debugln("Modbus LastResult OK") ;
+    //  }
   return true;
 }
 
