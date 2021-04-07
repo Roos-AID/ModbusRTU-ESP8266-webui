@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.6.4
+**  Version 1.7.1
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -229,32 +229,20 @@ void sendModbusmonitor()
             sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_short, Modbusmap[i].unit);
             break;
           case Modbus_ushort:
-            DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_ushort, Modbusmap[i].unit);
             break;
           case Modbus_int:
-            DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_int, Modbusmap[i].unit);
             break;
           case Modbus_uint:
-            DebugTf("Not implemented %s = %s \r\n", i, Modbusmap[i].label) ;
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_uint, Modbusmap[i].unit);
             break;
           case Modbus_float:
-            // // Change Wh inot kWh , will be setting in future
-            // if (strcmp("Wh", Modbusmap[i].unit) == 0)
-            // {
-            //   sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float/1000,"kWh");
-            // }
-            // else
-            // {
-            //   sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
-            // }
-            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float,Modbusmap[i].unit);
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float, Modbusmap[i].unit);
             break;
           case Modbus_undef:
             DebugTf("Error undef type %s = %s \r\n", i, Modbusmap[i].label) ;
             break;
-          default:
-            DebugTf("Error undef type %s = %s \r\n", i, Modbusmap[i].label) ;
-
         }
     }
   }

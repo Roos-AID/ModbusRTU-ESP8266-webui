@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.7.0
+**  Version 1.7.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -79,33 +79,130 @@ void setupModbus()
     mb.master();
     Debugf("Modbus Serial init completed\r\n");
 }
+void waitMBslave() {
+    while (mb.slave())
+    { // Check if Modbus transaction is active, then wait
+      delay(10);
+      mb.task();    
+    }
+}
+
+
+void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uint16_t numregs) {
+    DebugTf("Args MBtestreadHreg MBmapidx[%d], MBaddress[%d] , .address[%d], numregs[%d]\r\n ",MBmapidx, MBaddress, Modbusmap[MBmapidx].address,numregs);
+    ModbusdataObject.LastResult = 0;
+    switch (Modbusmap[MBmapidx].regformat)
+    {
+    case Modbus_short:
+      if (numregs != 1) { DebugTln("ERROR numregs read for short should be 1"); break; }
+       switch (Modbusmap[MBmapidx].address) 
+       {
+       case 1: 
+       value[0] = 0x04d2; 
+       break; // 1234
+       case 2: 
+       value[0] = 0xfb2e; 
+       break; // -1234 
+       default : 
+       value[0] = 1111; 
+       }
+      break; 
+    case Modbus_ushort:
+      if (numregs != 1) { DebugTln("ERROR numregs read for ushort should be 1"); break; }
+      switch (Modbusmap[MBmapidx].address)
+      {
+      case 3:  
+      value[0] = 0x04d2; // 1234 
+      break;
+      case 4:  
+      value[0] = 0xfb2e; // 64302
+      break;
+      default: 
+      value[0] = 2222;    
+      }
+      break;
+    case Modbus_int:
+      if (numregs != 2) { DebugTln("ERROR numregs read for int should be 2"); break; }
+      switch (Modbusmap[MBmapidx].address)
+      {
+      case 5:  
+        value[0] = 0x0000; 
+        value[1] = 0x04d2; // 1234 
+        break;
+      case 6:  
+        value[0] = 0xffff; 
+        value[1] = 0xfb2e; // -1234
+        break;
+      default: 
+        value[0] = 0; 
+        value[1] = 3333; 
+      }
+      break;
+    case Modbus_uint:
+      if (numregs != 2) { DebugTln("ERROR numregs read for uint should be 2"); break;}
+      switch (Modbusmap[MBmapidx].address)
+      {
+      case 7:  
+        value[0] = 0x0000;
+        value[1] = 0x04d2; // 1234 
+        break;
+      case 8: 
+        value[0] = 0xffff; 
+        value[1] = 0xfb2e; // 4294966062
+        break;
+      default: 
+        value[0] = 0; 
+        value[1] = 4444; 
+      }
+      break;
+    case Modbus_float:
+      if (numregs != 2) { DebugTln("ERROR numregs read for float should be 2"); }
+      switch (Modbusmap[MBmapidx].address)
+      {
+      case 9:  
+        value[0] = 0x47f1; 
+        value[1] = 0x2000;  // 123456
+        break;
+      case 10: 
+        value[0] = 0xc7f1; 
+        value[1] = 0x2000; 
+        break;
+      default: 
+        value[0] = 0x4759; 
+        value[1] = 0x0300; // 55555
+      }
+      break;
+    }
+    // DebugTf("########## MBmapidx[%d] Value0[%d] value1[]\r\n",MBmapidx,value[0],value[1]) ;
+}
 
 //============ Read register functions V2 (short )
 bool Modbus_Read_short(uint16_t i)
 {
   uint16_t shortres[2];
+  
+
   bool tempError = false;
 
-  if (!mb.slave())
-  { // Check if no transaction in progress
+  if (!mb.slave())  
+  { 
+    if (!bDebugMBlogic) { 
+      mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, shortres, 1, cb); // Send Read Hreg from Modbus Server
+      waitMBslave();
+    } else MBtestreadHreg(i, Modbusmap[i].address, shortres, 1 ) ;
 
-    mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, shortres, 1, cb); // Send Read Hreg from Modbus Server
-    while (mb.slave())
-    { // Check if Modbus transaction is active, then wait
-      delay(10);
-      mb.task();
-    }
     if (ModbusdataObject.LastResult == 0)
     {
       //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
-
+      mb_convert.mb_uint16 = shortres[0] ;
+      if (bDebugMBlogic) DebugTf("shortres[%d] md_uint16 [%d] md_int16 [%d]\r\n",shortres[0], mb_convert.mb_uint16, mb_convert.mb_int16 );
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
-        Modbusmap[i].Modbus_short = round(shortres[0] * Modbusmap[i].factor);
+        Modbusmap[i].Modbus_short = round(mb_convert.mb_int16 * Modbusmap[i].factor);
       else
-        Modbusmap[i].Modbus_short = shortres[0];
-        if (bDebugMBmsg)
-          DebugTf("Modbus Read short Reg:[%d] , Result:[%d]\r\n", Modbusmap[i].address, Modbusmap[i].Modbus_short);
+        Modbusmap[i].Modbus_short = mb_convert.mb_int16;
+      if (bDebugMBmsg)
+        DebugTf("Modbus Read short Reg:[%d] , Result:[%d]\r\n", Modbusmap[i].address, Modbusmap[i].Modbus_short);
       if (settingMQTTenable && Modbusmap[i].mqenable == 1)
       {
         toMQTT_short(i);
@@ -134,18 +231,17 @@ bool Modbus_Read_ushort(uint16_t i)
   bool tempError = false;
 
   if (!mb.slave())
-  { // Check if no transaction in progress
+  { 
 
-    mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, ushortres, 1, cb); // Send Read Hreg from Modbus Server
-    while (mb.slave())
-    { // Check if Modbus transaction is active, then wait
-      delay(10);
-      mb.task();
-    }
+    if (!bDebugMBlogic) { 
+      mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, ushortres, 1, cb); // Send Read Hreg from Modbus Server
+      waitMBslave();
+    } else  MBtestreadHreg(i, Modbusmap[i].address, ushortres, 1 ) ;
+
     if (ModbusdataObject.LastResult == 0)
     {
       //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
-
+      if (bDebugMBlogic) DebugTf("ushortres0[%d] \r\n",ushortres[0]);
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
         Modbusmap[i].Modbus_ushort = round(ushortres[0] * Modbusmap[i].factor);
@@ -177,23 +273,22 @@ bool Modbus_Read_ushort(uint16_t i)
 //============ Read register functions V2 (int)
 bool Modbus_Read_int(uint16_t i)
 {
-  uint16_t ushortres[2];
+  uint16_t intres[2];
   bool tempError = false;
   int32_t tempint = 0;
 
   if (!mb.slave())
-  { // Check if no transaction in progress
-
-    mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, ushortres, 1, cb); // Send Read Hreg from Modbus Server
-    while (mb.slave())
-    { // Check if Modbus transaction is active, then wait
-      delay(10);
-      mb.task();
-    }
+  { 
+    if (!bDebugMBlogic) { 
+      mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, intres, 2, cb); // Send Read Hreg from Modbus Server
+      waitMBslave();
+    } else  MBtestreadHreg(i, Modbusmap[i].address, intres, 2 ) ;
+    
     if (ModbusdataObject.LastResult == 0)
     {
       //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
-      tempint = cfint32(ushortres[0], ushortres[1]);
+      tempint = cfint32(intres[0], intres[1]);
+      if (bDebugMBlogic) DebugTf("intres0[%d] intres1[%d] tempint[%d]\r\n",intres[0], intres[1], tempint );
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
           Modbusmap[i].Modbus_int = round(tempint * Modbusmap[i].factor);
@@ -225,23 +320,22 @@ bool Modbus_Read_int(uint16_t i)
 //============ Read register functions V2 (uint)
 bool Modbus_Read_uint(uint16_t i)
 {
-  uint16_t ushortres[2];
+  uint16_t uintres[2];
   bool tempError = false;
   uint32_t tempuint = 0;
 
   if (!mb.slave())
-  { // Check if no transaction in progress
-
-    mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, ushortres, 1, cb); // Send Read Hreg from Modbus Server
-    while (mb.slave())
-    { // Check if Modbus transaction is active, then wait
-      delay(10);
-      mb.task();
-    }
+  {     
+    if (!bDebugMBlogic) { 
+      mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, uintres, 2, cb); // Send Read Hreg from Modbus Server
+      waitMBslave();
+    } else  MBtestreadHreg(i, Modbusmap[i].address, uintres, 2 ) ;
+    
     if (ModbusdataObject.LastResult == 0)
     {
       //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
-      tempuint = cfuint32(ushortres[0], ushortres[1]);
+      tempuint = cfuint32(uintres[0], uintres[1]);
+      if (bDebugMBlogic) DebugTf("uintres0[%d] uintres1[%d] tempuint[%d]\r\n",uintres[0], uintres[1], tempuint );
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
         Modbusmap[i].Modbus_uint = round(tempuint * Modbusmap[i].factor);
@@ -279,18 +373,17 @@ bool Modbus_Read_float(uint16_t i)
   float tempfloat = 0;
 
   if (!mb.slave())
-  { // Check if no transaction in progress
-
-    mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, floatres, 2, cb); // Send Read Hreg from Modbus Server
-    while (mb.slave())
-    { // Check if Modbus transaction is active, then wait
-      delay(10);
-      mb.task();
-    }
+  { 
+    if (!bDebugMBlogic) { 
+      mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, floatres, 2, cb); // Send Read Hreg from Modbus Server
+      waitMBslave();
+    } else  MBtestreadHreg(i, Modbusmap[i].address, floatres, 2 ) ;
+    
     if (ModbusdataObject.LastResult == 0)
     {
       //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
       tempfloat = cf32(floatres[0], floatres[1]);
+      if (bDebugMBlogic) DebugTf("floatres0[%d] floatres1[%d] tempfloat[%f]\r\n",floatres[0], floatres[1], tempfloat );
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
         Modbusmap[i].Modbus_float = tempfloat * Modbusmap[i].factor;
@@ -618,12 +711,12 @@ int sendModbus(const char* buf, int len)
  //===========================================================================================
  void printDaytimemap()
  {
-   DebugTf("printDaytimemap begin for: %d, records \r\n",7);
+   if (bDebugMBmsg) DebugTf("printDaytimemap begin for: %d, records \r\n",7);
    for (int i = 1; i <= 7; i++)
    {
      DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
    }
-  
+  Debugln();
   checkactivateRelay(false) ;
 
  }
@@ -753,9 +846,12 @@ int sendModbus(const char* buf, int len)
             // assign values to Modbusmap
             Modbusmap[id].address = sReg.toInt();
             Modbusmap[id].phase = sPhase.toInt();
-            Modbusmap[id].factor = sFactor.toFloat();
+            // Modbusmap[id].factor = sFactor.toFloat();
+            // also get sign converted of factor, this seems not to work with toFloat(). 
+            char tempChar[sFactor.length()+1];
+            sFactor.toCharArray(tempChar,sizeof(tempChar));  
+            Modbusmap[id].factor = atof(tempChar);
             Modbusmap[id].mqenable = sMQEnable.toInt();
-
             char *clabel = new char[sLabel.length() + 1];
             char *cname = new char[sName.length() + 1];
             char *cdevclass = new char[sDevclass.length() + 1];
@@ -774,6 +870,9 @@ int sendModbus(const char* buf, int len)
             // delete [] cunit;
 
             Modbusmap[id].Modbus_short = 9999;
+            Modbusmap[id].Modbus_ushort = 9999;
+            Modbusmap[id].Modbus_int = 9999;
+            Modbusmap[id].Modbus_uint = 9999;
             Modbusmap[id].Modbus_float = 9999;
           }
 

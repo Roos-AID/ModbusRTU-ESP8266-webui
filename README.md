@@ -32,6 +32,7 @@ Looking for the documentation, go here (work in progress):  TODO
 
 | Version | Release notes |
 |-|-|
+| 1.7.1 | Additional debug options, fix coding bugs|  
 | 1.7.0 | Implement additional types for Solaredge, rework Modbus reader code|  
 | 1.6.4 | Read interval timer in settings|  
 | 1.6.3 | Conversion of factor also for MQTT values, plus smaller bug fixes|  

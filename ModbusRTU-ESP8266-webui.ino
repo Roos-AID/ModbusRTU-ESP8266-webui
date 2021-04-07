@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusRTU-webui.ino
-**  Version 1.6.4
+**  Version 1.7.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -19,6 +19,7 @@
  *  - ezTime - https://github.com/ropg/ezTime
  *  - TelnetStream - https://github.com/jandrassy/TelnetStream/commit/1294a9ee5cc9b1f7e51005091e351d60c8cddecf
  *  - ArduinoJson - https://arduinojson.org/
+ *  - modbus-esp8266  -https://github.com/emelianov/modbus-esp8266
  *  All the library's can be installed using the library manager.
  *
  *  How to upload to your LittleFS?
@@ -73,7 +74,9 @@ void setup()
   setLed(LED2, ON);
 
   LittleFS.begin();
-  readSettings(true);
+  readSettings(true);    
+  
+  CHANGE_INTERVAL_SEC(timerreadmodbus, settingModbusReadInterval, CATCH_UP_MISSED_TICKS);
 
   NodeId = getUniqueId() ;
   

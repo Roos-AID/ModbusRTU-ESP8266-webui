@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Header file: ModbusStuff.h
-**  Version 1.7.0
+**  Version 1.7.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -102,6 +102,10 @@ struct Modbuslookup_t
 
 Modbuslookup_t* Modbusmap;
 
+static union  {
+    uint16_t mb_uint16;
+    int16_t mb_int16;
+  } mb_convert ;
 
 bool cb(Modbus::ResultCode event, uint16_t transactionId, void* data) { // Callback to monitor errors
     #ifdef ESP8266

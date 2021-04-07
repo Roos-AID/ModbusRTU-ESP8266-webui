@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.6.4
+**  Version 1.7.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -94,6 +94,8 @@ uint8_t   statusRelay = false;
 
 //debug flags
 bool bDebugMBmsg = false;
+bool bDebugMBlogic = false;
+
 bool bDebugRestAPI = false;
 bool bDebugMQTT = false;
 
