@@ -5,6 +5,9 @@
 The features of this ModbusRTU-ESP8266-webui firmware are:
 - Implementing the Modbus RTU protocol on the NodeMCU (ESP8266) to display in webUI and publish to MQTT
 - Registers and formats to be read can be configured in config file Modbusmap.cfg (see file for spec)
+- setting for the config file name, default to Modbusmap.cfg , additional file Modbusmaptest.cfg is to debug and is automatically loaded when bDebugMBlogic = true during compile. Additional files are included, eg. MBmapUMG96.cfg for Janitza UMG96 and MBmapSolaredge.cfg as examples. 
+- Also Strings can be read, see config file for spec.
+
 - Dynamic MQ Autoconfigure for homeassistant based on registers defined in Modbusmap.cfg
 - When MQ is enabled, then read registers are send to MQTT when enabled in Modbusmap.cfg
 
@@ -12,7 +15,8 @@ The features of this ModbusRTU-ESP8266-webui firmware are:
 - Warning : Conversion of int values are rounded to int when factor is applied
 
 - Enable telnet listening (for debugging and some commands, enter h for help)
-- Telnet commands are t = toggle relay, l = list Daytime map , d = re-read Daytimemap.cfg, m = Configure MQTT Discovery
+- Telnet commands are eg: t = toggle relay, l = list Daytime map , d = re-read Daytimemap.cfg, m = Configure MQTT Discovery
+- Telnet debug commands are 1,2,3 and 9 (see output of h)
 
 - a REST API (http://<ip>/api/v1/Modbus/Modbusmonitor
 - settings for Hostname, MQTT and NTP in the webUI 
@@ -32,6 +36,7 @@ Looking for the documentation, go here (work in progress):  TODO
 
 | Version | Release notes |
 |-|-|
+| 1.7.2 | Modbusmap config filename via settings, added String type|  
 | 1.7.1 | Additional debug options, fix coding bugs|  
 | 1.7.0 | Implement additional types for Solaredge, rework Modbus reader code|  
 | 1.6.4 | Read interval timer in settings|  
