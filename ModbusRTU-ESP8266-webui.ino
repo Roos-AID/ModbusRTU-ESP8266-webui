@@ -210,7 +210,7 @@ void doTaskEvery1s(){
 //===[ Do task every 5s ]===
 void doTaskEvery5s(){
   //== do tasks ==
-  yield();
+  // yield();
 }
 
 //===[ Do task every 30s ]===

@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : settingStuff.ino
-**  Version 1.6.4
+**  Version 1.7.2
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -43,6 +43,7 @@ void writeSettings(bool show)
   root["NTPenable"] = settingNTPenable;
   root["NTPtimezone"] = settingNTPtimezone;
   root["LEDblink"] = settingLEDblink;
+  root["modbusconfigfile"] = settingModbusCfgfile;
   root["modbusslaveadres"] = settingModbusSlaveAdr;
   root["modbusbaudrate"] = settingModbusBaudrate;
   root["modbusreadinterval"] = settingModbusReadInterval;
@@ -111,6 +112,8 @@ void readSettings(bool show)
   settingNTPtimezone      = doc["NTPtimezone"].as<String>();
   if (settingNTPtimezone=="null")  settingNTPtimezone = "Europe/Amsterdam"; //default to amsterdam timezone
   settingLEDblink         = doc["LEDblink"]|settingLEDblink;
+  settingModbusCfgfile    = doc["modbusconfigfile"].as<String>();
+  if (settingModbusCfgfile == "null")  settingModbusCfgfile = "Modbusmap.cfg" ;
   settingModbusSlaveAdr   = doc["modbusslaveadres"];
   settingModbusBaudrate   = doc["modbusbaudrate"];
   settingModbusReadInterval = doc["modbusreadinterval"];
@@ -140,6 +143,7 @@ void readSettings(bool show)
     Debugf("NTP enabled   : %s\r\n", CBOOLEAN(settingNTPenable));
     Debugf("NPT timezone  : %s\r\n", CSTR(settingNTPtimezone));
     Debugf("Led Blink     : %s\r\n", CBOOLEAN(settingLEDblink));
+    Debugf("Modbus configfile : %s\r\n",  CSTR(settingModbusCfgfile));
     Debugf("Modbus slaveadr : %d\r\n",  settingModbusSlaveAdr);
     Debugf("Modbus baudrate : %d\r\n",  settingModbusBaudrate);
     Debugf("Modbus read interval : %d\r\n",  settingModbusReadInterval);
@@ -206,6 +210,11 @@ void updateSetting(const char *field, const char *newValue)
     startNTP();  // update timezone if changed
   }
   if (stricmp(field, "LEDblink")==0)      settingLEDblink = EVALBOOLEAN(newValue);
+  if (stricmp(field, "modbusconfigfile")==0)
+  {
+    settingModbusCfgfile = String(newValue);
+    if (settingModbusCfgfile.length() == 0)   settingModbusCfgfile = "Modbusmap.cfg";
+  }
 
   if (stricmp(field, "modbusslaveadres")==0)  settingModbusSlaveAdr = atoi(newValue);
   if (stricmp(field, "modbusbaudrate")==0)  settingModbusBaudrate = atoi(newValue);

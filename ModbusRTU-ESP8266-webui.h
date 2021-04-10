@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.7.1
+**  Version 1.7.2
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -83,6 +83,7 @@ String    settingNTPtimezone = DEFAULT_TIMEZONE;
 bool      settingLEDblink = true;
 
 //Modbus Settings
+String    settingModbusCfgfile = "Modbusmap.cfg";
 int16_t   settingModbusSlaveAdr = 2;
 int32_t   settingModbusBaudrate = 115200;
 int16_t   settingModbusReadInterval = 30;
@@ -94,7 +95,7 @@ uint8_t   statusRelay = false;
 
 //debug flags
 bool bDebugMBmsg = false;
-bool bDebugMBlogic = false;
+bool bDebugMBlogic = false; // when set to true during compile time, Modbusmaptest.cfg file is selected during boot
 
 bool bDebugRestAPI = false;
 bool bDebugMQTT = false;

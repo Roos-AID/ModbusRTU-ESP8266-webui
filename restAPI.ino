@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.7.1
+**  Version 1.7.2
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -199,9 +199,7 @@ void sendModbusmonitor()
 //  DebugTln("sending Modbus monitor values ...\r");
 
   sendStartJsonObj("Modbusmonitor");
-
-//  sendJsonModbusmonObj("Number read errors", ModbusdataObject.ModbusErrors,"");
-//  sendJsonModbusmonObj("Last result", ModbusdataObject.LastResult,"");
+  if (ModbusdataObject.NumberRegisters == 0) sendJsonModbusmonObj("ERROR: No or invalid config file", "NO FILE", "ERR");
 
   if (settingTimebasedSwitch && settingNTPenable) {
     if (settingRelayAllwaysOnSwitch) {
@@ -218,10 +216,7 @@ void sendModbusmonitor()
   }
 
   for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
-  //  DebugTf("Record: %d, id %d, oper: %d, format: %d \r\n", i , Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].regformat);
-  //  DebugTf("Address: %d, phase: %d, Valuefloat %f\r\n ", Modbusmap[i].address ,Modbusmap[i].phase, Modbusmap[i].Modbus_float);
-  //  DebugTf("Label: %s, Friendlyname %s, Unit: %s\r\n ", Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].unit);
-  //  DebugTf("Factor %f, MQEnable %d \r\n", Modbusmap[i].factor,Modbusmap[i].mqenable);
+  if (bDebugRestAPI) printModbusmapln(i) ; 
     // Check if multiphase, if singlephase (1) then onlys show generic (0) or phase 1.
     if (!settingModbusSinglephase || Modbusmap[i].phase == 0 || Modbusmap[i].phase == 1 || Modbusmap[i].phase == 4) {
         switch (Modbusmap[i].regformat) {
@@ -240,8 +235,12 @@ void sendModbusmonitor()
           case Modbus_float:
             sendJsonModbusmonObj(Modbusmap[i].friendlyname, Modbusmap[i].Modbus_float, Modbusmap[i].unit);
             break;
+          case Modbus_string:
+            sendJsonModbusmonObj(Modbusmap[i].friendlyname, CSTR(Modbusmap[i].Modbus_string), Modbusmap[i].unit);
+            break;
           case Modbus_undef:
-            DebugTf("Error undef type %s = %s \r\n", i, Modbusmap[i].label) ;
+            snprintf(cMsg, sizeof(cMsg), "Error Modbus_undef%d reg:",i);
+            sendJsonModbusmonObj(cMsg, Modbusmap[i].address , "");
             break;
         }
     }
@@ -354,6 +353,7 @@ void sendDeviceSettings()
   sendJsonSettingObj("ntpenable", settingNTPenable, "b");
   sendJsonSettingObj("ntptimezone", CSTR(settingNTPtimezone), "s", 50);
   sendJsonSettingObj("ledblink", settingLEDblink, "b");
+  sendJsonSettingObj("modbusconfigfile", CSTR(settingModbusCfgfile), "s", 30);
   sendJsonSettingObj("modbusbaudrate", settingModbusBaudrate, "i", 9600, 115200, 9600);
   sendJsonSettingObj("modbusslaveadres", settingModbusSlaveAdr, "i", 1, 254, 1);
   sendJsonSettingObj("modbusreadinterval", settingModbusReadInterval, "i", 5, 3600, 1);

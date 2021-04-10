@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.7.1
+**  Version 1.7.2
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -172,6 +172,12 @@ void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uin
         value[1] = 0x0300; // 55555
       }
       break;
+    case Modbus_string:
+      // todo 
+        for (int i = 0 ; i <= numregs ; i++) {
+          value[i] = 0x424d;  // MB 
+        }
+     break;
     }
     // DebugTf("########## MBmapidx[%d] Value0[%d] value1[]\r\n",MBmapidx,value[0],value[1]) ;
 }
@@ -413,6 +419,59 @@ bool Modbus_Read_float(uint16_t i)
   return tempError;
 }
 
+//============ Read register functions V2 (string)
+bool Modbus_Read_string(uint16_t i)
+{
+  bool tempError = false;
+  uint16_t numregs = Modbusmap[i].formatstringlen / 2 ;    
+  // union defined static in .h 
+  // static union {
+  //     uint16_t mb_charregs[16];
+  //     char     mb_charconv[32];
+  // }  mb_reg2char ;
+
+  if (bDebugMBlogic) DebugTf("Modbus_Read_string Number of registers[%d]\r\n",numregs);
+
+  if (!mb.slave())  
+  { 
+    if (!bDebugMBlogic) { 
+      mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, mb_reg2char.mb_charregs, numregs, cb); // Send Read Hreg from Modbus Server
+      waitMBslave();
+    } else MBtestreadHreg(i, Modbusmap[i].address, mb_reg2char.mb_charregs, numregs ) ;
+
+    if (ModbusdataObject.LastResult == 0)
+    {
+      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
+      char *ctemp = new char[Modbusmap[i].formatstringlen + 1];
+      strCopy(ctemp, Modbusmap[i].formatstringlen ,mb_reg2char.mb_charconv);
+      Modbusmap[i].Modbus_string = ctemp ;
+      delete ctemp;
+
+      if (bDebugMBmsg)
+        DebugTf("Modbus Read string Reg:[%d] , Result:[%s]\r\n", Modbusmap[i].address, CSTR(Modbusmap[i].Modbus_string));
+      if (settingMQTTenable && Modbusmap[i].mqenable == 1)
+      {
+        toMQTT_string(i);
+      }
+    }
+    else
+    {
+      DebugTf("Modbus Read string Reg:[%d] , Result: 0x%02X \r\n", Modbusmap[i].address, ModbusdataObject.LastResult);
+      tempError = true;
+    }
+  }
+  else
+  {
+    // this should never happen
+    DebugTln("Error: Modbus Read while transaction active");
+    ModbusdataObject.LastResult = 99;
+  }
+
+  return tempError;
+}
+
+
+
 // MQTT send functions
 
 void toMQTT_short(int id)
@@ -476,6 +535,16 @@ void toMQTT_float(int id)
 
 }
 
+void toMQTT_string(int id)
+{
+  //function to push string data to MQTT
+
+  if (bDebugMBmsg) DebugTf("To MQTT_string %s %s %s\r\n", Modbusmap[id].label, CSTR(Modbusmap[id].Modbus_string));
+  //SendMQTT
+  sendMQTTData(Modbusmap[id].label, CSTR(Modbusmap[id].Modbus_string));
+
+}
+
 void Modbus2MQTT() {
   for (int i = 1; i <= ModbusdataObject.NumberRegisters; i++)
   {
@@ -495,6 +564,8 @@ void Modbus2MQTT() {
           toMQTT_uint(i);   break;
         case Modbus_float:
           toMQTT_float(i);  break;
+        case Modbus_string:
+          toMQTT_string(i);  break;
         case Modbus_undef:
           DebugTf("ERROR: MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label); break;
         default:
@@ -533,6 +604,8 @@ void readModbus()
         if (Modbus_Read_uint(i))  countError++;  break;
       case Modbus_float:
         if (Modbus_Read_float(i))  countError++;  break;
+      case Modbus_string:
+        if (Modbus_Read_string(i))  countError++;  break;
       case Modbus_undef:
         DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label);
         break;
@@ -723,13 +796,16 @@ int sendModbus(const char* buf, int len)
 
  void doInitModbusMap()
  {
+   String cfgFilename = "/" + settingModbusCfgfile ;
+  //  const char* cfgFilename = "/" + settingModbusCfgfile;
+  if (bDebugMBlogic) cfgFilename = "/Modbusmaptest.cfg" ;
+  DebugTf("Modbusmap config file[%s]\r\n",CSTR(settingModbusCfgfile));
 
-   const char* cfgFilename = "/Modbusmap.cfg";
    // Comment lines start with # or //
    // Configuration file to map modbus registers
    // file format is CSV , all values as string without "" ,  fields are
    // reg = register address
-   // format = (Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_undef)  (Only short and float implemented in rel 1)
+   // format = (Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_string[length], Modbus_undef)  
    // operation = (Modbus_READ, Modbus_RW, Modbus_UNDEF)  (Only Modbus_READ implemented in rel 1)
    // label = Short label string
    // friendlyname = string in UI
@@ -745,8 +821,10 @@ int sendModbus(const char* buf, int len)
 
    int id = 0;
    int Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9;
+   int Formatcnt = 0;
    String sReg;
    String sFormat;
+   String sFormatcnt;
    String sOper;
    String sLabel;
    String sName;
@@ -798,7 +876,7 @@ int sendModbus(const char* buf, int len)
               }
               break;
             }
-
+            Formatcnt = 0; // set Modbus_string lenght to 0
             sReg       = sLine.substring(0, Index1);
             sFormat    = sLine.substring(Index1 + 1, Index2);
             sOper      = sLine.substring(Index2 + 1, Index3);
@@ -838,20 +916,48 @@ int sendModbus(const char* buf, int len)
             else if (sFormat == "Modbus_int")     { Modbusmap[id].regformat = Modbus_int;     }
             else if (sFormat == "Modbus_uint")    { Modbusmap[id].regformat = Modbus_uint;    }
             else if (sFormat == "Modbus_float")   { Modbusmap[id].regformat = Modbus_float;   }
-            else {
-              Modbusmap[id].regformat = Modbus_undef;
-              if (bDebugMBmsg)  DebugTln("WARNING:  Modbus_undef detected");
+            else if (sFormat.startsWith("Modbus_string")) {
+                    Index1 = sFormat.indexOf('[');
+                    Index2 = sFormat.indexOf(']', Index1 + 1);
+                    sFormatcnt = sFormat.substring(Index1 + 1, Index2);
+                    if (Index2 > 0) {
+                        Modbusmap[id].regformat = Modbus_string;
+                        Formatcnt = sFormatcnt.toInt();
+                        if (bDebugMBmsg) DebugTf("Modbus_string detected, sFormat[%s], sFormatcnt[%s], length[%d]\r\n",CSTR(sFormat), CSTR(sFormatcnt),Formatcnt);
+                        if (Formatcnt > 64 || Formatcnt == 0) {
+                          DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+                          DebugTf("ERROR Modbus_string length[%d] outside allowed range\r\n",Formatcnt);
+                          Formatcnt = 0;
+                          Modbusmap[id].regformat = Modbus_undef; 
+                    
+                        }
+                        else if ((Formatcnt % 2) != 0) {
+                          DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+                          DebugTf("ERROR Modbus_string length[%d] not even\r\n",Formatcnt);
+                          Formatcnt = 0;
+                          Modbusmap[id].regformat = Modbus_undef;
+                        
+                          } 
+                    } else { 
+                      DebugTf("WARNING: Modbus_string defined without lenght") ; 
+                      Modbusmap[id].regformat = Modbus_undef;
+                       
+                      } 
+                } 
+            else  {  Modbusmap[id].regformat = Modbus_undef;
+                  if (bDebugMBmsg)  DebugTln("WARNING:  Modbus_undef detected");
+                  }
             }
-
             // assign values to Modbusmap
             Modbusmap[id].address = sReg.toInt();
             Modbusmap[id].phase = sPhase.toInt();
             // Modbusmap[id].factor = sFactor.toFloat();
-            // also get sign converted of factor, this seems not to work with toFloat(). 
+            // also get negative sign converted of factor, this seems not to work with toFloat(). 
             char tempChar[sFactor.length()+1];
             sFactor.toCharArray(tempChar,sizeof(tempChar));  
             Modbusmap[id].factor = atof(tempChar);
             Modbusmap[id].mqenable = sMQEnable.toInt();
+            Modbusmap[id].formatstringlen = Formatcnt;
             char *clabel = new char[sLabel.length() + 1];
             char *cname = new char[sName.length() + 1];
             char *cdevclass = new char[sDevclass.length() + 1];
@@ -860,21 +966,27 @@ int sendModbus(const char* buf, int len)
             strcpy(cname, sName.c_str());
             strcpy(cdevclass, sDevclass.c_str());
             strcpy(cunit, sUnit.c_str());
+
             Modbusmap[id].label = clabel;
             Modbusmap[id].friendlyname = cname;
             Modbusmap[id].devclass = cdevclass;
             Modbusmap[id].unit = cunit;
             // delete [] clabel;  // do not delete objects, are still required during runtime !
+            // delete [] cmbstring;
             // delete [] cname;
             // delete [] cdevclass;
             // delete [] cunit;
-
-            Modbusmap[id].Modbus_short = 9999;
-            Modbusmap[id].Modbus_ushort = 9999;
-            Modbusmap[id].Modbus_int = 9999;
-            Modbusmap[id].Modbus_uint = 9999;
-            Modbusmap[id].Modbus_float = 9999;
-          }
+            switch (Modbusmap[id].regformat) {
+              case Modbus_short:    Modbusmap[id].Modbus_short  = 9999; break;
+              case Modbus_ushort:   Modbusmap[id].Modbus_ushort = 9999; break;
+              case Modbus_int:      Modbusmap[id].Modbus_int =  9999;   break;
+              case Modbus_uint:     Modbusmap[id].Modbus_uint = 9999;   break;
+              case Modbus_float:    Modbusmap[id].Modbus_float = 9999;  break;
+              case Modbus_string:   
+                  Modbusmap[id].Modbus_string.reserve(Formatcnt) ;                         
+                  Modbusmap[id].Modbus_string = "9999";  
+                break;
+            }
 
        } // while available()
 
@@ -883,8 +995,10 @@ int sendModbus(const char* buf, int len)
        fh.close();
 
      }
-   }
+   } else DebugTf("ERROR, Modbus configfile[%s] doesnt exist.\r\n",CSTR(cfgFilename)) ;
  }
+
+// help routines 
 String getStringForModbusoper(int enum_val) {
   String tmp(Modbusoper_str[enum_val]);
   return tmp;
@@ -895,9 +1009,7 @@ String getStringForModbusformat(int enum_val)
   return tmp;
 }
 
-void printModbusmap() {
-  Debugf("printModbusmap begin for: %d, records\r\n", ModbusdataObject.NumberRegisters) ;
-  for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
+void printModbusmapln(int16_t i) {
     Debugf("Id[%d] Reg[%d] Oper[%s] Format[%s] ", Modbusmap[i].id, Modbusmap[i].address, CSTR(getStringForModbusoper(Modbusmap[i].oper)), CSTR(getStringForModbusformat(Modbusmap[i].regformat)));
     switch (Modbusmap[i].regformat)     {
     case Modbus_short:       Debugf("Value[%d]", Modbusmap[i].Modbus_short);  break;
@@ -905,11 +1017,19 @@ void printModbusmap() {
     case Modbus_int:         Debugf("Value[%d]", Modbusmap[i].Modbus_int);    break;
     case Modbus_uint:        Debugf("Value[%d]", Modbusmap[i].Modbus_uint);   break;
     case Modbus_float:       Debugf("Value[%f]", Modbusmap[i].Modbus_float);  break;
+    case Modbus_string:      Debugf("Length[%d] Value[%s]",Modbusmap[i].formatstringlen, CSTR(Modbusmap[i].Modbus_string));  break;
     case Modbus_undef:       DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label); break;
     default:                 DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label); break;
     } 
   Debugf("  Label[%s] Name[%s] Phase[%d] ",  Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].phase);
   Debugf("Devclass[%s] Unit[%s] Factor[%f] MQEnable[%d]\r\n", Modbusmap[i].devclass, Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
+
+}
+
+void printModbusmap() {
+  Debugf("printModbusmap begin for: %d, records\r\n", ModbusdataObject.NumberRegisters) ;
+  for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
+    printModbusmapln(i);
   }
 }
 
