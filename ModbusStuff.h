@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Header file: ModbusStuff.h
-**  Version 1.7.0
+**  Version 1.7.2
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -77,8 +77,8 @@ static ModbusdataStruct ModbusdataObject;
 
 enum Modbusoper_t { Modbus_READ, Modbus_RW, Modbus_UNDEF };
 static const char *Modbusoper_str[] = {"Modbus_READ", "Modbus_RW", "Modbus_UNDEF"} ; 
-enum Modbusformat_t { Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_undef };
-static const char *Modbusformat_str[] = {"Modbus_short", "Modbus_ushort", "Modbus_int", "Modbus_uint", "Modbus_float", "Modbus_undef"};
+enum Modbusformat_t { Modbus_short, Modbus_ushort, Modbus_int, Modbus_uint, Modbus_float, Modbus_string, Modbus_undef };
+static const char *Modbusformat_str[] = {"Modbus_short", "Modbus_ushort", "Modbus_int", "Modbus_uint", "Modbus_float", "Modbus_string", "Modbus_undef"};
 
 struct Modbuslookup_t
     {
@@ -94,6 +94,8 @@ struct Modbuslookup_t
         float Modbus_float;
         float factor;
         uint16_t mqenable;
+        uint16_t formatstringlen; // lenght of string when Modbusformat is Modbus_string
+        String Modbus_string;
         char* label;
         char* friendlyname;
         char* unit;
@@ -102,8 +104,19 @@ struct Modbuslookup_t
 
 Modbuslookup_t* Modbusmap;
 
+// Union declarations to convert to/from variable types
+static union  {
+    uint16_t mb_uint16;
+    int16_t mb_int16;
+  } mb_convert ;
 
-bool cb(Modbus::ResultCode event, uint16_t transactionId, void* data) { // Callback to monitor errors
+static union {
+    uint16_t mb_charregs[16];
+    char     mb_charconv[32];
+}  mb_reg2char ;
+
+// Callback for Modbus to monitor errors
+bool cb(Modbus::ResultCode event, uint16_t transactionId, void* data) { 
     #ifdef ESP8266
       if (event != 0) {
     //    DebugTf("Modbus Request result: 0x%02X, Mem: %d\n", event, ESP.getFreeHeap());

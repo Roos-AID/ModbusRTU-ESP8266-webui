@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : handleDebug
-**  Version 1.6.2
+**  Version 1.7.1
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -28,6 +28,7 @@ void handleDebug(){
             Debugf("1 : Toggle debug Modbus msg, status: %s\r\n", CBOOLEAN(bDebugMBmsg));
             Debugf("2 : Toggle debug RestAPI status %s\r\n", CBOOLEAN(bDebugRestAPI));
             Debugf("3 : Toggle debug MQTT, status: %s\r\n", CBOOLEAN(bDebugMQTT));
+            Debugf("9 : Toggle debug Modbuslogic, status: %s\r\n", CBOOLEAN(bDebugMBlogic));
 
             break;
         case 'd':
@@ -80,20 +81,21 @@ void handleDebug(){
             break;
         case '1':
             bDebugMBmsg = !bDebugMBmsg;
-            DebugTf("\r\nDebug Modbus msg: %s\r\n", CBOOLEAN(bDebugMBmsg));
+            Debugf("\r\nDebug Modbus msg: %s\r\n", CBOOLEAN(bDebugMBmsg));
             break;
         case '2':
             bDebugRestAPI = !bDebugRestAPI;
-            DebugTf("\r\nDebug RestAPI: %s\r\n", CBOOLEAN(bDebugRestAPI));
+            Debugf("\r\nDebug RestAPI: %s\r\n", CBOOLEAN(bDebugRestAPI));
             break;
         case '3':
             bDebugMQTT = !bDebugMQTT;
-            DebugTf("\r\nDebug MQTT: %s\r\n", CBOOLEAN(bDebugMQTT));
+            Debugf("\r\nDebug MQTT: %s\r\n", CBOOLEAN(bDebugMQTT));
             break;
-
+        case '9':
+            bDebugMBlogic = !bDebugMBlogic;
+            Debugf("\r\nDebug Modbuslogic: %s\r\n", CBOOLEAN(bDebugMBlogic));
             break;
-        default:
-        break;
+        default:  break;
         }
 
     }

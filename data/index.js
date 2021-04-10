@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.js, part of Modbus-firmware project
-**  Version 1.6.4
+**  Version 1.7.2
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -521,6 +521,7 @@ function sendPostSetting(field, value) {
     , ["bootcount", "Nr. Reboots"]
     , ["ledblink", "Heartbeat LED (on/off)"]
     , ["modbusbaudrate", "Modbus Baudrate (serial 8N1)"]
+    , ["modbusconfigfile", "Modbus Config filename"]
     , ["modbusslaveadres", "Modbus Slave address"]
     , ["modbusreadinterval", "Modbus Read Interval (sec)"]
     , ["modbussinglephase", "Modbus Single Phase"]
