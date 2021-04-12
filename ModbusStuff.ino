@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.7.2
+**  Version 1.7.3
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -174,7 +174,7 @@ void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uin
       break;
     case Modbus_string:
       // todo 
-        for (int i = 0 ; i <= numregs ; i++) {
+        for (int i = 0 ; i < numregs ; i++) {
           value[i] = 0x424d;  // MB 
         }
      break;
@@ -441,9 +441,15 @@ bool Modbus_Read_string(uint16_t i)
 
     if (ModbusdataObject.LastResult == 0)
     {
-      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
+      //  determine value from multiple registers for (int r = 0 ; r < count ; r++) { Debugf("Reg: %d, Val: %d \r\n", r+readreg, shortres[r]); }
       char *ctemp = new char[Modbusmap[i].formatstringlen + 1];
-      strCopy(ctemp, Modbusmap[i].formatstringlen ,mb_reg2char.mb_charconv);
+      if (settingModbusByteswap) {
+        for (int r = 0; r < Modbusmap[i].formatstringlen ; r=r+2) {
+          ctemp[r] = mb_reg2char.mb_charconv[r+1] ;
+          ctemp[r+1] = mb_reg2char.mb_charconv[r] ;
+        }
+        ctemp[Modbusmap[i].formatstringlen] = '\0' ; // set end of string
+      } else  strCopy(ctemp, Modbusmap[i].formatstringlen ,mb_reg2char.mb_charconv); // compiler adds end of string
       Modbusmap[i].Modbus_string = ctemp ;
       delete ctemp;
 
@@ -984,7 +990,7 @@ int sendModbus(const char* buf, int len)
               case Modbus_float:    Modbusmap[id].Modbus_float = 9999;  break;
               case Modbus_string:   
                   Modbusmap[id].Modbus_string.reserve(Formatcnt) ;                         
-                  Modbusmap[id].Modbus_string = "9999";  
+                  Modbusmap[id].Modbus_string = "NaN";  
                 break;
             }
 

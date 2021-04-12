@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : handleDebug
-**  Version 1.7.1
+**  Version 1.7.3
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -28,6 +28,7 @@ void handleDebug(){
             Debugf("1 : Toggle debug Modbus msg, status: %s\r\n", CBOOLEAN(bDebugMBmsg));
             Debugf("2 : Toggle debug RestAPI status %s\r\n", CBOOLEAN(bDebugRestAPI));
             Debugf("3 : Toggle debug MQTT, status: %s\r\n", CBOOLEAN(bDebugMQTT));
+            Debugf("8 : Toggle Modbus Byteswap: %s\r\n", CBOOLEAN(settingModbusByteswap));
             Debugf("9 : Toggle debug Modbuslogic, status: %s\r\n", CBOOLEAN(bDebugMBlogic));
 
             break;
@@ -91,6 +92,11 @@ void handleDebug(){
             bDebugMQTT = !bDebugMQTT;
             Debugf("\r\nDebug MQTT: %s\r\n", CBOOLEAN(bDebugMQTT));
             break;
+        case '8':
+            settingModbusByteswap = !settingModbusByteswap;
+            Debugf("\r\nModbus ByteSwap: %s\r\n", CBOOLEAN(settingModbusByteswap));
+            break;
+    
         case '9':
             bDebugMBlogic = !bDebugMBlogic;
             Debugf("\r\nDebug Modbuslogic: %s\r\n", CBOOLEAN(bDebugMBlogic));
