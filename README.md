@@ -4,19 +4,25 @@
 
 The features of this ModbusRTU-ESP8266-webui firmware are:
 - Implementing the Modbus RTU protocol on the NodeMCU (ESP8266) to display in webUI and publish to MQTT
+- A simple schematic is in the Documents folder, there are also some screenshots of the webUI on an iPhone
+
 - Registers and formats to be read can be configured in config file Modbusmap.cfg (see file for spec)
-- setting for the config file name, default to Modbusmap.cfg , additional file Modbusmaptest.cfg is to debug and is automatically loaded when bDebugMBlogic = true during compile. Additional files are included, eg. MBmapUMG96.cfg for Janitza UMG96 and MBmapSolaredge.cfg as examples. 
-- Also Strings can be read, see config file for spec.
+- setting for the config file name, default to Modbusmap.cfg , 
+    additional file Modbusmaptest.cfg is to debug the code and is automatically loaded when bDebugMBlogic = true during compile. 
+    Additional files are included, eg. MBmapUMG96.cfg for Janitza UMG96 and MBmapSolaredge.cfg as examples. 
+- Strings upto 64 chars in length, being 32 registers, can be read, see config file for specification.
+    - As Modbus Strings are not clearly defined how to decode, a byteswap option is available (in telnet debug option 8 for now).
 
 - Dynamic MQ Autoconfigure for homeassistant based on registers defined in Modbusmap.cfg
-- When MQ is enabled, then read registers are send to MQTT when enabled in Modbusmap.cfg
+- When MQ is enabled, then the specified Modbus registers are send to MQTT when enabled in Modbusmap.cfg
 
 - Register values can be converted by a set factor in the config file for display in Webui and MQTT (eg. read Wh and display kWh)
+    The value can also be negative.
 - Warning : Conversion of int values are rounded to int when factor is applied
 
 - Enable telnet listening (for debugging and some commands, enter h for help)
 - Telnet commands are eg: t = toggle relay, l = list Daytime map , d = re-read Daytimemap.cfg, m = Configure MQTT Discovery
-- Telnet debug commands are 1,2,3 and 9 (see output of h)
+- Telnet debug commands are 1,2,3 and 8, 9 (see output of h)
 
 - a REST API (http://<ip>/api/v1/Modbus/Modbusmonitor
 - settings for Hostname, MQTT and NTP in the webUI 
@@ -27,15 +33,18 @@ The features of this ModbusRTU-ESP8266-webui firmware are:
 
 
 To do:
-- Documentation (hardware schematic, configuration and operation)
+- Byteswap switch in config screen
+- Documentation (configuration and operation)
 - InfluxDB client to do direct logging
 - Update of specific registers through MQTT (low prio)
+- In version 2 we might add multiple Modbus devices to be read (very low prio now)
 
 
-Looking for the documentation, go here (work in progress):  TODO
+Looking for the documentation?, see the Documentation folder (work in progress).  
 
 | Version | Release notes |
 |-|-|
+| 1.7.3 | Byteswap option added for Modbus_String (via debug for now), String length fix |  
 | 1.7.2 | Modbusmap config filename via settings, added String type|  
 | 1.7.1 | Additional debug options, fix coding bugs|  
 | 1.7.0 | Implement additional types for Solaredge, rework Modbus reader code|  

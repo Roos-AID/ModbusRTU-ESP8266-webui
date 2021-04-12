@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.7.2
+**  Version 1.7.3
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -88,6 +88,7 @@ int16_t   settingModbusSlaveAdr = 2;
 int32_t   settingModbusBaudrate = 115200;
 int16_t   settingModbusReadInterval = 30;
 bool      settingModbusSinglephase = false;
+bool      settingModbusByteswap = false;
 
 bool      settingTimebasedSwitch = false;
 bool      settingRelayAllwaysOnSwitch = false;
