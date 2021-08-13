@@ -10,24 +10,25 @@
 **  TERMS OF USE: MIT License. See bottom of file.
 ***************************************************************************
 */
-#include <ModbusRTU.h>
+// #include <ModbusRTU.h>
+#include <ModbusIP_ESP8266.h>
 #include "Debug.h"
 // Modbus RTU Specific API
-#define MODBUS_RX D7 // RX  D7 = GPIO 13
-#define MODBUS_TX D5   // TX  D5 = GPIO 14
-#define MODBUS_RXTX D6 // TX Enable D6 = GPIO 12 , use in Modbus.begin(*Serial,RXTX_PIN)
+// #define MODBUS_RX D7 // RX  D7 = GPIO 13
+// #define MODBUS_TX D5   // TX  D5 = GPIO 14
+// #define MODBUS_RXTX D6 // TX Enable D6 = GPIO 12 , use in Modbus.begin(*Serial,RXTX_PIN)
 
 #define MODBUSCOUNT 40  // max number of registers in config file
+IPAddress remote(10, 0, 0, 70);  // Address of Modbus Slave device
 
+// #if defined(ESP8266)
+//  #include <SoftwareSerial.h>
+//  // SoftwareSerial S(D1, D2, false, 256);
 
-#if defined(ESP8266)
- #include <SoftwareSerial.h>
- // SoftwareSerial S(D1, D2, false, 256);
-
- // receivePin, transmitPin, inverse_logic, bufSize, isrBufSize
- // connect RX to D2 (GPIO4, Arduino pin 4), TX to D1 (GPIO5, Arduino pin 4)
- // SoftwareSerial S(4, 5);
-#endif
+//  // receivePin, transmitPin, inverse_logic, bufSize, isrBufSize
+//  // connect RX to D2 (GPIO4, Arduino pin 4), TX to D1 (GPIO5, Arduino pin 4)
+//  // SoftwareSerial S(4, 5);
+// #endif
 
 // Callback Modbus
 //
@@ -136,11 +137,11 @@ bool cb(Modbus::ResultCode event, uint16_t transactionId, void* data) {
     #endif
 
     ModbusdataObject.LastResult = event ;
-    //  if (event != 0) {
-    //    Debugln("Modbus LastResult not 0") ;
-    //  } else {
-    //    Debugln("Modbus LastResult OK") ;
-    //  }
+     if (event != 0) {
+       Debugln("Modbus LastResult not 0") ;
+     } else {
+       Debugln("Modbus LastResult OK") ;
+     }
   return true;
 }
 

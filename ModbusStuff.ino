@@ -20,8 +20,9 @@
 
 // Setup ModbusRTU and Software Serial
 
-SoftwareSerial S(MODBUS_RX, MODBUS_TX);
-ModbusRTU mb;
+// SoftwareSerial S(MODBUS_RX, MODBUS_TX);
+// ModbusRTU mb;
+ModbusIP mb;
 
 
 // Convert 2 16 bit registers to float 32bit value
@@ -60,32 +61,45 @@ uint32_t cfuint32(uint16_t u1, uint16_t u2)
 void setupModbus()
 {
 
-  if (bDebugMBmsg) Debugf("Init Serial with baudrate:\r\n");
-  if (bDebugMBmsg) Debugln(settingModbusBaudrate);
+//   if (bDebugMBmsg) Debugf("Init Serial with baudrate:\r\n");
+//   if (bDebugMBmsg) Debugln(settingModbusBaudrate);
 
-#if defined(ESP8266)
+// #if defined(ESP8266)
 
-      S.begin(settingModbusBaudrate, SWSERIAL_8N1, MODBUS_RX, MODBUS_TX);
-      mb.begin(&S,MODBUS_RXTX);
-    #elif defined(ESP32)
-      Serial1.begin(settingModbusBaudrate, SERIAL_8N1);
-      mb.begin(&Serial1,MODBUS_RXTX);
-    #else
-      Serial1.begin(settingModbusBaudrate, SERIAL_8N1);
-      mb.begin(&Serial1,MODBUS_RXTX);
-      mb.setBaudrate(settingModbusBaudrate);
-    #endif
+//       S.begin(settingModbusBaudrate, SWSERIAL_8N1, MODBUS_RX, MODBUS_TX);
+//       mb.begin(&S,MODBUS_RXTX);
+//     #elif defined(ESP32)
+//       Serial1.begin(settingModbusBaudrate, SERIAL_8N1);
+//       mb.begin(&Serial1,MODBUS_RXTX);
+//     #else
+//       Serial1.begin(settingModbusBaudrate, SERIAL_8N1);
+//       mb.begin(&Serial1,MODBUS_RXTX);
+//       mb.setBaudrate(settingModbusBaudrate);
+//     #endif
+     if (bDebugMBmsg) Debugf("Init Modbus IP \r\n");
 
-    mb.master();
-    Debugf("Modbus Serial init completed\r\n");
-}
-void waitMBslave() {
-    while (mb.slave())
-    { // Check if Modbus transaction is active, then wait
-      delay(10);
-      mb.task();    
+  if (mb.isConnected(remote)) {   // Check if connection to Modbus Slave is established
+     if (bDebugMBmsg) Debugf("Init Modbus IP IF was already established\r\n");
+
+    } else {
+    mb.connect(remote);           // Try to connect if no connection
+    if (mb.isConnected(remote)) {
+      Debugf("Init Modbus IP succesfull\r\n");
+    } else {
+      Debugf("ERROR Init Modbus IP FAILED\r\n");
     }
+  }
+
+    mb.client();
+    Debugf("Modbus IP IF init completed\r\n");
 }
+// void waitMBslave() {
+//     while (mb.slave())
+//     { // Check if Modbus transaction is active, then wait
+//       delay(10);
+//       mb.task();    
+//     }
+// }
 
 
 void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uint16_t numregs) {
@@ -190,11 +204,11 @@ bool Modbus_Read_short(uint16_t i)
 
   bool tempError = false;
 
-  if (!mb.slave())  
+  if (mb.isConnected(remote))  
   { 
     if (!bDebugMBlogic) { 
       mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, shortres, 1, cb); // Send Read Hreg from Modbus Server
-      waitMBslave();
+      // waitMBslave();
     } else MBtestreadHreg(i, Modbusmap[i].address, shortres, 1 ) ;
 
     if (ModbusdataObject.LastResult == 0)
@@ -223,7 +237,7 @@ bool Modbus_Read_short(uint16_t i)
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln("Error: Modbus Read failed, no IP connection");
     ModbusdataObject.LastResult = 99;
   }
 
@@ -236,12 +250,12 @@ bool Modbus_Read_ushort(uint16_t i)
   uint16_t ushortres[2];
   bool tempError = false;
 
-  if (!mb.slave())
+  if (mb.isConnected(remote))
   { 
 
     if (!bDebugMBlogic) { 
       mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, ushortres, 1, cb); // Send Read Hreg from Modbus Server
-      waitMBslave();
+      // waitMBslave();
     } else  MBtestreadHreg(i, Modbusmap[i].address, ushortres, 1 ) ;
 
     if (ModbusdataObject.LastResult == 0)
@@ -269,7 +283,7 @@ bool Modbus_Read_ushort(uint16_t i)
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln("Error: Modbus Read failed, no IP connection");
     ModbusdataObject.LastResult = 99;
   }
 
@@ -283,11 +297,11 @@ bool Modbus_Read_int(uint16_t i)
   bool tempError = false;
   int32_t tempint = 0;
 
-  if (!mb.slave())
+  if (mb.isConnected(remote))
   { 
     if (!bDebugMBlogic) { 
       mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, intres, 2, cb); // Send Read Hreg from Modbus Server
-      waitMBslave();
+      // waitMBslave();
     } else  MBtestreadHreg(i, Modbusmap[i].address, intres, 2 ) ;
     
     if (ModbusdataObject.LastResult == 0)
@@ -316,7 +330,7 @@ bool Modbus_Read_int(uint16_t i)
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln("Error: Modbus Read failed, no IP connection");
     ModbusdataObject.LastResult = 99;
   }
 
@@ -330,11 +344,11 @@ bool Modbus_Read_uint(uint16_t i)
   bool tempError = false;
   uint32_t tempuint = 0;
 
-  if (!mb.slave())
+  if (mb.isConnected(remote))
   {     
     if (!bDebugMBlogic) { 
       mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, uintres, 2, cb); // Send Read Hreg from Modbus Server
-      waitMBslave();
+      // waitMBslave();
     } else  MBtestreadHreg(i, Modbusmap[i].address, uintres, 2 ) ;
     
     if (ModbusdataObject.LastResult == 0)
@@ -364,7 +378,7 @@ bool Modbus_Read_uint(uint16_t i)
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln("Error: Modbus Read failed, no IP connection");
     ModbusdataObject.LastResult = 99;
   }
 
@@ -378,11 +392,11 @@ bool Modbus_Read_float(uint16_t i)
   bool tempError = false;
   float tempfloat = 0;
 
-  if (!mb.slave())
+  if (mb.isConnected(remote))
   { 
     if (!bDebugMBlogic) { 
       mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, floatres, 2, cb); // Send Read Hreg from Modbus Server
-      waitMBslave();
+      // waitMBslave();
     } else  MBtestreadHreg(i, Modbusmap[i].address, floatres, 2 ) ;
     
     if (ModbusdataObject.LastResult == 0)
@@ -412,7 +426,7 @@ bool Modbus_Read_float(uint16_t i)
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln("Error: Modbus Read failed, no IP connection");
     ModbusdataObject.LastResult = 99;
   }
 
@@ -432,11 +446,11 @@ bool Modbus_Read_string(uint16_t i)
 
   if (bDebugMBlogic) DebugTf("Modbus_Read_string Number of registers[%d]\r\n",numregs);
 
-  if (!mb.slave())  
+  if (mb.isConnected(remote))  
   { 
     if (!bDebugMBlogic) { 
       mb.readHreg(settingModbusSlaveAdr, Modbusmap[i].address, mb_reg2char.mb_charregs, numregs, cb); // Send Read Hreg from Modbus Server
-      waitMBslave();
+      // waitMBslave();
     } else MBtestreadHreg(i, Modbusmap[i].address, mb_reg2char.mb_charregs, numregs ) ;
 
     if (ModbusdataObject.LastResult == 0)
@@ -469,7 +483,7 @@ bool Modbus_Read_string(uint16_t i)
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln("Error: Modbus Read failed, no IP connection");
     ModbusdataObject.LastResult = 99;
   }
 
@@ -640,15 +654,15 @@ void readModbusSetup()
   uint16_t count = 8;
   uint16_t resval[8];  // set count value !!
 
- if (!mb.slave()) {    // Check if no transaction in progress
+ if (mb.isConnected(remote)) {    // Check if no transaction in progress
    // mb.readHreg(SLAVE_ID, FIRST_REG, res, REG_COUNT, cb); // Send Read Hreg from Modbus Server
    mb.readHreg(settingModbusSlaveAdr, offset, resval, count, cb); // Send Read Hreg from Modbus Server
 
-   while(mb.slave()) { // Check if transaction is active
- //    Debugf("readModbus slave true\r\n");
-     mb.task();
-     delay(10);
-   }
+//    while(mb.slave()) { // Check if transaction is active
+//  //    Debugf("readModbus slave true\r\n");
+//      mb.task();
+//      delay(10);
+//    }
    Debugf("readModbus2 result\r\n");
    for (int i = 0 ; i < count ; i++) {
       Debugf("Reg: %d, Val: %d \r\n", i+offset, resval[i]);
@@ -1055,7 +1069,12 @@ String getModbusValue(int modbusreg)
 void checkactivateRelay(bool activaterelay)
 {
   int16_t dagcurmin, dagstartmin, dagendmin = 0;
-  if (settingTimebasedSwitch && settingNTPenable)
+
+  if (settingRelayAllwaysOnSwitch) {
+    DebugTln("*#*#*#* WARNING, Relay set to ALWAYS ON");
+    setRelay(RELAYON) ;
+  } 
+  else if (settingTimebasedSwitch && settingNTPenable)
   {
 
     DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
@@ -1063,7 +1082,7 @@ void checkactivateRelay(bool activaterelay)
     dagcurmin = hour() * 60 + minute();
     dagstartmin = Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin;
     dagendmin = Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin ;
-
+    
     if (dagstartmin < dagendmin)
     {
       if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
@@ -1091,11 +1110,7 @@ void checkactivateRelay(bool activaterelay)
       }
     }
   }
-  if (settingRelayAllwaysOnSwitch) {
-    DebugTln("WARNING, Relay set to ON");
-    DebugTln("WARNING, Relay set to ON");
-    setRelay(RELAYON) ;
-  }
+  
   if (activaterelay) DebugTf("statusRelay[%d]\r\n", statusRelay);
 }
 

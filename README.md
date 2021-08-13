@@ -44,6 +44,8 @@ Looking for the documentation?, see the Documentation folder (work in progress).
 
 | Version | Release notes |
 |-|-|
+| 1.8.0 | Change Modbus IF to Wifi IP experiment (not working yet) |  
+| 1.7.4 | Add option for Relay On until next time Relay Off switch  (to be completed) |  
 | 1.7.3 | Byteswap option added for Modbus_String (via debug for now), String length fix |  
 | 1.7.2 | Modbusmap config filename via settings, added String type|  
 | 1.7.1 | Additional debug options, fix coding bugs|  
