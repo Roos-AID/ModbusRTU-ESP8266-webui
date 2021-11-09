@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.7.2
+**  Version 1.7.4
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -89,6 +89,13 @@ void processAPI()
 //          } else sendApiNotFound(URI);
         }
         else sendApiNotFound(URI);
+      }
+      else if (words[3] == "relayToggle"){
+        if (tempsettingRelayOn ) {
+          tempsettingRelayOn = false ;
+        }
+        else tempsettingRelayOn = true ;
+        // sendModbusmonitor();
       }
       else sendApiNotFound(URI);
     }
@@ -205,6 +212,10 @@ void sendModbusmonitor()
     if (settingRelayAllwaysOnSwitch) {
       sendJsonModbusmonObj("Warning: Relay set to allways", "ON", "");
     }
+    if (tempsettingRelayOn) {
+      sendJsonModbusmonObj("Warning: Relay temp. set to", "ON", "");
+    }
+
     if (statusRelay) {
       sendJsonModbusmonObj("Relay output status", "ON", "");
     } else
@@ -287,16 +298,20 @@ void sendDeviceInfo()
   sendNestedJsonObj("boardtype",
 #ifdef ARDUINO_ESP8266_NODEMCU
      "ESP8266_NODEMCU"
-#endif
-#ifdef ARDUINO_ESP8266_GENERIC
-     "ESP8266_GENERIC"
-#endif
-#ifdef ESP8266_ESP01
+#else
+  #ifdef ARDUINO_ESP8266_GENERIC
+      "ESP8266_GENERIC"
+  #else
+    #ifdef ESP8266_ESP01
      "ESP8266_ESP01"
-#endif
-#ifdef ESP8266_ESP12
-     "ESP8266_ESP12"
-#endif
+    #else
+      #ifdef ESP8266
+        "ESP8266"
+      #else "UNKNOWN"
+      #endif    
+    #endif
+  #endif
+#endif      
   );
   sendNestedJsonObj("ssid", WiFi.SSID().c_str());
   sendNestedJsonObj("wifirssi", WiFi.RSSI());

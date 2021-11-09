@@ -44,6 +44,7 @@ Looking for the documentation?, see the Documentation folder (work in progress).
 
 | Version | Release notes |
 |-|-|
+| 1.7.4 | Upgraded libraries, Arduino to 3.0.2.  Added in WebUI button Relay temporary on|  
 | 1.7.3 | Byteswap option added for Modbus_String (via debug for now), String length fix |  
 | 1.7.2 | Modbusmap config filename via settings, added String type|  
 | 1.7.1 | Additional debug options, fix coding bugs|  

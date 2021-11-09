@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusRTU-webui.ino
-**  Version 1.7.1
+**  Version 1.7.4
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -52,7 +52,7 @@ DECLARE_TIMER_SEC(timerreadmodbus, settingModbusReadInterval, CATCH_UP_MISSED_TI
 void setup()
 {
 
-  Serial.begin(115400, SERIAL_8N1);
+  Serial.begin(115200, SERIAL_8N1);
   while (!Serial) {} //Wait for OK
   Serial.println(F("\r\n[ModbusRTU-webui firmware version]\r\n"));
   Serial.printf("Booting....[%s]\r\n\r\n", String(_FW_VERSION).c_str());

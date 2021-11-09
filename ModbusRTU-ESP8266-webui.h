@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.7.3
+**  Version 1.7.4
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -91,6 +91,7 @@ bool      settingModbusSinglephase = false;
 bool      settingModbusByteswap = false;
 
 bool      settingTimebasedSwitch = false;
+bool      tempsettingRelayOn = false;
 bool      settingRelayAllwaysOnSwitch = false;
 uint8_t   statusRelay = false;
 

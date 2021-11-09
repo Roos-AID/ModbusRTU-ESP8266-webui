@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.js, part of Modbus-firmware project
-**  Version 1.7.2
+**  Version 1.7.4
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -57,6 +57,7 @@ function initMainPage() {
     location.href = "/";
   });
   document.getElementById('S_saveSettings').addEventListener('click', function () { saveSettings(); });
+  document.getElementById('tabToggleRelay').addEventListener('click', function () { relayToggle(); });
   document.getElementById('tabDeviceInfo').addEventListener('click', function () { deviceinfoPage(); });
   document.getElementById('tabSettings').addEventListener('click', function () { settingsPage(); });
   needReload = false;
@@ -69,6 +70,12 @@ function initMainPage() {
   document.getElementById("displayDeviceInfo").style.display = "none";
 
 } // initMainPage()
+
+  function relayToggle()
+  {
+    relayToggleFunc();
+    location.href = "/";
+  } // relayToggle()
 
   function deviceinfoPage()
   {
@@ -120,6 +127,24 @@ function initMainPage() {
 
   } // refreshDevTime()
 
+  //============================================================================
+  function relayToggleFunc()
+  {
+    console.log("relayToggleFunc() ..");
+
+    fetch(APIGW+"v1/relayToggle")
+      .then(response => response.json())
+      .then(json => {
+        console.log("parsed .., data is ["+ JSON.stringify(json)+"]");
+        data = json.devinfo;
+      })
+      .catch(function(error) {
+        var p = document.createElement('p');
+        p.appendChild(
+          document.createTextNode('Error: ' + error.message)
+        );
+      });
+  } // relayToggleFunc()
 
   //============================================================================
   function refreshDevInfo()
