@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.7.4
+**  Version 1.7.5
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -620,7 +620,7 @@ void readModbus()
         break;
       }
     }
-    yield();
+    // yield();
   }
 
   if (countError > 0)
@@ -1073,9 +1073,12 @@ void checkactivateRelay(bool activaterelay)
       if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
       {
         DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+        if (tempsettingRelayOn)    {        
+          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
+          DebugTln("Info: Relay Temporary On switch turned off"); 
+        }
         if (activaterelay && statusRelay == RELAYOFF) {
           setRelay(RELAYON); 
-          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
         }  
       }
       else
@@ -1089,9 +1092,12 @@ void checkactivateRelay(bool activaterelay)
       if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
       {
         DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+        if (tempsettingRelayOn)    {        
+          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
+          DebugTln("Info: Relay Temporary On switch turned off"); 
+        }
         if (activaterelay && statusRelay == RELAYOFF) { 
           setRelay(RELAYON);
-          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
         }  
       }
       else

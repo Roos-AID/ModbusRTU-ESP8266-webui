@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.7.4
+**  Version 1.7.5
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -95,7 +95,8 @@ void processAPI()
           tempsettingRelayOn = false ;
         }
         else tempsettingRelayOn = true ;
-        // sendModbusmonitor();
+        // Set the relay according to the schedule and the tempsetting
+        checkactivateRelay(true);
       }
       else sendApiNotFound(URI);
     }

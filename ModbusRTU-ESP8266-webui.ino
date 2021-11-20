@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusRTU-webui.ino
-**  Version 1.7.4
+**  Version 1.7.5
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -115,6 +115,8 @@ void setup()
     DebugTln("Wifi not Connected !!!  Restart Wifi");
     reconnectWiFiCount++;
     restartWiFi(CSTR(settingHostname), 240);
+    MDNS.update();
+
     //check telnet
     startTelnet();
   }
@@ -131,6 +133,8 @@ void setup()
       doRestart("IP Ping failed to often, restart ESP");
     }
     restartWiFi(CSTR(settingHostname), 240);
+    MDNS.update();
+
     //check telnet
     startTelnet();
   }
@@ -228,6 +232,8 @@ void doTaskEvery60s(){
     //disconnected, try to reconnect then...
     reconnectWiFiCount++;
     startWiFi(CSTR(settingHostname), 240);
+    MDNS.update();
+
     //check telnet
     startTelnet();
   }
@@ -243,6 +249,8 @@ void doTaskEvery60s(){
       doRestart("IP Ping failed to often, restart ESP");
     }
     restartWiFi(CSTR(settingHostname), 240);
+    MDNS.update();
+
     //check telnet
     startTelnet();
   }
@@ -255,11 +263,11 @@ void doBackgroundTasks()
 {
   handleMQTT();                 // MQTT transmissions
   httpServer.handleClient();
-  MDNS.update();
+  // MDNS.update();
   events();                     // trigger ezTime update etc.
   delay(1);
   handleDebug();
-  // yield();
+  yield();
 }
 
 void loop()
