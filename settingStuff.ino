@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : settingStuff.ino
-**  Version 1.7.2
+**  Version 1.8.0
 **
 **
 **  Copyright (c) 2021 Rob Roos
