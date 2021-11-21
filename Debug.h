@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Debug.h, part of ModbusRTU-webui
-**  Version 1.4.0
+**  Version 1.8.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications

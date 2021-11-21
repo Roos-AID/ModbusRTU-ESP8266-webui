@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.7.3
+**  Version 1.8.0
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -620,7 +620,7 @@ void readModbus()
         break;
       }
     }
-    yield();
+    // yield();
   }
 
   if (countError > 0)
@@ -1060,6 +1060,10 @@ void checkactivateRelay(bool activaterelay)
 
     DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
 
+    if (tempsettingRelayOn && activaterelay) {
+      DebugTln("Warning: Relay Temporary On until next on cycle"); 
+      setRelay(RELAYON); 
+    }
     dagcurmin = hour() * 60 + minute();
     dagstartmin = Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin;
     dagendmin = Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin ;
@@ -1069,12 +1073,18 @@ void checkactivateRelay(bool activaterelay)
       if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
       {
         DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
-        if (activaterelay && statusRelay == RELAYOFF)  setRelay(RELAYON);
+        if (tempsettingRelayOn)    {        
+          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
+          DebugTln("Info: Relay Temporary On switch turned off"); 
+        }
+        if (activaterelay && statusRelay == RELAYOFF) {
+          setRelay(RELAYON); 
+        }  
       }
       else
       {
         DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
-        if (activaterelay && statusRelay == RELAYON)  setRelay(RELAYOFF);
+        if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
       }
     }
     else
@@ -1082,12 +1092,18 @@ void checkactivateRelay(bool activaterelay)
       if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
       {
         DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
-        if (activaterelay && statusRelay == RELAYOFF)  setRelay(RELAYON);
+        if (tempsettingRelayOn)    {        
+          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
+          DebugTln("Info: Relay Temporary On switch turned off"); 
+        }
+        if (activaterelay && statusRelay == RELAYOFF) { 
+          setRelay(RELAYON);
+        }  
       }
       else
       {
         DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
-        if (activaterelay && statusRelay == RELAYON)   setRelay(RELAYOFF);
+        if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
       }
     }
   }
