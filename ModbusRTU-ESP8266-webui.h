@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.8.0
+**  Version 1.8.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -13,7 +13,10 @@
 
 //#include <ESP8266WiFi.h>
 #include <Arduino.h>
-#include <ezTime.h>             // https://github.com/ropg/ezTime
+
+#include <AceTime.h>
+#include <TimeLib.h>
+
 #include <TelnetStream.h>       // https://github.com/jandrassy/TelnetStream/commit/1294a9ee5cc9b1f7e51005091e351d60c8cddecf
 #include <ArduinoJson.h>        // https://arduinojson.org/
 #include "Wire.h"
@@ -35,7 +38,9 @@ void setLed(int8_t, uint8_t);
 
 #define _HOSTNAME   "ModbusRTU"
 #define SETTINGS_FILE   "/settings.ini"
-#define DEFAULT_TIMEZONE "Europe/Amsterdam"
+#define NTP_DEFAULT_TIMEZONE "Europe/Amsterdam"
+#define NTP_HOST_DEFAULT "nl.pool.ntp.org"
+#define NTP_RESYNC_TIME 1800 //seconds = every 30 minutes
 
 #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant" // Home Assistant discovery prefix
 
@@ -55,9 +60,14 @@ uint64_t    upTimeSeconds=0;
 uint32_t    rebootCount=0;
 uint32_t    reconnectWiFiCount=0;
 uint32_t    restartWiFiCount=0;
-Timezone    myTZ;
 String      sMessage = "";
 String      NodeId = "";
+
+//Use acetime
+using namespace ace_time;
+static BasicZoneProcessor timeProcessor;
+static const int CACHE_SIZE = 3;
+static BasicZoneManager<CACHE_SIZE> manager(zonedb::kZoneRegistrySize, zonedb::kZoneRegistry);
 
 const char *weekDayName[]  {  "Unknown", "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Unknown" };
 const char *flashMode[]    { "QIO", "QOUT", "DIO", "DOUT", "Unknown" };
@@ -79,7 +89,8 @@ String    settingMQTThaprefix = HOME_ASSISTANT_DISCOVERY_PREFIX;
 String    settingMQTTuniqueid = ""; // Intialized in readsettings
 String    settingMQTTtopTopic = "ModbusRTUrdr";
 bool      settingNTPenable = true;
-String    settingNTPtimezone = DEFAULT_TIMEZONE;
+String    settingNTPtimezone = NTP_DEFAULT_TIMEZONE;
+String    settingNTPhostname = NTP_HOST_DEFAULT;
 bool      settingLEDblink = true;
 
 //Modbus Settings

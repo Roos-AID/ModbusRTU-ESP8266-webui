@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.css,
-**  Version 1.8.0
+**  Version 1.8.1
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
@@ -88,6 +88,7 @@ input {
   display: flex;
 
   -webkit-flex-flow: row wrap;
+  flex-flow: row wrap;
   justify-content: space-around; /* flex-start | flex-end | center | space-between | space-around | space-evenly */
 
 }
@@ -105,6 +106,7 @@ input {
   display: flex;
 
   -webkit-flex-flow: column wrap;
+  flex-flow: row wrap;
   justify-content: flex-start;
   margin-top: 10px;
 
@@ -123,6 +125,7 @@ input {
   display: -webkit-flex;
   display: flex-start;
   -webkit-flex-flow: row wrap;
+  flex-flow: row wrap;
   min-height: 24px;
 
 }

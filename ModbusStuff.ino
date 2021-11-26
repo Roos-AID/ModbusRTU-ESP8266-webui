@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.8.0
+**  Version 1.8.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -77,7 +77,7 @@ void setupModbus()
     #endif
 
     mb.master();
-    Debugf("Modbus Serial init completed\r\n");
+    DebugTf("Modbus Serial init completed\r\n");
 }
 void waitMBslave() {
     while (mb.slave())
@@ -620,7 +620,7 @@ void readModbus()
         break;
       }
     }
-    // yield();
+    yield();          
   }
 
   if (countError > 0)
@@ -793,7 +793,9 @@ int sendModbus(const char* buf, int len)
    if (bDebugMBmsg) DebugTf("printDaytimemap begin for: %d, records \r\n",7);
    for (int i = 1; i <= 7; i++)
    {
-     DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+    //  DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+     DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+
    }
   Debugln();
   checkactivateRelay(false) ;
@@ -1057,8 +1059,9 @@ void checkactivateRelay(bool activaterelay)
   int16_t dagcurmin, dagstartmin, dagendmin = 0;
   if (settingTimebasedSwitch && settingNTPenable)
   {
-
-    DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+    loopNTP(); // Make sure time is set
+    // DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+    DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
 
     if (tempsettingRelayOn && activaterelay) {
       DebugTln("Warning: Relay Temporary On until next on cycle"); 

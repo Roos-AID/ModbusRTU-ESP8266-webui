@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : index.js, part of Modbus-firmware project
-**  Version 1.8.0
+**  Version 1.8.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -542,6 +542,7 @@ function sendPostSetting(field, value) {
     , ["mqttuniqueid", "MQTT Uniqueid"]
     , ["ntpenable", "NTP Enable"]
     , ["ntptimezone", "NTP Timezone"]
+    , ["ntphostname", "NTP Hostname"]
     , ["uptime", "Uptime since boot"]
     , ["bootcount", "Nr. Reboots"]
     , ["ledblink", "Heartbeat LED (on/off)"]

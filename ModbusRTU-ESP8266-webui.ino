@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusRTU-webui.ino
-**  Version 1.8.0
+**  Version 1.8.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -16,10 +16,11 @@
  *  How to install the ModbusRTU-webui on your nodeMCU
  *
  *  Make sure you have all required library's installed:
- *  - ezTime - https://github.com/ropg/ezTime
+ *  - AceTime v1.8.0 - https://github.com/bxparks/AceTime
  *  - TelnetStream - https://github.com/jandrassy/TelnetStream/commit/1294a9ee5cc9b1f7e51005091e351d60c8cddecf
  *  - ArduinoJson - https://arduinojson.org/
  *  - modbus-esp8266  -https://github.com/emelianov/modbus-esp8266
+ *  - pubsubclient (MQTT) -https://github.com/knolleary/pubsubclient
  *  All the library's can be installed using the library manager.
  *
  *  How to upload to your LittleFS?
@@ -57,14 +58,10 @@ void setup()
   Serial.println(F("\r\n[ModbusRTU-webui firmware version]\r\n"));
   Serial.printf("Booting....[%s]\r\n\r\n", String(_FW_VERSION).c_str());
   
-
-  rebootCount = updateRebootCount();
+  // rebootCount = updateRebootCount();
 
   //setup randomseed the right way
   randomSeed(RANDOM_REG32); //This is 8266 HWRNG used to seed the Random PRNG: Read more: https://config9.com/arduino/getting-a-truly-random-number-in-arduino/
-
-  lastReset     = ESP.getResetReason();
-  Serial.printf("Last reset reason: [%s]\r\n", CSTR(ESP.getResetReason()));
 
   if (settingRelayAllwaysOnSwitch) setRelay(RELAYON);  else
     setRelay(RELAYOFF);
@@ -75,7 +72,6 @@ void setup()
 
   LittleFS.begin();
   readSettings(true);    
-  
   CHANGE_INTERVAL_SEC(timerreadmodbus, settingModbusReadInterval, CATCH_UP_MISSED_TICKS);
 
   NodeId = getUniqueId() ;
@@ -98,6 +94,12 @@ void setup()
   startWebserver();
   setupPing();
 
+  // log last reset reason after all above has started 
+  lastReset = ESP.getResetReason();
+  DebugTf("Last reset reason: [%s]\r\n", CSTR(ESP.getResetReason()));
+  rebootCount = updateRebootCount();
+  updateRebootLog(ESP.getResetReason());
+
   //============== Setup Modbus ======================================
   setupModbus();
   doInitModbusMap();
@@ -105,7 +107,7 @@ void setup()
   printDaytimemap();
   //  printModbusmap() ;
   //  readModbusSetup();
-  readModbus();
+  // readModbus();
   
   // Double check if Wifi is still alive (seems sometimes problematic)
 
@@ -138,8 +140,6 @@ void setup()
     //check telnet
     startTelnet();
   }
-
-
 
   Debugf("Reboot count = [%d]\r\n", rebootCount);
   Debugln(F("Setup finished!"));
@@ -214,7 +214,6 @@ void doTaskEvery1s(){
 //===[ Do task every 5s ]===
 void doTaskEvery5s(){
   //== do tasks ==
-  // yield();
 }
 
 //===[ Do task every 30s ]===
@@ -261,12 +260,13 @@ void doTaskEvery60s(){
 //===[ Do the background tasks ]===
 void doBackgroundTasks()
 {
-  handleMQTT();                 // MQTT transmissions
-  httpServer.handleClient();
-  // MDNS.update();
-  events();                     // trigger ezTime update etc.
-  delay(1);
-  handleDebug();
+    if (WiFi.status() == WL_CONNECTED) {
+    //while connected handle everything that uses network stuff
+      handleDebug();
+      handleMQTT();                 // MQTT transmissions
+      httpServer.handleClient();
+      loopNTP();
+    }           
   yield();
 }
 
