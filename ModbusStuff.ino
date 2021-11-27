@@ -1060,62 +1060,68 @@ void checkactivateRelay(bool activaterelay)
   if (settingTimebasedSwitch && settingNTPenable)
   {
     loopNTP(); // Make sure time is set
-    // DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
-    DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
-
-    if (tempsettingRelayOn && activaterelay) {
-      DebugTln("Warning: Relay Temporary On until next on cycle"); 
-      setRelay(RELAYON); 
+    if (NtpStatus != TIME_SYNC) {
+        DebugTln("Warning: Time not synced, exit activate relay check"); 
     }
-    dagcurmin = hour() * 60 + minute();
-    dagstartmin = Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin;
-    dagendmin = Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin ;
+    else {
+        // DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+        DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
 
-    if (dagstartmin < dagendmin)
-    {
-      if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
-      {
-        DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
-        if (tempsettingRelayOn)    {        
-          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
-          DebugTln("Info: Relay Temporary On switch turned off"); 
-        }
-        if (activaterelay && statusRelay == RELAYOFF) {
+        if (tempsettingRelayOn && activaterelay) {
+          DebugTln("Warning: Relay Temporary On until next on cycle"); 
           setRelay(RELAYON); 
-        }  
-      }
-      else
-      {
-        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
-        if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
-      }
-    }
-    else
-    {
-      if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
-      {
-        DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
-        if (tempsettingRelayOn)    {        
-          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
-          DebugTln("Info: Relay Temporary On switch turned off"); 
         }
-        if (activaterelay && statusRelay == RELAYOFF) { 
-          setRelay(RELAYON);
-        }  
+        dagcurmin = hour() * 60 + minute();
+        dagstartmin = Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin;
+        dagendmin = Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin ;
+
+        if (dagstartmin < dagendmin)
+        {
+          if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
+          {
+            DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+            if (tempsettingRelayOn)    {        
+              tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
+              DebugTln("Info: Relay Temporary On switch turned off"); 
+            }
+            if (activaterelay && statusRelay == RELAYOFF) {
+              setRelay(RELAYON); 
+            }  
+          }
+          else
+          {
+            DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
+            if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
+          }
+        }
+        else
+        {
+          if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
+          {
+            DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+            if (tempsettingRelayOn)    {        
+              tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
+              DebugTln("Info: Relay Temporary On switch turned off"); 
+            }
+            if (activaterelay && statusRelay == RELAYOFF) { 
+              setRelay(RELAYON);
+            }  
+          }
+          else
+          {
+            DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
+            if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
+          }
+        }
+      
+      if (settingRelayAllwaysOnSwitch) {
+        DebugTln("WARNING, Relay set to ON");
+        DebugTln("WARNING, Relay set to ON");
+        setRelay(RELAYON) ;
       }
-      else
-      {
-        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
-        if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
-      }
+      if (activaterelay) DebugTf("statusRelay[%d]\r\n", statusRelay);
     }
-  }
-  if (settingRelayAllwaysOnSwitch) {
-    DebugTln("WARNING, Relay set to ON");
-    DebugTln("WARNING, Relay set to ON");
-    setRelay(RELAYON) ;
-  }
-  if (activaterelay) DebugTf("statusRelay[%d]\r\n", statusRelay);
+  } 
 }
 
 void setRelay(uint8_t status)

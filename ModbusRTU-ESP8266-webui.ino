@@ -94,6 +94,12 @@ void setup()
   startWebserver();
   setupPing();
 
+  // when dependend on time schedule, then ensure time is set 
+  while (settingTimebasedSwitch && settingNTPenable && (NtpStatus != TIME_SYNC))
+  {
+    loopNTP(); // Make sure time is set
+  }
+
   // log last reset reason after all above has started 
   lastReset = ESP.getResetReason();
   DebugTf("Last reset reason: [%s]\r\n", CSTR(ESP.getResetReason()));
@@ -107,7 +113,7 @@ void setup()
   printDaytimemap();
   //  printModbusmap() ;
   //  readModbusSetup();
-  // readModbus();
+  readModbus();
   
   // Double check if Wifi is still alive (seems sometimes problematic)
 

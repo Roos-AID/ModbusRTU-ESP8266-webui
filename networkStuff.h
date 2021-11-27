@@ -207,9 +207,14 @@ if (!settingNTPenable) return;
         } else DebugTln(F("Timezone lookup: successful"));
         
         auto myTime = ZonedDateTime::forUnixSeconds(NtpLastSync, myTz);
-        setTime(myTime.hour(), myTime.minute(), myTime.second(), myTime.day(), myTime.month(), myTime.year());
-        NtpStatus = TIME_SYNC;
-        DebugTln(F("Time synced!"));
+        if (myTime.isError()) {
+          DebugTln("Error: Time not set correctly, wait for sync");
+          // NtpStatus = TIME_NEEDSYNC;
+        } else {
+          setTime(myTime.hour(), myTime.minute(), myTime.second(), myTime.day(), myTime.month(), myTime.year());
+          NtpStatus = TIME_SYNC;
+          DebugTln(F("Time synced!"));
+        }
       } 
     break;
     case TIME_SYNC:
@@ -223,8 +228,8 @@ if (!settingNTPenable) return;
 
 
  
-  DECLARE_TIMER_SEC(timerNTPtime, 10, CATCH_UP_MISSED_TICKS);
-  if DUE(timerNTPtime) Debugf("Epoch Seconds: %d\r\n", time(nullptr)); //timeout, then break out of this loop
+  // DECLARE_TIMER_SEC(timerNTPtime, 10, CATCH_UP_MISSED_TICKS);
+  // if DUE(timerNTPtime) Debugf("Epoch Seconds: %d\r\n", time(nullptr)); //timeout, then break out of this loop
 }
 
 String getMacAddress()
@@ -261,11 +266,11 @@ void setupPing() {
         response.EchoMessageSize - sizeof(struct icmp_echo_hdr),
         response.ResponseTime,
         response.TimeToLive);
-      DebugTln("End Ping");
+      // DebugTln("End Ping");
     }
     else
     {
-      DebugTf("Request timed out.\n");
+      DebugTf("Ping request timed out.\n");
     }
 
     // Return true to continue the ping sequence.
