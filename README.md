@@ -44,6 +44,7 @@ Looking for the documentation?, see the Documentation folder (work in progress).
 
 | Version | Release notes |
 |-|-|
+| 1.9.0 | Breaking change , added stateclass to MQ Autoconfigure for HA , additional parameter in Modbusmap.cfg see examples|  
 | 1.8.1 | Implement a bootlog to register reboot reason and debug info, copied from rlagerweij<br>Changed: removed ezTime NTP library, moved to ConfigTime NTP and AceTime |  
 | 1.8.0 | New baseline for future improvements, tested on Arduino 3.0.2 / ESP |  
 | 1.7.5 | Improved responsiveness WebUI, improved functionality in Relay Temp on switch|  

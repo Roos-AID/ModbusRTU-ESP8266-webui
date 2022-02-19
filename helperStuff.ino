@@ -654,7 +654,8 @@ bool updateRebootLog(String text)
         //read from file
         while (infh.available() && (i < LOG_LINES)){
           //read the first line 
-          String line = infh.readStringUntil('\r\n');
+          // String line = infh.readStringUntil('\r\n');
+          String line = infh.readStringUntil('\n');
           if (line.length() > 3) { //TODO: check is no longer needed?
             outfh.print(line);
           }

@@ -100,6 +100,7 @@ struct Modbuslookup_t
         char* friendlyname;
         char* unit;
         char* devclass;
+        char* stateclass;
     };
 
 Modbuslookup_t* Modbusmap;

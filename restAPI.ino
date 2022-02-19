@@ -308,7 +308,8 @@ void sendDeviceInfo()
     #else
       #ifdef ESP8266
         "ESP8266"
-      #else "UNKNOWN"
+      #else 
+        "UNKNOWN"
       #endif    
     #endif
   #endif
