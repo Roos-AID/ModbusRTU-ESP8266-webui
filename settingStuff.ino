@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : settingStuff.ino
-**  Version 1.8.0
+**  Version 1.8.1
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -42,6 +42,7 @@ void writeSettings(bool show)
   root["MQTTuniqueid"] = settingMQTTuniqueid;
   root["NTPenable"] = settingNTPenable;
   root["NTPtimezone"] = settingNTPtimezone;
+  root["NTPhostname"] = settingNTPhostname;
   root["LEDblink"] = settingLEDblink;
   root["modbusconfigfile"] = settingModbusCfgfile;
   root["modbusslaveadres"] = settingModbusSlaveAdr;
@@ -110,7 +111,9 @@ void readSettings(bool show)
 
   settingNTPenable        = doc["NTPenable"];
   settingNTPtimezone      = doc["NTPtimezone"].as<String>();
-  if (settingNTPtimezone=="null")  settingNTPtimezone = "Europe/Amsterdam"; //default to amsterdam timezone
+  if (settingNTPtimezone=="null")  settingNTPtimezone = NTP_DEFAULT_TIMEZONE;  
+  settingNTPhostname      = doc["NTPhostname"].as<String>();
+  if (settingNTPhostname=="null")  settingNTPhostname = NTP_HOST_DEFAULT; 
   settingLEDblink         = doc["LEDblink"]|settingLEDblink;
   settingModbusCfgfile    = doc["modbusconfigfile"].as<String>();
   if (settingModbusCfgfile == "null")  settingModbusCfgfile = "Modbusmap.cfg" ;
@@ -141,7 +144,8 @@ void readSettings(bool show)
     Debugf("HA prefix     : %s\r\n", CSTR(settingMQTThaprefix));
     Debugf("MQTT uniqueid : %s\r\n", CSTR(settingMQTTuniqueid));
     Debugf("NTP enabled   : %s\r\n", CBOOLEAN(settingNTPenable));
-    Debugf("NPT timezone  : %s\r\n", CSTR(settingNTPtimezone));
+    Debugf("NTP timezone  : %s\r\n", CSTR(settingNTPtimezone));
+    Debugf("NTP hostname  : %s\r\n", CSTR(settingNTPhostname));
     Debugf("Led Blink     : %s\r\n", CBOOLEAN(settingLEDblink));
     Debugf("Modbus configfile : %s\r\n",  CSTR(settingModbusCfgfile));
     Debugf("Modbus slaveadr : %d\r\n",  settingModbusSlaveAdr);
@@ -205,6 +209,12 @@ void updateSetting(const char *field, const char *newValue)
   }
   if (stricmp(field, "NTPenable") == 0)
     settingNTPenable = EVALBOOLEAN(newValue);
+
+  if (stricmp(field, "NTPhostname")==0)    {
+    settingNTPhostname = String(newValue); 
+    startNTP();
+  }
+
   if (stricmp(field, "NTPtimezone")==0)    {
     settingNTPtimezone = String(newValue);
     startNTP();  // update timezone if changed

@@ -1,7 +1,7 @@
 /* 
 ***************************************************************************  
 **  Program : FSexplorer
-**  Version 1.8.0
+**  Version 1.8.1
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -88,9 +88,9 @@ void startWebserver(){
 
   httpServer.begin();
   // Set up first message as the IP address
-  Serial.println("\nHTTP Server started\r");  
+  DebugTln("HTTP Server started\r");  
   sprintf(cMsg, "%03d.%03d.%d.%d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
-  Serial.printf("\nAssigned IP=%s\r\n", cMsg);
+  DebugTf("Assigned IP=%s\r\n", cMsg);
 }
 //=====================================================================================
 void setupFSexplorer(){    

@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.8.0
+**  Version 1.8.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -77,7 +77,7 @@ void setupModbus()
     #endif
 
     mb.master();
-    Debugf("Modbus Serial init completed\r\n");
+    DebugTf("Modbus Serial init completed\r\n");
 }
 void waitMBslave() {
     while (mb.slave())
@@ -620,7 +620,7 @@ void readModbus()
         break;
       }
     }
-    // yield();
+    yield();          
   }
 
   if (countError > 0)
@@ -659,7 +659,7 @@ void readModbusSetup()
 }
 
 
-int sendModbus(const char* buf, int len)
+void sendModbus(const char* buf, int len)
  {
    //Just send the buffer to Modbus when the Serial interface is available
    // Needs to be Mudbus RTU !!!
@@ -793,7 +793,9 @@ int sendModbus(const char* buf, int len)
    if (bDebugMBmsg) DebugTf("printDaytimemap begin for: %d, records \r\n",7);
    for (int i = 1; i <= 7; i++)
    {
-     DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+    //  DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+     DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+
    }
   Debugln();
   checkactivateRelay(false) ;
@@ -826,7 +828,7 @@ int sendModbus(const char* buf, int len)
    Modbusmap  = new  Modbuslookup_t[MODBUSCOUNT];
 
    int id = 0;
-   int Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9;
+   int Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9, Index10;
    int Formatcnt = 0;
    String sReg;
    String sFormat;
@@ -835,6 +837,7 @@ int sendModbus(const char* buf, int len)
    String sLabel;
    String sName;
    String sDevclass;
+   String sStateclass;
    String sUnit;
    String sPhase;
    String sFactor;
@@ -862,7 +865,7 @@ int sendModbus(const char* buf, int len)
             if (bDebugMBmsg) DebugTf("INFO: Either comment or invalid config line: [%s]\r\n", sLine.c_str());
           } else {             
             if (bDebugMBmsg) DebugTf("sline[%s]\r\n", sLine.c_str());
-            // reg, format, type, label, friendlyname, devclass, unit, phase, mqenable
+            // reg, format, type, label, friendlyname, devclass, stateclass, unit, phase, mqenable
             Index1 = sLine.indexOf(',');
             Index2 = sLine.indexOf(',', Index1 + 1);
             Index3 = sLine.indexOf(',', Index2 + 1);
@@ -872,39 +875,42 @@ int sendModbus(const char* buf, int len)
             Index7 = sLine.indexOf(',', Index6 + 1);
             Index8 = sLine.indexOf(',', Index7 + 1);
             Index9 = sLine.indexOf(',', Index8 + 1);
-            if (bDebugMBmsg)  DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d]\r\n", Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9);
+            Index10 = sLine.indexOf(',', Index9 + 1);
+            if (bDebugMBmsg)  DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d],Index10[%d]\r\n", Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9, Index10);
 
-            if (Index9 <= 0)
+            if (Index10 <= 0)
             {
               if (bDebugMBmsg) {
-                DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d]\r\n", Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9);
+                DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d],Index10[%d]\r\n", Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9,Index10);
                 DebugTln("ERROR: Missing parameters in config line, skip line");
               }
               break;
             }
             Formatcnt = 0; // set Modbus_string lenght to 0
-            sReg       = sLine.substring(0, Index1);
-            sFormat    = sLine.substring(Index1 + 1, Index2);
-            sOper      = sLine.substring(Index2 + 1, Index3);
-            sLabel     = sLine.substring(Index3 + 1, Index4);
-            sName      = sLine.substring(Index4 + 1, Index5);
-            sDevclass  = sLine.substring(Index5 + 1, Index6);
-            sUnit      = sLine.substring(Index6 + 1, Index7);
-            sPhase     = sLine.substring(Index7 + 1, Index8);
-            sFactor    = sLine.substring(Index8 + 1, Index9);
-            sMQEnable  = sLine.substring(Index9 + 1);
+            sReg        = sLine.substring(0, Index1);
+            sFormat     = sLine.substring(Index1 + 1, Index2);
+            sOper       = sLine.substring(Index2 + 1, Index3);
+            sLabel      = sLine.substring(Index3 + 1, Index4);
+            sName       = sLine.substring(Index4 + 1, Index5);
+            sDevclass   = sLine.substring(Index5 + 1, Index6);
+            sStateclass = sLine.substring(Index6 + 1, Index7);
+            sUnit       = sLine.substring(Index7 + 1, Index8);
+            sPhase      = sLine.substring(Index8 + 1, Index9);
+            sFactor     = sLine.substring(Index9 + 1, Index10);
+            sMQEnable   = sLine.substring(Index10 + 1);
             sReg.trim();
             sFormat.trim();
             sOper.trim();
             sLabel.trim();
             sName.trim();
             sDevclass.trim();
+            sStateclass.trim();
             sUnit.trim();
             sPhase.trim();
             sFactor.trim();
             sMQEnable.trim();
             if (bDebugMBmsg) {
-               DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+               DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s], sStateclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sStateclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
                delay(10);
             }
             id++;
@@ -931,14 +937,14 @@ int sendModbus(const char* buf, int len)
                         Formatcnt = sFormatcnt.toInt();
                         if (bDebugMBmsg) DebugTf("Modbus_string detected, sFormat[%s], sFormatcnt[%s], length[%d]\r\n",CSTR(sFormat), CSTR(sFormatcnt),Formatcnt);
                         if (Formatcnt > 64 || Formatcnt == 0) {
-                          DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+                          DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s], sStateclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sStateclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
                           DebugTf("ERROR Modbus_string length[%d] outside allowed range\r\n",Formatcnt);
                           Formatcnt = 0;
                           Modbusmap[id].regformat = Modbus_undef; 
                     
                         }
                         else if ((Formatcnt % 2) != 0) {
-                          DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+                          DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s] , sStateclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sStateclass.c_str(),  sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
                           DebugTf("ERROR Modbus_string length[%d] not even\r\n",Formatcnt);
                           Formatcnt = 0;
                           Modbusmap[id].regformat = Modbus_undef;
@@ -967,20 +973,24 @@ int sendModbus(const char* buf, int len)
             char *clabel = new char[sLabel.length() + 1];
             char *cname = new char[sName.length() + 1];
             char *cdevclass = new char[sDevclass.length() + 1];
+            char *cstateclass = new char[sStateclass.length() + 1];
             char *cunit = new char[sUnit.length() + 1];
             strcpy(clabel, sLabel.c_str());
             strcpy(cname, sName.c_str());
             strcpy(cdevclass, sDevclass.c_str());
+            strcpy(cstateclass, sStateclass.c_str());
             strcpy(cunit, sUnit.c_str());
 
             Modbusmap[id].label = clabel;
             Modbusmap[id].friendlyname = cname;
             Modbusmap[id].devclass = cdevclass;
+            Modbusmap[id].stateclass = cstateclass;
             Modbusmap[id].unit = cunit;
             // delete [] clabel;  // do not delete objects, are still required during runtime !
             // delete [] cmbstring;
             // delete [] cname;
             // delete [] cdevclass;
+            // delete [] cstateclass;
             // delete [] cunit;
             switch (Modbusmap[id].regformat) {
               case Modbus_short:    Modbusmap[id].Modbus_short  = 9999; break;
@@ -1028,7 +1038,7 @@ void printModbusmapln(int16_t i) {
     default:                 DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label); break;
     } 
   Debugf("  Label[%s] Name[%s] Phase[%d] ",  Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].phase);
-  Debugf("Devclass[%s] Unit[%s] Factor[%f] MQEnable[%d]\r\n", Modbusmap[i].devclass, Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
+  Debugf("Devclass[%s] Stateclass[%s] Unit[%s] Factor[%f] MQEnable[%d]\r\n", Modbusmap[i].devclass, Modbusmap[i].stateclass, Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
 
 }
 
@@ -1057,62 +1067,69 @@ void checkactivateRelay(bool activaterelay)
   int16_t dagcurmin, dagstartmin, dagendmin = 0;
   if (settingTimebasedSwitch && settingNTPenable)
   {
-
-    DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
-
-    if (tempsettingRelayOn && activaterelay) {
-      DebugTln("Warning: Relay Temporary On until next on cycle"); 
-      setRelay(RELAYON); 
+    loopNTP(); // Make sure time is set
+    if (NtpStatus != TIME_SYNC) {
+        DebugTln("Warning: Time not synced, exit activate relay check"); 
     }
-    dagcurmin = hour() * 60 + minute();
-    dagstartmin = Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin;
-    dagendmin = Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin ;
+    else {
+        // DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+        DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
 
-    if (dagstartmin < dagendmin)
-    {
-      if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
-      {
-        DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
-        if (tempsettingRelayOn)    {        
-          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
-          DebugTln("Info: Relay Temporary On switch turned off"); 
-        }
-        if (activaterelay && statusRelay == RELAYOFF) {
+        if (tempsettingRelayOn && activaterelay) {
+          DebugTln("Warning: Relay Temporary On until next on cycle"); 
           setRelay(RELAYON); 
-        }  
-      }
-      else
-      {
-        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
-        if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
-      }
-    }
-    else
-    {
-      if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
-      {
-        DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
-        if (tempsettingRelayOn)    {        
-          tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
-          DebugTln("Info: Relay Temporary On switch turned off"); 
         }
-        if (activaterelay && statusRelay == RELAYOFF) { 
-          setRelay(RELAYON);
-        }  
+        dagcurmin = hour() * 60 + minute();
+        dagstartmin = Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin;
+        dagendmin = Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin ;
+
+        if (dagstartmin < dagendmin)
+        {
+          if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
+          {
+            DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+            if (tempsettingRelayOn)    {        
+              tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
+              DebugTln("Info: Relay Temporary On switch turned off"); 
+            }
+            if (activaterelay && statusRelay == RELAYOFF) {
+              setRelay(RELAYON); 
+            }  
+          }
+          else
+          {
+            DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
+            if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
+          }
+        }
+        else
+        {
+          if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
+          {
+            DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+            if (tempsettingRelayOn)    {        
+              tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
+              DebugTln("Info: Relay Temporary On switch turned off"); 
+            }
+            if (activaterelay && statusRelay == RELAYOFF) { 
+              setRelay(RELAYON);
+            }  
+          }
+          else
+          {
+            DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
+            if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
+          }
+        }
+      
+      if (settingRelayAllwaysOnSwitch) {
+        DebugTln("WARNING, Relay set to ON");
+        DebugTln("WARNING, Relay set to ON");
+        setRelay(RELAYON) ;
       }
-      else
-      {
-        DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
-        if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
-      }
+      if (activaterelay) DebugTf("statusRelay[%d]\r\n", statusRelay);
     }
-  }
-  if (settingRelayAllwaysOnSwitch) {
-    DebugTln("WARNING, Relay set to ON");
-    DebugTln("WARNING, Relay set to ON");
-    setRelay(RELAYON) ;
-  }
-  if (activaterelay) DebugTf("statusRelay[%d]\r\n", statusRelay);
+  } 
 }
 
 void setRelay(uint8_t status)

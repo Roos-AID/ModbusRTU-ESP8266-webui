@@ -383,9 +383,9 @@ void doAutoConfigure()
   MQTTDebugln("Start doAutoConfigureMB");
 
   //  String sTopic_template = "%homeassistant%/sensor/%node_id%/%label%/config";
-  //  String sMsg_template = "{\"avty_t\":\"%mqtt_pub_topic%\",\"dev\":{\"identifiers\":\"%node_id%\",\"manufacturer\":\"Rob Roos\",\"model\":\"modbusRTUrdr\",\"name\":\"ModbusRTU reader(%hostname%)\",\"sw_version\":\"%version%\"},\"uniq_id\":\"%node_id%-%label%\",\"device_class\":\"%devclass%\",\"name\":\"%hostname%_%friendlyname%\", \"stat_t\":\"%mqtt_pub_topic%/%label%\",\"unit_of_measurement\": \"%unit%\", \"value_template\": \"{{ value }}\" }" ;
+  //  String sMsg_template = "{\"avty_t\":\"%mqtt_pub_topic%\",\"dev\":{\"identifiers\":\"%node_id%\",\"manufacturer\":\"Rob Roos\",\"model\":\"modbusRTUrdr\",\"name\":\"ModbusRTU reader(%hostname%)\",\"sw_version\":\"%version%\"},\"uniq_id\":\"%node_id%-%label%\",\"device_class\":\"%devclass%\",\"state_class\":\"%stateclass%\",\"name\":\"%hostname%_%friendlyname%\", \"stat_t\":\"%mqtt_pub_topic%/%label%\",\"unit_of_measurement\": \"%unit%\", \"value_template\": \"{{ value }}\" }" ;
   String sTopic_template = "%homeassistant%/sensor/%label%/config";
-  String sMsg_template = "{\"avty_t\": \"%mqtt_pub_topic%\", \"dev\": {\"identifiers\": \"%node_id%\", \"manufacturer\": \"Rob Roos\", \"model\": \"modbusRTUrdr\", \"name\": \"ModbusRTU reader(%hostname%)\", \"sw_version\": \"%version%\"}, \"uniq_id\": \"%node_id%-%label%\", \"device_class\": \"%devclass%\", \"name\": \"%hostname%_%friendlyname%\", \"stat_t\": \"%mqtt_pub_topic%/%label%\", \"unit_of_measurement\": \"%unit%\", \"value_template\": \"{{ value }}\" }";
+  String sMsg_template = "{\"avty_t\": \"%mqtt_pub_topic%\", \"dev\": {\"identifiers\": \"%node_id%\", \"manufacturer\": \"Rob Roos\", \"model\": \"modbusRTUrdr\", \"name\": \"ModbusRTU reader(%hostname%)\", \"sw_version\": \"%version%\"}, \"uniq_id\": \"%node_id%-%label%\", \"device_class\": \"%devclass%\", \"state_class\": \"%stateclass%\", \"name\": \"%hostname%_%friendlyname%\", \"stat_t\": \"%mqtt_pub_topic%/%label%\", \"unit_of_measurement\": \"%unit%\", \"value_template\": \"{{ value }}\" }";
   String sTopic = "";
   String sMsg = "";
   // first convert sTopic_template and sMsg_template to unique MQTT Topic and Msg templates
@@ -431,6 +431,8 @@ void doAutoConfigure()
       sMsg.replace("%friendlyname%", Modbusmap[i].friendlyname);
       // deviceclass
       sMsg.replace("%devclass%", Modbusmap[i].devclass);
+      // stateclass
+      sMsg.replace("%stateclass%", Modbusmap[i].stateclass);
       // unit
       sMsg.replace("%unit%", Modbusmap[i].unit);
 

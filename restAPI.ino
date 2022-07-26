@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.8.0
+**  Version 1.8.1
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -308,7 +308,8 @@ void sendDeviceInfo()
     #else
       #ifdef ESP8266
         "ESP8266"
-      #else "UNKNOWN"
+      #else 
+        "UNKNOWN"
       #endif    
     #endif
   #endif
@@ -368,6 +369,7 @@ void sendDeviceSettings()
   sendJsonSettingObj("mqttuniqueid", CSTR(settingMQTTuniqueid), "s", 20);
   sendJsonSettingObj("ntpenable", settingNTPenable, "b");
   sendJsonSettingObj("ntptimezone", CSTR(settingNTPtimezone), "s", 50);
+  sendJsonSettingObj("ntphostname", CSTR(settingNTPhostname), "s", 50);
   sendJsonSettingObj("ledblink", settingLEDblink, "b");
   sendJsonSettingObj("modbusconfigfile", CSTR(settingModbusCfgfile), "s", 30);
   sendJsonSettingObj("modbusbaudrate", settingModbusBaudrate, "i", 9600, 115200, 9600);

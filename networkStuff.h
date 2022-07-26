@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program : networkStuff.h
-**  Version 1.8.0
+**  Version 1.9.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -22,10 +22,28 @@
 //#include "ESP8266HTTPUpdateServer.h"
 #include "ModUpdateServer.h"   // https://github.com/mrWheel/ModUpdateServer
 #include "updateServerHtml.h"
-#include <WiFiManager.h>        // version 2.0.4-beta - use latest development branch  - https://github.com/tzapu/WiFiManager
+#include <WiFiManager.h>        // version 2.0.11-beta - use latest development branch  - https://github.com/tzapu/WiFiManager
 // included in main program: #include <TelnetStream.h>       // Version 0.0.1 - https://github.com/jandrassy/TelnetStream
 // #include<FS.h> // part of ESP8266 Core https://github.com/esp8266/Arduino
 #include <LittleFS.h>
+
+//prototype
+bool updateRebootLog(String text) ;
+
+//Use the NTP SDK ESP 8266 
+#include <time.h>
+
+enum NtpStatus_t {
+	TIME_NOTSET,
+	TIME_SYNC,
+	TIME_WAITFORSYNC,
+  TIME_NEEDSYNC
+};
+
+NtpStatus_t NtpStatus = TIME_NOTSET;
+time_t NtpLastSync = 0; //last sync moment in EPOCH seconds
+
+
 ESP8266WebServer httpServer(80);
 ESP8266HTTPUpdateServer httpUpdater(true);
 // Ping logic
@@ -57,6 +75,8 @@ void configModeCallback (WiFiManager *myWiFiManager)
 void startWiFi(const char *hostname, int timeOut)
 {
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+  WiFi.setSleepMode(WIFI_NONE_SLEEP); // explicitly set Wifi sleep mode off
+  // WiFi.setOutputPower(20.5);
 
   WiFiManager manageWiFi;
   uint32_t lTime = millis();
@@ -85,6 +105,8 @@ void startWiFi(const char *hostname, int timeOut)
   {
     //-- fail to connect? Have you tried turning it off and on again?
     DebugTln(F("failed to connect and hit timeout"));
+    updateRebootLog("failed to connect and hit timeout, restart ESP");
+
     delay(2000); // Enough time for messages to be sent.
     ESP.restart();
     delay(5000); // Enough time to ensure we don't return.
@@ -121,7 +143,7 @@ void startTelnet()
   Serial.print(WiFi.localIP());
   Serial.println("' for debugging");
   TelnetStream.begin();
-  DebugTln(F("\nTelnet server started .."));
+  DebugTln(F("Telnet server started ..\r\n"));
   TelnetStream.flush();
 } // startTelnet()
 
@@ -154,39 +176,67 @@ void startLLMNR(const char *hostname)
   }
 } // startLLMNR()
 
-void startNTP()
-{
-  // Initialisation ezTime
-  if (!settingNTPenable)    return;
 
-  setDebug(INFO);
-  // setServer("time.google.com");
-  setServer("europe.pool.ntp.org");
+//====[ startNTP ]===
+void startNTP(){
+  // Initialisation Time
+  if (!settingNTPenable) return;
+  if (settingNTPtimezone.length()==0) settingNTPtimezone = NTP_DEFAULT_TIMEZONE; //set back to default timezone
+  if (settingNTPhostname.length()==0) settingNTPhostname = NTP_HOST_DEFAULT; //set back to default timezone
 
-  if (settingNTPtimezone.length() == 0)     settingNTPtimezone = DEFAULT_TIMEZONE; //set back to default timezone
+  //void configTime(int timezone_sec, int daylightOffset_sec, const char* server1, const char* server2, const char* server3)
+  configTime(0, 0, CSTR(settingNTPhostname), nullptr, nullptr);
+  NtpStatus = TIME_WAITFORSYNC;
+}
 
-  if (myTZ.setLocation(settingNTPtimezone))
-  {
-    DebugTf("Timezone set to: %s\r\n", CSTR(settingNTPtimezone));
-    DebugTf("Olson TZ : %s\r\n", CSTR(myTZ.getOlson()));
-    DebugTf("Posix TZ : %s\r\n", CSTR(myTZ.getPosix()));
-    DebugTf("TZ Name  : %s\r\n", CSTR(myTZ.getTimezoneName()));
-    DebugTf("TX Offset: %d\r\n", myTZ.getOffset());
-    DebugTf("DST      : %d\r\n", myTZ.isDST());
-  }
-  else
-  {
-    DebugTf("Error setting Timezone: %s\r\n", CSTR(errorString()));
-    settingNTPtimezone = DEFAULT_TIMEZONE;
-  }
+void loopNTP(){
+if (!settingNTPenable) return;
+  switch (NtpStatus){
+    case TIME_NOTSET:
+      DebugTln(F("Time not set"));
+    case TIME_NEEDSYNC:
+      NtpLastSync = time(nullptr); //remember last sync
+      DebugTln(F("Start time syncing"));
+      startNTP();
+      NtpStatus = TIME_WAITFORSYNC;
+    break;
+    case TIME_WAITFORSYNC:
+      if ((time(nullptr)>0) || (time(nullptr) >= NtpLastSync)) { 
+        NtpLastSync = time(nullptr); //remember last sync 
+        
+        DebugTf("Timezone lookup for [%s]\r\n", CSTR(settingNTPtimezone));
+        auto myTz =  timezoneManager.createForZoneName(CSTR(settingNTPtimezone));
+        
+        if (myTz.isError()){
+          DebugTf("Error: Timezone Invalid/Not Found: [%s]\r\n", CSTR(settingNTPtimezone));
+          settingNTPtimezone = NTP_DEFAULT_TIMEZONE;
+          myTz = timezoneManager.createForZoneName(CSTR(settingNTPtimezone)); //try with default Timezone instead
+        } else DebugTln(F("Timezone lookup: successful"));
+        
+        auto myTime = ZonedDateTime::forUnixSeconds(NtpLastSync, myTz);
+        if (myTime.isError()) {
+          DebugTln("Error: Time not set correctly, wait for sync");
+          // NtpStatus = TIME_NEEDSYNC;
+        } else {
+          setTime(myTime.hour(), myTime.minute(), myTime.second(), myTime.day(), myTime.month(), myTime.year());
+          NtpStatus = TIME_SYNC;
+          DebugTln(F("Time synced!"));
+        }
+      } 
+    break;
+    case TIME_SYNC:
+      if ((time(nullptr)-NtpLastSync) > NTP_RESYNC_TIME){
+        //when xx seconds have passed, resync using NTP
+         DebugTln(F("Time resync needed"));
+        NtpStatus = TIME_NEEDSYNC;
+      }
+    break;
+  } 
 
-  myTZ.setDefault();
-  updateNTP();     //force NTP sync
-  waitForSync(60); //wait until valid time myTZ.setDefault();
-  setDebug(NONE);  //turn off any other debug information
 
-  DebugTln("UTC time  : " + UTC.dateTime());
-  DebugTln("local time: " + myTZ.dateTime());
+ 
+  // DECLARE_TIMER_SEC(timerNTPtime, 10, CATCH_UP_MISSED_TICKS);
+  // if DUE(timerNTPtime) Debugf("Epoch Seconds: %d\r\n", time(nullptr)); //timeout, then break out of this loop
 }
 
 String getMacAddress()
@@ -218,15 +268,16 @@ void setupPing() {
     if (response.ReceivedResponse)
     {
       DebugTf(
-        "Reply from %s: bytes=%d time=%lums TTL=%d\n",
+        "Reply from %s: bytes=%d time=%lums TTL=%d \r\n",
         response.DestIPAddress.toString().c_str(),
         response.EchoMessageSize - sizeof(struct icmp_echo_hdr),
         response.ResponseTime,
         response.TimeToLive);
+      // DebugTln("End Ping");
     }
     else
     {
-      DebugTf("Request timed out.\n");
+      DebugTf("Ping request timed out.\n");
     }
 
     // Return true to continue the ping sequence.

@@ -22,7 +22,9 @@
 
 //DEBUG_ESP_PORT setup means the Core ESP Arduino can also output debug info
 //To use this: Tools -> Core Debug Level --> <none, error, warning, info, debug, verbose>
-#define DEBUG_ESP_PORT DEBUG_PORT
+#ifndef DEBUG_ESP_PORT
+      #define DEBUG_ESP_PORT DEBUG_PORT   
+#endif      
 
 #ifdef DEBUG_ESP_PORT
   #define DEBUG_MSG(...) DEBUG_ESP_PORT.printf( __VA_ARGS__ )
