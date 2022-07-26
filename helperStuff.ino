@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : helperStuff
-**  Version 1.8.1
+**  Version 1.9.1
 **
 **
 **  Copyright (c) 2021 Rob Roos
@@ -553,12 +553,13 @@ bool updateRebootLog(String text)
 {
   #define REBOOTLOG_FILE "/reboot_log.txt"
   #define TEMPLOG_FILE "/reboot_log.t.txt"
-  #define LOG_LINES 20
+  #define LOG_LINES 30
   #define LOG_LINE_LENGTH 140
 
 
   char log_line[LOG_LINE_LENGTH] = {0};
   char log_line_regs[LOG_LINE_LENGTH] = {0};
+  char log_line_reason[LOG_LINE_LENGTH] = {0};
   char log_line_excpt[LOG_LINE_LENGTH] = {0};
   uint32_t errorCode = -1;
 
@@ -573,8 +574,6 @@ bool updateRebootLog(String text)
   } else {
 
 
-    DebugTf("reset reason:	%x\r\n",	rtc_info->reason);
-    errorCode = rtc_info->reason;
     // Rst cause No.    Cause                     GPIO state
     //--------------    -------------------       -------------
     // 0                Power reboot              Changed
@@ -585,9 +584,21 @@ bool updateRebootLog(String text)
     // 5                Deep-sleep                Changed
     // 6                Hardware reset            Changed
 
+    errorCode = rtc_info->reason;
+
+    switch(rtc_info->reason) {
+        case 0:   snprintf(log_line_reason, LOG_LINE_LENGTH, "0 - Power reboot"); break;
+        case 1:   snprintf(log_line_reason, LOG_LINE_LENGTH, "1 - Hardware WDT reset"); break;
+        case 2:   snprintf(log_line_reason, LOG_LINE_LENGTH, "2 - Fatal exception"); break;
+        case 3:   snprintf(log_line_reason, LOG_LINE_LENGTH, "3 - Software watchdog reset"); break;
+        case 4:   snprintf(log_line_reason, LOG_LINE_LENGTH, "4 - Software reset"); break;
+        case 5:   snprintf(log_line_reason, LOG_LINE_LENGTH, "5 - Deep-sleep"); break;
+        case 6:   snprintf(log_line_reason, LOG_LINE_LENGTH, "6 - Hardware reset"); break;
+        default:  snprintf(log_line_reason, LOG_LINE_LENGTH, "- Other (not specified) (%d)", rtc_info->reason); break;
+      }
+    DebugTf("reset reason:	%s\r\n",	log_line_reason);
 
     if	(rtc_info->reason	==	REASON_WDT_RST	|| rtc_info->reason	==	REASON_EXCEPTION_RST	|| rtc_info->reason	==	REASON_SOFT_WDT_RST)	{
-
 
       //The	address	of	the	last	crash	is	printed,	which	is	used	to	debug	garbled	output
       snprintf(log_line_regs, LOG_LINE_LENGTH,"ESP register contents: epc1=0x%08x, epc2=0x%08x, epc3=0x%08x, excvaddr=0x%08x, depc=0x%08x\r\n", rtc_info->epc1, rtc_info->epc2, rtc_info->epc3, rtc_info->excvaddr, rtc_info->depc);
@@ -629,7 +640,7 @@ bool updateRebootLog(String text)
   }
 
 
-  snprintf(log_line, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d - reboot cause: %s (%x) %s\r\n", year(),  month(), day(), hour(), minute(), second(), CSTR(text), errorCode, log_line_excpt);
+  snprintf(log_line, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d - reboot cause: %s (%x) %s\r\n", year(),  month(), day(), hour(), minute(), second(), text, errorCode, log_line_excpt);
 
 
   if (LittleFS.begin()) {
@@ -640,6 +651,10 @@ bool updateRebootLog(String text)
     if (outfh) {
       //write to _reboot to file
       outfh.print(log_line);
+
+      if (strlen(log_line_reason)>2) {
+        outfh.print(log_line_reason);
+      }
 
 
       if (strlen(log_line_regs)>2) {
@@ -683,7 +698,8 @@ bool updateRebootLog(String text)
 
 void doRestart(const char* str) {
   DebugTln(str);
-  delay(2000);  // Enough time for messages to be sent.
+  updateRebootLog(String(str));
+  delay(2000);  // Enough time for messages to be sent and saved
   ESP.restart();
   delay(5000);  // Enough time to ensure we don't return.
 }

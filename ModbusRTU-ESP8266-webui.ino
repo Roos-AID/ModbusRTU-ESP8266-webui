@@ -2,7 +2,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusRTU-webui.ino
-**  Version 1.8.1
+**  Version 1.9.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -63,15 +63,17 @@ void setup()
   //setup randomseed the right way
   randomSeed(RANDOM_REG32); //This is 8266 HWRNG used to seed the Random PRNG: Read more: https://config9.com/arduino/getting-a-truly-random-number-in-arduino/
 
-  if (settingRelayAllwaysOnSwitch) setRelay(RELAYON);  else
-    setRelay(RELAYOFF);
-  
   //setup the status LED
   setLed(LED1, ON);
   setLed(LED2, ON);
 
   LittleFS.begin();
   readSettings(true);    
+  
+  if (settingRelayAllwaysOnSwitch) setRelay(RELAYON);  else
+    setRelay(RELAYOFF);
+  
+
   CHANGE_INTERVAL_SEC(timerreadmodbus, settingModbusReadInterval, CATCH_UP_MISSED_TICKS);
 
   NodeId = getUniqueId() ;
@@ -104,7 +106,8 @@ void setup()
   lastReset = ESP.getResetReason();
   DebugTf("Last reset reason: [%s]\r\n", CSTR(ESP.getResetReason()));
   rebootCount = updateRebootCount();
-  updateRebootLog(ESP.getResetReason());
+  // updateRebootLog(ESP.getResetReason());
+  updateRebootLog("Startup");
 
   //============== Setup Modbus ======================================
   setupModbus();
@@ -138,7 +141,8 @@ void setup()
     restartWiFiCount++;
     if (restartWiFiCount > 5)
     {
-      doRestart("IP Ping failed to often, restart ESP");
+      updateRebootLog("In Setup IP Ping failed to often, restart ESP");
+      doRestart("In Setup IP Ping failed to often, restart ESP");
     }
     restartWiFi(CSTR(settingHostname), 240);
     MDNS.update();
@@ -251,7 +255,8 @@ void doTaskEvery60s(){
     DebugTln("Error during last ping command. Restart Wifi");
     restartWiFiCount++ ;
     if (restartWiFiCount > 5) {
-      doRestart("IP Ping failed to often, restart ESP");
+      updateRebootLog("In Run IP Ping failed to often, restart ESP");
+      doRestart("In Run IP Ping failed to often, restart ESP");
     }
     restartWiFi(CSTR(settingHostname), 240);
     MDNS.update();

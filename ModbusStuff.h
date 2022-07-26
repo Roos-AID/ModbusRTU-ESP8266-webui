@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : Header file: ModbusStuff.h
-**  Version 1.8.0
+**  Version 1.9.1
 **
 **  Copyright (c) 2021 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -10,7 +10,7 @@
 **  TERMS OF USE: MIT License. See bottom of file.
 ***************************************************************************
 */
-#include <ModbusRTU.h>
+#include <ModbusRTU.h>  // https://github.com/emelianov/modbus-esp8266 version 4.1.1 
 #include "Debug.h"
 // Modbus RTU Specific API
 #define MODBUS_RX D7 // RX  D7 = GPIO 13
