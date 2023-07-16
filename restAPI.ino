@@ -1,10 +1,10 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.8.1
+**  Version 1.10.0
 **
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2022 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -23,13 +23,13 @@ void processAPI()
 
   if (httpServer.method() == HTTP_GET)
     if (bDebugRestAPI)
-      DebugTf("from[%s] URI[%s] method[GET] \r\n", httpServer.client().remoteIP().toString().c_str(), URI);
+      DebugTf(PSTR("from[%s] URI[%s] method[GET] \r\n"), httpServer.client().remoteIP().toString().c_str(), URI);
     else if (bDebugRestAPI)
-      DebugTf("from[%s] URI[%s] method[PUT] \r\n", httpServer.client().remoteIP().toString().c_str(), URI);
+      DebugTf(PSTR("from[%s] URI[%s] method[PUT] \r\n"), httpServer.client().remoteIP().toString().c_str(), URI);
 
   if (ESP.getFreeHeap() < 8500) // to prevent firmware from crashing!
   {
-    if (bDebugRestAPI) DebugTf("==> Bailout due to low heap (%d bytes))\r\n", ESP.getFreeHeap());
+    if (bDebugRestAPI) DebugTf(PSTR("==> Bailout due to low heap (%d bytes))\r\n"), ESP.getFreeHeap());
     httpServer.send(500, "text/plain", "500: internal server error (low heap)\r\n");
     return;
   }
@@ -378,6 +378,7 @@ void sendDeviceSettings()
   sendJsonSettingObj("modbussinglephase", settingModbusSinglephase, "b");
   sendJsonSettingObj("timebasedswitch", settingTimebasedSwitch, "b");
   sendJsonSettingObj("relayallwayson", settingRelayAllwaysOnSwitch, "b");
+  sendJsonSettingObj("debugbootswitch", settingDebugAfterBoot, "b");
   sendEndJsonObj();
 
 } // sendDeviceSettings()
@@ -409,7 +410,7 @@ void postSettings()
         if (wOut[0].equalsIgnoreCase("name"))  strCopy(field, sizeof(field), wOut[1].c_str());
         if (wOut[0].equalsIgnoreCase("value")) strCopy(newValue, sizeof(newValue), wOut[1].c_str());
       }
-      DebugTf("--> field[%s] => newValue[%s]\r\n", field, newValue);
+      DebugTf(PSTR("--> field[%s] => newValue[%s]\r\n"), field, newValue);
       updateSetting(field, newValue);
       httpServer.send(200, "application/json", httpServer.arg(0));
 

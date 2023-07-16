@@ -4,7 +4,7 @@
 **  Version 1.8.1
 **
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2022 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -90,7 +90,7 @@ void startWebserver(){
   // Set up first message as the IP address
   DebugTln("HTTP Server started\r");  
   sprintf(cMsg, "%03d.%03d.%d.%d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
-  DebugTf("Assigned IP=%s\r\n", cMsg);
+  DebugTf(PSTR("Assigned IP=%s\r\n"), cMsg);
 }
 //=====================================================================================
 void setupFSexplorer(){    
@@ -111,10 +111,10 @@ void setupFSexplorer(){
  
   httpServer.onNotFound([]() 
   {
-    if (bDebugRestAPI) DebugTf("in 'onNotFound()'!! [%s] => \r\n", String(httpServer.uri()).c_str());
+    if (bDebugRestAPI) DebugTf(PSTR("in 'onNotFound()'!! [%s] => \r\n"), String(httpServer.uri()).c_str());
     if (httpServer.uri().indexOf("/api/") == 0) 
     {
-      if (bDebugRestAPI) DebugTf("next: processAPI(%s)\r\n", String(httpServer.uri()).c_str());
+      if (bDebugRestAPI) DebugTf(PSTR("next: processAPI(%s)\r\n"), String(httpServer.uri()).c_str());
       processAPI();
     }
     // else if (httpServer.uri() == "/")
@@ -124,7 +124,7 @@ void setupFSexplorer(){
     // }
     else
     {
-      if (bDebugRestAPI) DebugTf("next: handleFile(%s)\r\n"
+      if (bDebugRestAPI) DebugTf(PSTR("next: handleFile(%s)\r\n")
                         , String(httpServer.urlDecode(httpServer.uri())).c_str());
       if (!handleFile(httpServer.urlDecode(httpServer.uri())))
       {
@@ -158,13 +158,13 @@ void apilistfiles()             // Senden aller Daten an den Client
     dirMap[fileNr].Size = dir.fileSize();
     fileNr++;
   }
-  //DebugTf("fileNr[%d], Max[%d]\r\n", fileNr, MAX_FILES_IN_LIST);
+  //DebugTf(PSTR("fileNr[%d], Max[%d]\r\n"), fileNr, MAX_FILES_IN_LIST);
 
   // -- bubble sort dirMap op .Name--
   for (int8_t y = 0; y < fileNr; y++) {
     yield();
     for (int8_t x = y + 1; x < fileNr; x++)  {
-      //DebugTf("y[%d], x[%d] => seq[y][%s] / seq[x][%s] ", y, x, dirMap[y].Name, dirMap[x].Name);
+      //DebugTf(PSTR("y[%d], x[%d] => seq[y][%s] / seq[x][%s] "), y, x, dirMap[y].Name, dirMap[x].Name);
       if (strcasecmp(dirMap[x].Name, dirMap[y].Name) <= 0)
       {
         //Debug(" !switch!");
@@ -190,7 +190,7 @@ void apilistfiles()             // Senden aller Daten an den Client
   String temp = "[";
   for (int f=0; f < fileNr; f++)  
   {
-    DebugTf("[%3d] >> [%s]\r\n", f, dirMap[f].Name);
+    DebugTf(PSTR("[%3d] >> [%s]\r\n"), f, dirMap[f].Name);
     temp += R"({"name":")" + String(dirMap[f].Name) + R"(","size":")" + formatBytes(dirMap[f].Size) + R"("},)";
   }
 
@@ -209,7 +209,7 @@ bool handleFile(String&& path)
 {
   if (httpServer.hasArg("delete")) 
   {
-    DebugTf("Delete -> [%s]\n\r",  httpServer.arg("delete").c_str());
+    DebugTf(PSTR("Delete -> [%s]\n\r"),  httpServer.arg("delete").c_str());
     LittleFS.remove(httpServer.arg("delete"));    // Datei löschen
     httpServer.sendContent(Header);
     return true;

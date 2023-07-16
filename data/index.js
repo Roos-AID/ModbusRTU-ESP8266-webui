@@ -3,7 +3,7 @@
 **  Program  : index.js, part of Modbus-firmware project
 **  Version 1.8.1
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2022 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -553,6 +553,7 @@ function sendPostSetting(field, value) {
     , ["modbussinglephase", "Modbus Single Phase"]
     , ["timebasedswitch", "Day and timebased switching"]
     , ["relayallwayson", "Relay allways on"]
+    , ["debugbootswitch", "Debuglog all on after reboot"]
     , ["wifireconnect", "Wifi reconnect count (reset at reboot)"]
     , ["wifirestart", "Wifi restart count (reset at reboot)"]
     , ["rebootcount", "ESP reboot count"]

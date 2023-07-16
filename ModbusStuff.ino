@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.8.1
+**  Version 1.10.0
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2022 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -60,7 +60,7 @@ uint32_t cfuint32(uint16_t u1, uint16_t u2)
 void setupModbus()
 {
 
-  if (bDebugMBmsg) Debugf("Init Serial with baudrate:\r\n");
+  if (bDebugMBmsg) Debugf(PSTR("Init Serial with baudrate:\r\n"));
   if (bDebugMBmsg) Debugln(settingModbusBaudrate);
 
 #if defined(ESP8266)
@@ -77,7 +77,7 @@ void setupModbus()
     #endif
 
     mb.master();
-    DebugTf("Modbus Serial init completed\r\n");
+    DebugTf(PSTR("Modbus Serial init completed\r\n"));
 }
 void waitMBslave() {
     while (mb.slave())
@@ -89,12 +89,12 @@ void waitMBslave() {
 
 
 void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uint16_t numregs) {
-    DebugTf("Args MBtestreadHreg MBmapidx[%d], MBaddress[%d] , .address[%d], numregs[%d]\r\n ",MBmapidx, MBaddress, Modbusmap[MBmapidx].address,numregs);
+    DebugTf(PSTR("Args MBtestreadHreg MBmapidx[%d], MBaddress[%d] , .address[%d], numregs[%d]\r\n "),MBmapidx, MBaddress, Modbusmap[MBmapidx].address,numregs);
     ModbusdataObject.LastResult = 0;
     switch (Modbusmap[MBmapidx].regformat)
     {
     case Modbus_short:
-      if (numregs != 1) { DebugTln("ERROR numregs read for short should be 1"); break; }
+      if (numregs != 1) { DebugTln(F("ERROR numregs read for short should be 1")); break; }
        switch (Modbusmap[MBmapidx].address) 
        {
        case 1: 
@@ -108,7 +108,7 @@ void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uin
        }
       break; 
     case Modbus_ushort:
-      if (numregs != 1) { DebugTln("ERROR numregs read for ushort should be 1"); break; }
+      if (numregs != 1) { DebugTln(F("ERROR numregs read for ushort should be 1")); break; }
       switch (Modbusmap[MBmapidx].address)
       {
       case 3:  
@@ -122,7 +122,7 @@ void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uin
       }
       break;
     case Modbus_int:
-      if (numregs != 2) { DebugTln("ERROR numregs read for int should be 2"); break; }
+      if (numregs != 2) { DebugTln(F("ERROR numregs read for int should be 2")); break; }
       switch (Modbusmap[MBmapidx].address)
       {
       case 5:  
@@ -139,7 +139,7 @@ void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uin
       }
       break;
     case Modbus_uint:
-      if (numregs != 2) { DebugTln("ERROR numregs read for uint should be 2"); break;}
+      if (numregs != 2) { DebugTln(F("ERROR numregs read for uint should be 2")); break;}
       switch (Modbusmap[MBmapidx].address)
       {
       case 7:  
@@ -156,7 +156,7 @@ void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uin
       }
       break;
     case Modbus_float:
-      if (numregs != 2) { DebugTln("ERROR numregs read for float should be 2"); }
+      if (numregs != 2) { DebugTln(F("ERROR numregs read for float should be 2")); }
       switch (Modbusmap[MBmapidx].address)
       {
       case 9:  
@@ -179,7 +179,7 @@ void MBtestreadHreg(uint16_t MBmapidx, uint16_t MBaddress, uint16_t value[], uin
         }
      break;
     }
-    // DebugTf("########## MBmapidx[%d] Value0[%d] value1[]\r\n",MBmapidx,value[0],value[1]) ;
+    // DebugTf(PSTR("########## MBmapidx[%d] Value0[%d] value1[]\r\n"),MBmapidx,value[0],value[1]) ;
 }
 
 //============ Read register functions V2 (short )
@@ -199,16 +199,16 @@ bool Modbus_Read_short(uint16_t i)
 
     if (ModbusdataObject.LastResult == 0)
     {
-      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
+      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf(PSTR("Reg: %d, Val: %d \r\n"), i+readreg, shortres[i]); }
       mb_convert.mb_uint16 = shortres[0] ;
-      if (bDebugMBlogic) DebugTf("shortres[%d] md_uint16 [%d] md_int16 [%d]\r\n",shortres[0], mb_convert.mb_uint16, mb_convert.mb_int16 );
+      if (bDebugMBlogic) DebugTf(PSTR("shortres[%d] md_uint16 [%d] md_int16 [%d]\r\n"),shortres[0], mb_convert.mb_uint16, mb_convert.mb_int16 );
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
         Modbusmap[i].Modbus_short = round(mb_convert.mb_int16 * Modbusmap[i].factor);
       else
         Modbusmap[i].Modbus_short = mb_convert.mb_int16;
       if (bDebugMBmsg)
-        DebugTf("Modbus Read short Reg:[%d] , Result:[%d]\r\n", Modbusmap[i].address, Modbusmap[i].Modbus_short);
+        DebugTf(PSTR("Modbus Read short Reg:[%d] , Result:[%d]\r\n"), Modbusmap[i].address, Modbusmap[i].Modbus_short);
       if (settingMQTTenable && Modbusmap[i].mqenable == 1)
       {
         toMQTT_short(i);
@@ -216,14 +216,14 @@ bool Modbus_Read_short(uint16_t i)
     }
     else
     {
-      DebugTf("Modbus Read short Reg:[%d] , Result: 0x%02X \r\n", Modbusmap[i].address, ModbusdataObject.LastResult);
+      DebugTf(PSTR("Modbus Read short Reg:[%d] , Result: 0x%02X \r\n"), Modbusmap[i].address, ModbusdataObject.LastResult);
       tempError = true;
     }
   }
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln(F("Error: Modbus Read while transaction active"));
     ModbusdataObject.LastResult = 99;
   }
 
@@ -246,15 +246,15 @@ bool Modbus_Read_ushort(uint16_t i)
 
     if (ModbusdataObject.LastResult == 0)
     {
-      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
-      if (bDebugMBlogic) DebugTf("ushortres0[%d] \r\n",ushortres[0]);
+      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf(PSTR("Reg: %d, Val: %d \r\n"), i+readreg, shortres[i]); }
+      if (bDebugMBlogic) DebugTf(PSTR("ushortres0[%d] \r\n"),ushortres[0]);
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
         Modbusmap[i].Modbus_ushort = round(ushortres[0] * Modbusmap[i].factor);
       else
         Modbusmap[i].Modbus_ushort = ushortres[0];
       if (bDebugMBmsg)
-        DebugTf("Modbus Read ushort Reg:[%d] , Result:[%u]\r\n", Modbusmap[i].address, Modbusmap[i].Modbus_ushort);
+        DebugTf(PSTR("Modbus Read ushort Reg:[%d] , Result:[%u]\r\n"), Modbusmap[i].address, Modbusmap[i].Modbus_ushort);
       if (settingMQTTenable && Modbusmap[i].mqenable == 1)
       {
         toMQTT_ushort(i);
@@ -262,14 +262,14 @@ bool Modbus_Read_ushort(uint16_t i)
     }
     else
     {
-      DebugTf("Modbus Read ushort Reg:[%d] , Result: 0x%02X \r\n", Modbusmap[i].address, ModbusdataObject.LastResult);
+      DebugTf(PSTR("Modbus Read ushort Reg:[%d] , Result: 0x%02X \r\n"), Modbusmap[i].address, ModbusdataObject.LastResult);
       tempError = true;
     }
   }
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln(F("Error: Modbus Read while transaction active"));
     ModbusdataObject.LastResult = 99;
   }
 
@@ -292,16 +292,16 @@ bool Modbus_Read_int(uint16_t i)
     
     if (ModbusdataObject.LastResult == 0)
     {
-      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
+      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf(PSTR("Reg: %d, Val: %d \r\n"), i+readreg, shortres[i]); }
       tempint = cfint32(intres[0], intres[1]);
-      if (bDebugMBlogic) DebugTf("intres0[%d] intres1[%d] tempint[%d]\r\n",intres[0], intres[1], tempint );
+      if (bDebugMBlogic) DebugTf(PSTR("intres0[%d] intres1[%d] tempint[%d]\r\n"),intres[0], intres[1], tempint );
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
           Modbusmap[i].Modbus_int = round(tempint * Modbusmap[i].factor);
       else
         Modbusmap[i].Modbus_int = tempint;
       if (bDebugMBmsg)
-        DebugTf("Modbus Read int Reg:[%d] , Result:[%d]\r\n", Modbusmap[i].address, Modbusmap[i].Modbus_int);
+        DebugTf(PSTR("Modbus Read int Reg:[%d] , Result:[%d]\r\n"), Modbusmap[i].address, Modbusmap[i].Modbus_int);
       if (settingMQTTenable && Modbusmap[i].mqenable == 1)
       {
         toMQTT_int(i);
@@ -309,14 +309,14 @@ bool Modbus_Read_int(uint16_t i)
     }
     else
     {
-      DebugTf("Modbus Read int Reg:[%d] , Result: 0x%02X \r\n", Modbusmap[i].address, ModbusdataObject.LastResult);
+      DebugTf(PSTR("Modbus Read int Reg:[%d] , Result: 0x%02X \r\n"), Modbusmap[i].address, ModbusdataObject.LastResult);
       tempError = true;
     }
   }
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln(PSTR("Error: Modbus Read while transaction active"));
     ModbusdataObject.LastResult = 99;
   }
 
@@ -339,16 +339,16 @@ bool Modbus_Read_uint(uint16_t i)
     
     if (ModbusdataObject.LastResult == 0)
     {
-      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
+      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf(PSTR("Reg: %d, Val: %d \r\n"), i+readreg, shortres[i]); }
       tempuint = cfuint32(uintres[0], uintres[1]);
-      if (bDebugMBlogic) DebugTf("uintres0[%d] uintres1[%d] tempuint[%d]\r\n",uintres[0], uintres[1], tempuint );
+      if (bDebugMBlogic) DebugTf(PSTR("uintres0[%d] uintres1[%d] tempuint[%d]\r\n"),uintres[0], uintres[1], tempuint );
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
         Modbusmap[i].Modbus_uint = round(tempuint * Modbusmap[i].factor);
       else
         Modbusmap[i].Modbus_uint = tempuint;
       if (bDebugMBmsg)
-        DebugTf("Modbus Read uint Reg:[%d] , Result:[%u]\r\n", Modbusmap[i].address, Modbusmap[i].Modbus_uint);
+        DebugTf(PSTR("Modbus Read uint Reg:[%d] , Result:[%u]\r\n"), Modbusmap[i].address, Modbusmap[i].Modbus_uint);
 
       if (settingMQTTenable && Modbusmap[i].mqenable == 1)
       {
@@ -357,14 +357,14 @@ bool Modbus_Read_uint(uint16_t i)
     }
     else
     {
-      DebugTf("Modbus Read uint Reg:[%d] , Result: 0x%02X \r\n", Modbusmap[i].address, ModbusdataObject.LastResult);
+      DebugTf(PSTR("Modbus Read uint Reg:[%d] , Result: 0x%02X \r\n"), Modbusmap[i].address, ModbusdataObject.LastResult);
       tempError = true;
     }
   }
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln(PSTR("Error: Modbus Read while transaction active"));
     ModbusdataObject.LastResult = 99;
   }
 
@@ -387,16 +387,16 @@ bool Modbus_Read_float(uint16_t i)
     
     if (ModbusdataObject.LastResult == 0)
     {
-      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf("Reg: %d, Val: %d \r\n", i+readreg, shortres[i]); }
+      //  determine value from multiple registers for (int i = 0 ; i < 1 ; i++) { Debugf(PSTR("Reg: %d, Val: %d \r\n"), i+readreg, shortres[i]); }
       tempfloat = cf32(floatres[0], floatres[1]);
-      if (bDebugMBlogic) DebugTf("floatres0[%d] floatres1[%d] tempfloat[%f]\r\n",floatres[0], floatres[1], tempfloat );
+      if (bDebugMBlogic) DebugTf(PSTR("floatres0[%d] floatres1[%d] tempfloat[%f]\r\n"),floatres[0], floatres[1], tempfloat );
       // Convert when factor is set other than 1
       if (Modbusmap[i].factor != 1)
         Modbusmap[i].Modbus_float = tempfloat * Modbusmap[i].factor;
       else
         Modbusmap[i].Modbus_float = tempfloat;
       if (bDebugMBmsg)
-        DebugTf("Modbus Read float Reg:[%d] , Result:[%f]\r\n", Modbusmap[i].address, Modbusmap[i].Modbus_float);
+        DebugTf(PSTR("Modbus Read float Reg:[%d] , Result:[%f]\r\n"), Modbusmap[i].address, Modbusmap[i].Modbus_float);
 
       if (settingMQTTenable && Modbusmap[i].mqenable == 1)
       {
@@ -405,14 +405,14 @@ bool Modbus_Read_float(uint16_t i)
     }
     else
     {
-      DebugTf("Modbus Read float Reg:[%d] , Result: 0x%02X \r\n", Modbusmap[i].address, ModbusdataObject.LastResult);
+      DebugTf(PSTR("Modbus Read float Reg:[%d] , Result: 0x%02X \r\n"), Modbusmap[i].address, ModbusdataObject.LastResult);
       tempError = true;
     }
   }
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln(F("Error: Modbus Read while transaction active"));
     ModbusdataObject.LastResult = 99;
   }
 
@@ -430,7 +430,7 @@ bool Modbus_Read_string(uint16_t i)
   //     char     mb_charconv[32];
   // }  mb_reg2char ;
 
-  if (bDebugMBlogic) DebugTf("Modbus_Read_string Number of registers[%d]\r\n",numregs);
+  if (bDebugMBlogic) DebugTf(PSTR("Modbus_Read_string Number of registers[%d]\r\n"),numregs);
 
   if (!mb.slave())  
   { 
@@ -441,7 +441,7 @@ bool Modbus_Read_string(uint16_t i)
 
     if (ModbusdataObject.LastResult == 0)
     {
-      //  determine value from multiple registers for (int r = 0 ; r < count ; r++) { Debugf("Reg: %d, Val: %d \r\n", r+readreg, shortres[r]); }
+      //  determine value from multiple registers for (int r = 0 ; r < count ; r++) { Debugf(PSTR("Reg: %d, Val: %d \r\n"), r+readreg, shortres[r]); }
       char *ctemp = new char[Modbusmap[i].formatstringlen + 1];
       if (settingModbusByteswap) {
         for (int r = 0; r < Modbusmap[i].formatstringlen ; r=r+2) {
@@ -454,7 +454,7 @@ bool Modbus_Read_string(uint16_t i)
       delete ctemp;
 
       if (bDebugMBmsg)
-        DebugTf("Modbus Read string Reg:[%d] , Result:[%s]\r\n", Modbusmap[i].address, CSTR(Modbusmap[i].Modbus_string));
+        DebugTf(PSTR("Modbus Read string Reg:[%d] , Result:[%s]\r\n"), Modbusmap[i].address, CSTR(Modbusmap[i].Modbus_string));
       if (settingMQTTenable && Modbusmap[i].mqenable == 1)
       {
         toMQTT_string(i);
@@ -462,14 +462,14 @@ bool Modbus_Read_string(uint16_t i)
     }
     else
     {
-      DebugTf("Modbus Read string Reg:[%d] , Result: 0x%02X \r\n", Modbusmap[i].address, ModbusdataObject.LastResult);
+      DebugTf(PSTR("Modbus Read string Reg:[%d] , Result: 0x%02X \r\n"), Modbusmap[i].address, ModbusdataObject.LastResult);
       tempError = true;
     }
   }
   else
   {
     // this should never happen
-    DebugTln("Error: Modbus Read while transaction active");
+    DebugTln(F("Error: Modbus Read while transaction active"));
     ModbusdataObject.LastResult = 99;
   }
 
@@ -487,7 +487,7 @@ void toMQTT_short(int id)
   char _msg[15]{0};
   itoa(_value, _msg, 10);
   if (bDebugMBmsg)
-    DebugTf("To MQTT_short %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
+    DebugTf(PSTR("To MQTT_short %s %s %s\r\n"), Modbusmap[id].label, _msg, Modbusmap[id].unit);
   //SendMQTT
   sendMQTTData(Modbusmap[id].label, _msg);
 }
@@ -499,7 +499,7 @@ void toMQTT_ushort(int id)
   char _msg[15]{0};
   itoa(_value, _msg, 10);
   if (bDebugMBmsg)
-    DebugTf("To MQTT_short %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
+    DebugTf(PSTR("To MQTT_short %s %s %s\r\n"), Modbusmap[id].label, _msg, Modbusmap[id].unit);
   //SendMQTT
   sendMQTTData(Modbusmap[id].label, _msg);
 }
@@ -511,7 +511,7 @@ void toMQTT_int(int id)
   char _msg[15]{0};
   itoa(_value, _msg, 10);
   if (bDebugMBmsg)
-    DebugTf("To MQTT_short %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
+    DebugTf(PSTR("To MQTT_short %s %s %s\r\n"), Modbusmap[id].label, _msg, Modbusmap[id].unit);
   //SendMQTT
   sendMQTTData(Modbusmap[id].label, _msg);
 }
@@ -523,7 +523,7 @@ void toMQTT_uint(int id)
   char _msg[15]{0};
   itoa(_value, _msg, 10);
   if (bDebugMBmsg)
-    DebugTf("To MQTT_short %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
+    DebugTf(PSTR("To MQTT_short %s %s %s\r\n"), Modbusmap[id].label, _msg, Modbusmap[id].unit);
   //SendMQTT
   sendMQTTData(Modbusmap[id].label, _msg);
 }
@@ -535,7 +535,7 @@ void toMQTT_float(int id)
 
   char _msg[15]{0};
   dtostrf(_value, 3, 2, _msg);
-  if (bDebugMBmsg) DebugTf("To MQTT_float %s %s %s\r\n", Modbusmap[id].label, _msg, Modbusmap[id].unit);
+  if (bDebugMBmsg) DebugTf(PSTR("To MQTT_float %s %s %s\r\n"), Modbusmap[id].label, _msg, Modbusmap[id].unit);
   //SendMQTT
   sendMQTTData(Modbusmap[id].label, _msg);
 
@@ -545,7 +545,7 @@ void toMQTT_string(int id)
 {
   //function to push string data to MQTT
 
-  if (bDebugMBmsg) DebugTf("To MQTT_string %s %s %s\r\n", Modbusmap[id].label, CSTR(Modbusmap[id].Modbus_string));
+  if (bDebugMBmsg) DebugTf(PSTR("To MQTT_string %s %s %s\r\n"), Modbusmap[id].label, CSTR(Modbusmap[id].Modbus_string));
   //SendMQTT
   sendMQTTData(Modbusmap[id].label, CSTR(Modbusmap[id].Modbus_string));
 
@@ -573,9 +573,9 @@ void Modbus2MQTT() {
         case Modbus_string:
           toMQTT_string(i);  break;
         case Modbus_undef:
-          DebugTf("ERROR: MQTT Not implemented for %d = %s \r\n", i, Modbusmap[i].label); break;
+          DebugTf(PSTR("ERROR: MQTT Not implemented for %d = %s \r\n"), i, Modbusmap[i].label); break;
         default:
-          DebugTf("ERROR: MQTT Error undef type %d = %s \r\n", i, Modbusmap[i].label); break;
+          DebugTf(PSTR("ERROR: MQTT Error undef type %d = %s \r\n"), i, Modbusmap[i].label); break;
         }
       }
     }
@@ -613,10 +613,10 @@ void readModbus()
       case Modbus_string:
         if (Modbus_Read_string(i))  countError++;  break;
       case Modbus_undef:
-        DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label);
+        DebugTf(PSTR("ERROR: undef type %d = %s \r\n"), i, Modbusmap[i].label);
         break;
       default:
-        DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label);
+        DebugTf(PSTR("ERROR: undef type %d = %s \r\n"), i, Modbusmap[i].label);
         break;
       }
     }
@@ -625,7 +625,7 @@ void readModbus()
 
   if (countError > 0)
   {
-    DebugTf("readModbus ended with errors count[%d] FreeHeap:[%d] \r\n", countError, ESP.getFreeHeap());
+    DebugTf(PSTR("readModbus ended with errors count[%d] FreeHeap:[%d] \r\n"), countError, ESP.getFreeHeap());
   }
   if (settingLEDblink)
     blinkLEDnow(LED1);
@@ -634,7 +634,7 @@ void readModbus()
 void readModbusSetup()
 {
 
-  if (bDebugMBmsg) Debugf("readModbus2 started\r\n");
+  if (bDebugMBmsg) Debugf(PSTR("readModbus2 started\r\n"));
 
   uint16_t offset = 0;
   uint16_t count = 8;
@@ -645,19 +645,28 @@ void readModbusSetup()
    mb.readHreg(settingModbusSlaveAdr, offset, resval, count, cb); // Send Read Hreg from Modbus Server
 
    while(mb.slave()) { // Check if transaction is active
- //    Debugf("readModbus slave true\r\n");
+ //    Debugf(PSTR("readModbus slave true\r\n"));
      mb.task();
      delay(10);
    }
-   Debugf("readModbus2 result\r\n");
+   Debugf(PSTR("readModbus2 result\r\n"));
    for (int i = 0 ; i < count ; i++) {
-      Debugf("Reg: %d, Val: %d \r\n", i+offset, resval[i]);
+      Debugf(PSTR("Reg: %d, Val: %d \r\n"), i+offset, resval[i]);
       // Debugln(resval[i]);
    }
  }
- if (bDebugMBmsg) Debugf("readModbus ended \r\n");
+ if (bDebugMBmsg) Debugf(PSTR("readModbus ended \r\n"));
 }
 
+void processMQcommand(const char* buf, int len)
+// analyse the incomming MQ command and process
+{
+   
+   DebugTf(PSTR("processMQcommand"));
+   if (bDebugMQTT)  DebugTf(PSTR("processMQcommand len: [%s] buf: [%s]\r\n"), len, buf);
+   
+
+}
 
 void sendModbus(const char* buf, int len)
  {
@@ -665,10 +674,10 @@ void sendModbus(const char* buf, int len)
    // Needs to be Mudbus RTU !!!
    //
 
-   if (bDebugMBmsg)  DebugTf("sendModbus len: [%s] buf: [%s]\r\n", len, buf);
+   if (bDebugMBmsg)  DebugTf(PSTR("sendModbus len: [%s] buf: [%s]\r\n"), len, buf);
    //  if (Serial) {
    //    //check the write buffer
-   //    Debugf("Serial Write Buffer space = [%d] - needed [%d]\r\n",Serial.availableForWrite(), (len+2));
+   //    Debugf(PSTR("Serial Write Buffer space = [%d] - needed [%d]\r\n"),Serial.availableForWrite(), (len+2));
    //    DebugT("Sending to Serial [");
    //    for (int i = 0; i < len; i++) {
    //      Debug((char)buf[i]);
@@ -720,11 +729,11 @@ void sendModbus(const char* buf, int len)
 
          if (sLine.startsWith("#") || sLine.startsWith("//"))
          {
-           if (bDebugMBmsg)  DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
+           if (bDebugMBmsg)  DebugTf(PSTR("Either comment or invalid config line: [%s]\r\n"), sLine.c_str());
          }
          else
          {
-           if (bDebugMBmsg)  DebugTf("sline[%s]\r\n", sLine.c_str());
+           if (bDebugMBmsg)  DebugTf(PSTR("sline[%s]\r\n"), sLine.c_str());
            // #file format is CSV, all values as string without "", fields are
            // #day, starthour, startmin, endhour, endmin
            // #day = daynumber, Numeric representation of the day of the week(1 = Sunday)
@@ -738,14 +747,14 @@ void sendModbus(const char* buf, int len)
            Index3 = sLine.indexOf(',', Index2 + 1);
            Index4 = sLine.indexOf(',', Index3 + 1);
            if (bDebugMBmsg)
-             DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d]\r\n", Index1, Index2, Index3, Index4);
+             DebugTf(PSTR("Index1[%d],Index2[%d],Index3[%d],Index4[%d]\r\n"), Index1, Index2, Index3, Index4);
 
            if (Index4 <= 0)
            {
              if (bDebugMBmsg)
              {
-               DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d]\r\n", Index1, Index2, Index3, Index4);
-               DebugTln("ERROR: Missing parameters in Daytimemap, skip line");
+               DebugTf(PSTR("Index1[%d],Index2[%d],Index3[%d],Index4[%d]\r\n"), Index1, Index2, Index3, Index4);
+               DebugTln(PSTR("ERROR: Missing parameters in Daytimemap, skip line"));
              }
              break;
            }
@@ -762,13 +771,13 @@ void sendModbus(const char* buf, int len)
            sEndhour.trim();
            sEndmin.trim();
 
-          if (bDebugMBmsg) { DebugTf("sDay[%s], sStarthour[%s], sStartmin[%s], sEndhour[%s], sEndmin[%s]\r\n", sDay.c_str(), sStarthour.c_str(), sStartmin.c_str(), sEndhour.c_str(), sEndmin.c_str());
+          if (bDebugMBmsg) { DebugTf(PSTR("sDay[%s], sStarthour[%s], sStartmin[%s], sEndhour[%s], sEndmin[%s]\r\n"), sDay.c_str(), sStarthour.c_str(), sStartmin.c_str(), sEndhour.c_str(), sEndmin.c_str());
               delay(10); 
           }
 
            daynum = sDay.toInt();
            if (daynum >7 || daynum != id ) {
-              DebugTf("DAYNUM NOT IN SEQUENCE sDay[%s], sStarthour[%s], sStartmin[%s], sEndhour[%s], sEndmin[%s]\r\n", sDay.c_str(), sStarthour.c_str(), sStartmin.c_str(), sEndhour.c_str(), sEndmin.c_str());
+              DebugTf(PSTR("DAYNUM NOT IN SEQUENCE sDay[%s], sStarthour[%s], sStartmin[%s], sEndhour[%s], sEndmin[%s]\r\n"), sDay.c_str(), sStarthour.c_str(), sStartmin.c_str(), sEndhour.c_str(), sEndmin.c_str());
            }
            else
            {
@@ -782,7 +791,7 @@ void sendModbus(const char* buf, int len)
          }
 
        } // while available()
-       if (bDebugMBmsg) DebugTf("Number of Daytimemap registers initialized:, %d \r\n", id-1);
+       if (bDebugMBmsg) DebugTf(PSTR("Number of Daytimemap registers initialized:, %d \r\n"), id-1);
        fh.close();
      }
    }
@@ -790,11 +799,11 @@ void sendModbus(const char* buf, int len)
  //===========================================================================================
  void printDaytimemap()
  {
-   if (bDebugMBmsg) DebugTf("printDaytimemap begin for: %d, records \r\n",7);
+   if (bDebugMBmsg) DebugTf(PSTR("printDaytimemap begin for: %d, records \r\n"),7);
    for (int i = 1; i <= 7; i++)
    {
-    //  DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
-     DebugTf("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[i].day), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+    //  DebugTf(PSTR("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+     DebugTf(PSTR("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[i].day), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
 
    }
   Debugln();
@@ -807,7 +816,7 @@ void sendModbus(const char* buf, int len)
    String cfgFilename = "/" + settingModbusCfgfile ;
   //  const char* cfgFilename = "/" + settingModbusCfgfile;
   if (bDebugMBlogic) cfgFilename = "/Modbusmaptest.cfg" ;
-  DebugTf("Modbusmap config file[%s]\r\n",CSTR(settingModbusCfgfile));
+  DebugTf(PSTR("Modbusmap config file[%s]\r\n"),CSTR(settingModbusCfgfile));
 
    // Comment lines start with # or //
    // Configuration file to map modbus registers
@@ -862,9 +871,9 @@ void sendModbus(const char* buf, int len)
 
           if (sLine.startsWith("#") || sLine.startsWith("//") )
           {
-            if (bDebugMBmsg) DebugTf("INFO: Either comment or invalid config line: [%s]\r\n", sLine.c_str());
+            if (bDebugMBmsg) DebugTf(PSTR("INFO: Either comment or invalid config line: [%s]\r\n"), sLine.c_str());
           } else {             
-            if (bDebugMBmsg) DebugTf("sline[%s]\r\n", sLine.c_str());
+            if (bDebugMBmsg) DebugTf(PSTR("sline[%s]\r\n"), sLine.c_str());
             // reg, format, type, label, friendlyname, devclass, stateclass, unit, phase, mqenable
             Index1 = sLine.indexOf(',');
             Index2 = sLine.indexOf(',', Index1 + 1);
@@ -876,13 +885,13 @@ void sendModbus(const char* buf, int len)
             Index8 = sLine.indexOf(',', Index7 + 1);
             Index9 = sLine.indexOf(',', Index8 + 1);
             Index10 = sLine.indexOf(',', Index9 + 1);
-            if (bDebugMBmsg)  DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d],Index10[%d]\r\n", Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9, Index10);
+            if (bDebugMBmsg)  DebugTf(PSTR("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d],Index10[%d]\r\n"), Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9, Index10);
 
             if (Index10 <= 0)
             {
               if (bDebugMBmsg) {
-                DebugTf("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d],Index10[%d]\r\n", Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9,Index10);
-                DebugTln("ERROR: Missing parameters in config line, skip line");
+                DebugTf(PSTR("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d],Index10[%d]\r\n"), Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9,Index10);
+                DebugTln(PSTR("ERROR: Missing parameters in config line, skip line"));
               }
               break;
             }
@@ -910,7 +919,7 @@ void sendModbus(const char* buf, int len)
             sFactor.trim();
             sMQEnable.trim();
             if (bDebugMBmsg) {
-               DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s], sStateclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sStateclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+               DebugTf(PSTR("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s], sStateclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n"), sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sStateclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
                delay(10);
             }
             id++;
@@ -920,7 +929,7 @@ void sendModbus(const char* buf, int len)
             else if (sOper == "Modbus_RW" )       { Modbusmap[id].oper = Modbus_RW ;   } 
             else {
               Modbusmap[id].oper = Modbus_UNDEF ;
-              if (bDebugMBmsg) DebugTln("WARNING: Not read or RW,  Modbus_UNDEF");
+              if (bDebugMBmsg) DebugTln(F("WARNING: Not read or RW,  Modbus_UNDEF"));
             }
 
             if (sFormat == "Modbus_short" )       { Modbusmap[id].regformat = Modbus_short ;  }
@@ -935,29 +944,29 @@ void sendModbus(const char* buf, int len)
                     if (Index2 > 0) {
                         Modbusmap[id].regformat = Modbus_string;
                         Formatcnt = sFormatcnt.toInt();
-                        if (bDebugMBmsg) DebugTf("Modbus_string detected, sFormat[%s], sFormatcnt[%s], length[%d]\r\n",CSTR(sFormat), CSTR(sFormatcnt),Formatcnt);
+                        if (bDebugMBmsg) DebugTf(PSTR("Modbus_string detected, sFormat[%s], sFormatcnt[%s], length[%d]\r\n"),CSTR(sFormat), CSTR(sFormatcnt),Formatcnt);
                         if (Formatcnt > 64 || Formatcnt == 0) {
-                          DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s], sStateclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sStateclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
-                          DebugTf("ERROR Modbus_string length[%d] outside allowed range\r\n",Formatcnt);
+                          DebugTf(PSTR("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s], sStateclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n"), sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sStateclass.c_str(), sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+                          DebugTf(PSTR("ERROR Modbus_string length[%d] outside allowed range\r\n"),Formatcnt);
                           Formatcnt = 0;
                           Modbusmap[id].regformat = Modbus_undef; 
                     
                         }
                         else if ((Formatcnt % 2) != 0) {
-                          DebugTf("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s] , sStateclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n", sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sStateclass.c_str(),  sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
-                          DebugTf("ERROR Modbus_string length[%d] not even\r\n",Formatcnt);
+                          DebugTf(PSTR("sReg[%s], sFormat[%s], sRegoper[%s], sLabel[%s], sName[%s], sDeviceclass[%s] , sStateclass[%s] , sUnit[%s], sPhase[%s], sFactor[%s], sMQEnable[%s]\r\n"), sReg.c_str(), sFormat.c_str(), sOper.c_str(), sLabel.c_str(), sName.c_str(), sDevclass.c_str(), sStateclass.c_str(),  sUnit.c_str(), sPhase.c_str(),sFactor.c_str(),sMQEnable.c_str());
+                          DebugTf(PSTR("ERROR Modbus_string length[%d] not even\r\n"),Formatcnt);
                           Formatcnt = 0;
                           Modbusmap[id].regformat = Modbus_undef;
                         
                           } 
                     } else { 
-                      DebugTf("WARNING: Modbus_string defined without lenght") ; 
+                      DebugTf(PSTR("WARNING: Modbus_string defined without lenght")) ; 
                       Modbusmap[id].regformat = Modbus_undef;
                        
                       } 
                 } 
             else  {  Modbusmap[id].regformat = Modbus_undef;
-                  if (bDebugMBmsg)  DebugTln("WARNING:  Modbus_undef detected");
+                  if (bDebugMBmsg)  DebugTln(F("WARNING:  Modbus_undef detected"));
                   }
             }
             // assign values to Modbusmap
@@ -1007,11 +1016,11 @@ void sendModbus(const char* buf, int len)
        } // while available()
 
        ModbusdataObject.NumberRegisters = id ;
-       if (bDebugMBmsg)  DebugTf("INFO: Number of Modbus registers initialized:, %d \r\n", ModbusdataObject.NumberRegisters);
+       if (bDebugMBmsg)  DebugTf(PSTR("INFO: Number of Modbus registers initialized:, %d \r\n"), ModbusdataObject.NumberRegisters);
        fh.close();
 
      }
-   } else DebugTf("ERROR, Modbus configfile[%s] doesnt exist.\r\n",CSTR(cfgFilename)) ;
+   } else DebugTf(PSTR("ERROR, Modbus configfile[%s] doesnt exist.\r\n"),CSTR(cfgFilename)) ;
  }
 
 // help routines 
@@ -1026,24 +1035,24 @@ String getStringForModbusformat(int enum_val)
 }
 
 void printModbusmapln(int16_t i) {
-    Debugf("Id[%d] Reg[%d] Oper[%s] Format[%s] ", Modbusmap[i].id, Modbusmap[i].address, CSTR(getStringForModbusoper(Modbusmap[i].oper)), CSTR(getStringForModbusformat(Modbusmap[i].regformat)));
+    Debugf(PSTR("Id[%d] Reg[%d] Oper[%s] Format[%s] "), Modbusmap[i].id, Modbusmap[i].address, CSTR(getStringForModbusoper(Modbusmap[i].oper)), CSTR(getStringForModbusformat(Modbusmap[i].regformat)));
     switch (Modbusmap[i].regformat)     {
-    case Modbus_short:       Debugf("Value[%d]", Modbusmap[i].Modbus_short);  break;
-    case Modbus_ushort:      Debugf("Value[%d]", Modbusmap[i].Modbus_ushort); break;
-    case Modbus_int:         Debugf("Value[%d]", Modbusmap[i].Modbus_int);    break;
-    case Modbus_uint:        Debugf("Value[%d]", Modbusmap[i].Modbus_uint);   break;
-    case Modbus_float:       Debugf("Value[%f]", Modbusmap[i].Modbus_float);  break;
-    case Modbus_string:      Debugf("Length[%d] Value[%s]",Modbusmap[i].formatstringlen, CSTR(Modbusmap[i].Modbus_string));  break;
-    case Modbus_undef:       DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label); break;
-    default:                 DebugTf("ERROR: undef type %d = %s \r\n", i, Modbusmap[i].label); break;
+    case Modbus_short:       Debugf(PSTR("Value[%d]"), Modbusmap[i].Modbus_short);  break;
+    case Modbus_ushort:      Debugf(PSTR("Value[%d]"), Modbusmap[i].Modbus_ushort); break;
+    case Modbus_int:         Debugf(PSTR("Value[%d]"), Modbusmap[i].Modbus_int);    break;
+    case Modbus_uint:        Debugf(PSTR("Value[%d]"), Modbusmap[i].Modbus_uint);   break;
+    case Modbus_float:       Debugf(PSTR("Value[%f]"), Modbusmap[i].Modbus_float);  break;
+    case Modbus_string:      Debugf(PSTR("Length[%d] Value[%s]"),Modbusmap[i].formatstringlen, CSTR(Modbusmap[i].Modbus_string));  break;
+    case Modbus_undef:       DebugTf(PSTR("ERROR: undef type %d = %s \r\n"), i, Modbusmap[i].label); break;
+    default:                 DebugTf(PSTR("ERROR: undef type %d = %s \r\n"), i, Modbusmap[i].label); break;
     } 
-  Debugf("  Label[%s] Name[%s] Phase[%d] ",  Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].phase);
-  Debugf("Devclass[%s] Stateclass[%s] Unit[%s] Factor[%f] MQEnable[%d]\r\n", Modbusmap[i].devclass, Modbusmap[i].stateclass, Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
+  Debugf(PSTR("  Label[%s] Name[%s] Phase[%d] "),  Modbusmap[i].label, Modbusmap[i].friendlyname, Modbusmap[i].phase);
+  Debugf(PSTR("Devclass[%s] Stateclass[%s] Unit[%s] Factor[%f] MQEnable[%d]\r\n"), Modbusmap[i].devclass, Modbusmap[i].stateclass, Modbusmap[i].unit, Modbusmap[i].factor, Modbusmap[i].mqenable);
 
 }
 
 void printModbusmap() {
-  Debugf("printModbusmap begin for: %d, records\r\n", ModbusdataObject.NumberRegisters) ;
+  Debugf(PSTR("printModbusmap begin for: %d, records\r\n"), ModbusdataObject.NumberRegisters) ;
   for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
     printModbusmapln(i);
   }
@@ -1069,14 +1078,14 @@ void checkactivateRelay(bool activaterelay)
   {
     loopNTP(); // Make sure time is set
     if (NtpStatus != TIME_SYNC) {
-        DebugTln("Warning: Time not synced, exit activate relay check"); 
+        DebugTln(PSTR("Warning: Time not synced, exit activate relay check")); 
     }
     else {
-        // DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
-        DebugTf("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n", dayStr(Daytimemap[weekday()].day), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+        // DebugTf(PSTR("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+        DebugTf(PSTR("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[weekday()].day), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
 
         if (tempsettingRelayOn && activaterelay) {
-          DebugTln("Warning: Relay Temporary On until next on cycle"); 
+          DebugTln(PSTR("Warning: Relay Temporary On until next on cycle")); 
           setRelay(RELAYON); 
         }
         dagcurmin = hour() * 60 + minute();
@@ -1087,10 +1096,10 @@ void checkactivateRelay(bool activaterelay)
         {
           if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
           {
-            DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+            DebugTf(PSTR("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n"), hour(), minute());
             if (tempsettingRelayOn)    {        
               tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
-              DebugTln("Info: Relay Temporary On switch turned off"); 
+              DebugTln(PSTR("Info: Relay Temporary On switch turned off")); 
             }
             if (activaterelay && statusRelay == RELAYOFF) {
               setRelay(RELAYON); 
@@ -1098,7 +1107,7 @@ void checkactivateRelay(bool activaterelay)
           }
           else
           {
-            DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
+            DebugTf(PSTR("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n"), hour(), minute());
             if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
           }
         }
@@ -1106,10 +1115,10 @@ void checkactivateRelay(bool activaterelay)
         {
           if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
           {
-            DebugTf("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n", hour(), minute());
+            DebugTf(PSTR("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n"), hour(), minute());
             if (tempsettingRelayOn)    {        
               tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
-              DebugTln("Info: Relay Temporary On switch turned off"); 
+              DebugTln(PSTR("Info: Relay Temporary On switch turned off")); 
             }
             if (activaterelay && statusRelay == RELAYOFF) { 
               setRelay(RELAYON);
@@ -1117,17 +1126,16 @@ void checkactivateRelay(bool activaterelay)
           }
           else
           {
-            DebugTf("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n", hour(), minute());
+            DebugTf(PSTR("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n"), hour(), minute());
             if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
           }
         }
       
       if (settingRelayAllwaysOnSwitch) {
-        DebugTln("WARNING, Relay set to ON");
-        DebugTln("WARNING, Relay set to ON");
+        DebugTln(PSTR("#$#$# WARNING, Relay set to ON"));
         setRelay(RELAYON) ;
       }
-      if (activaterelay) DebugTf("statusRelay[%d]\r\n", statusRelay);
+      if (activaterelay) DebugTf(PSTR("statusRelay[%d]\r\n"), statusRelay);
     }
   } 
 }
@@ -1136,7 +1144,7 @@ void setRelay(uint8_t status)
 {
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, status);
-  if (bDebugMBmsg)  DebugTf("INFO: Relay set to %d \r\n", status);
+  if (bDebugMBmsg)  DebugTf(PSTR("INFO: Relay set to %d \r\n"), status);
   statusRelay = status;
 }
 

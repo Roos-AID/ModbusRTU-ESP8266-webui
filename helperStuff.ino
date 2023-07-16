@@ -1,10 +1,10 @@
 /*
 ***************************************************************************
 **  Program  : helperStuff
-**  Version 1.9.1
+**  Version 1.10.0
 **
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2022 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -118,7 +118,7 @@ int8_t splitString(String inStrng, char delimiter, String wOut[], uint8_t maxWor
       inxE  = inStrng.indexOf(delimiter, inxS);         //finds location of first ,
       wOut[wordCount] = inStrng.substring(inxS, inxE);  //captures first data String
       wOut[wordCount].trim();
-      //DebugTf("[%d] => [%c] @[%d] found[%s]\r\n", wordCount, delimiter, inxE, wOut[wordCount].c_str());
+      //DebugTf(PSTR("[%d] => [%c] @[%d] found[%s]\r\n"), wordCount, delimiter, inxE, wOut[wordCount].c_str());
       inxS = inxE;
       inxS++;
       wordCount++;
@@ -149,7 +149,7 @@ void strConcat(char *dest, int maxLen, const char *src)
   }
   else
   {
-    DebugTf("Combined string > %d chars\r\n", maxLen);
+    DebugTf(PSTR("Combined string > %d chars\r\n"), maxLen);
   }
 
 } // strConcat()
@@ -173,7 +173,7 @@ void strConcat(char *dest, int maxLen, float v, int dec)
   }
   else
   {
-    DebugTf("Combined string > %d chars\r\n", maxLen);
+    DebugTf(PSTR("Combined string > %d chars\r\n"), maxLen);
   }
 
 } // strConcat()
@@ -191,7 +191,7 @@ void strConcat(char *dest, int maxLen, int v)
   }
   else
   {
-    DebugTf("Combined string > %d chars\r\n", maxLen);
+    DebugTf(PSTR("Combined string > %d chars\r\n"), maxLen);
   }
 
 } // strConcat()
@@ -213,7 +213,7 @@ void strToLower(char *src)
 void strCopy(char *dest, int maxLen, const char *src, int frm, int to)
 {
   int d=0;
-//DebugTf("dest[%s], src[%s] max[%d], frm[%d], to[%d] =>\r\n", dest, src, maxLen, frm, to);
+//DebugTf(PSTR("dest[%s], src[%s] max[%d], frm[%d], to[%d] =>\r\n"), dest, src, maxLen, frm, to);
   dest[0] = '\0';
   for (int i=0; i<=frm; i++)
   {
@@ -345,7 +345,7 @@ int strIndex(const char *haystack, const char *needle, int start)
 {
   char *p = strstr (haystack+start, needle);
   if (p) {
-    //DebugTf("found [%s] at position [%d]\r\n", needle, (p - haystack));
+    //DebugTf(PSTR("found [%s] at position [%d]\r\n"), needle, (p - haystack));
     return (p - haystack);
   }
   return -1;
@@ -411,7 +411,7 @@ float strToFloat(const char *s, int dec)
   r = strtof(s, NULL);
   p = (int)(r*pow(10, dec));
   r = p / pow(10, dec);
-  //DebugTf("[%s][%d] => p[%d] -> r[%f]\r\n", s, dec, p, r);
+  //DebugTf(PSTR("[%s][%d] => p[%d] -> r[%f]\r\n"), s, dec, p, r);
   return r;
 
 } //  strToFloat()
@@ -570,7 +570,7 @@ bool updateRebootLog(String text)
   struct	rst_info	*rtc_info	=	system_get_rst_info();
   
   if (rtc_info == NULL) {
-    DebugTf("no reset info available:	%x\r\n",	errorCode);
+    DebugTf(PSTR("no reset info available:	%x\r\n"),	errorCode);
   } else {
 
 
@@ -587,16 +587,16 @@ bool updateRebootLog(String text)
     errorCode = rtc_info->reason;
 
     switch(rtc_info->reason) {
-        case 0:   snprintf(log_line_reason, LOG_LINE_LENGTH, "0 - Power reboot"); break;
-        case 1:   snprintf(log_line_reason, LOG_LINE_LENGTH, "1 - Hardware WDT reset"); break;
-        case 2:   snprintf(log_line_reason, LOG_LINE_LENGTH, "2 - Fatal exception"); break;
-        case 3:   snprintf(log_line_reason, LOG_LINE_LENGTH, "3 - Software watchdog reset"); break;
-        case 4:   snprintf(log_line_reason, LOG_LINE_LENGTH, "4 - Software reset"); break;
-        case 5:   snprintf(log_line_reason, LOG_LINE_LENGTH, "5 - Deep-sleep"); break;
-        case 6:   snprintf(log_line_reason, LOG_LINE_LENGTH, "6 - Hardware reset"); break;
-        default:  snprintf(log_line_reason, LOG_LINE_LENGTH, "- Other (not specified) (%d)", rtc_info->reason); break;
+        case 0:   snprintf(log_line_reason, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d Power reboot\r\n",year(), month(), day(), hour(), minute(), second()); break;
+        case 1:   snprintf(log_line_reason, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d Hardware WDT reset\r\n",year(), month(), day(), hour(), minute(), second()); break;
+        case 2:   snprintf(log_line_reason, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d Fatal exception\r\n",year(), month(), day(), hour(), minute(), second()); break;
+        case 3:   snprintf(log_line_reason, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d Software watchdog reset\r\n,", year(), month(), day(), hour(), minute(), second()); break;
+        case 4:   snprintf(log_line_reason, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d Software reset\r\n", year(), month(), day(), hour(), minute(), second()); break;
+        case 5:   snprintf(log_line_reason, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d Deep-sleep\r\n", year(), month(), day(), hour(), minute(), second()); break;
+        case 6:   snprintf(log_line_reason, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d Hardware reset\r\n", year(), month(), day(), hour(), minute(), second()); break;
+        default:  snprintf(log_line_reason, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d Other (not specified) (%d)\r\n", year(), month(), day(), hour(), minute(), second(), rtc_info->reason); break;
       }
-    DebugTf("reset reason:	%s\r\n",	log_line_reason);
+    DebugTf(PSTR("reset reason:	%s\r\n"),	log_line_reason);
 
     if	(rtc_info->reason	==	REASON_WDT_RST	|| rtc_info->reason	==	REASON_EXCEPTION_RST	|| rtc_info->reason	==	REASON_SOFT_WDT_RST)	{
 
@@ -635,7 +635,7 @@ bool updateRebootLog(String text)
       }
 
 
-      DebugTf("Fatal exception (%d): %s\r\n",	rtc_info->exccause, log_line_excpt);
+      DebugTf(PSTR("Fatal exception (%d): %s\r\n"),	rtc_info->exccause, log_line_excpt);
     }
   }
 

@@ -1,10 +1,10 @@
 /*
 ***************************************************************************
 **  Program  : settingStuff.ino
-**  Version 1.8.1
+**  Version 1.10.0
 **
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2022 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -51,6 +51,7 @@ void writeSettings(bool show)
   root["modbussinglephase"] = settingModbusSinglephase;
   root["timebasedswitch"] = settingTimebasedSwitch;
   root["relayallwayson"] = settingRelayAllwaysOnSwitch;
+  root["debugbootswitch"] = settingDebugAfterBoot;
 
   serializeJsonPretty(root, TelnetStream);
   serializeJsonPretty(root, file);
@@ -124,6 +125,7 @@ void readSettings(bool show)
   settingModbusSinglephase = doc["modbussinglephase"]|settingModbusSinglephase;
   settingTimebasedSwitch  = doc["timebasedswitch"] | settingTimebasedSwitch;
   settingRelayAllwaysOnSwitch = doc["relayallwayson"] | settingRelayAllwaysOnSwitch;
+  settingDebugAfterBoot = doc["debugbootswitch"] | settingDebugAfterBoot;
 
 
   // Close the file (Curiously, File's destructor doesn't close the file)
@@ -132,7 +134,7 @@ void readSettings(bool show)
 
   DebugTln(F(" .. done\r"));
 
-  if (show) {
+  if (show | settingDebugAfterBoot) {
     Debugln(F("\r\n==== read Settings ===================================================\r"));
     Debugf("Hostname      : %s\r\n",  CSTR(settingHostname));
     Debugf("MQTT enabled  : %s\r\n",  CBOOLEAN(settingMQTTenable));
@@ -154,6 +156,7 @@ void readSettings(bool show)
     Debugf("Modbus singlephase : %s\r\n",  CBOOLEAN(settingModbusSinglephase));
     Debugf("Timebased switch : %s\r\n", CBOOLEAN(settingTimebasedSwitch));
     Debugf("Relay Allways On switch : %s\r\n", CBOOLEAN(settingRelayAllwaysOnSwitch));
+    Debugf("Debug after boot switch : %s\r\n", CBOOLEAN(settingDebugAfterBoot));
   }
 
   Debugln(F("-\r"));
@@ -239,6 +242,9 @@ void updateSetting(const char *field, const char *newValue)
   if (stricmp(field, "relayallwayson") == 0)  { 
      settingRelayAllwaysOnSwitch = EVALBOOLEAN(newValue); 
      checkactivateRelay(true) ;
+     }
+  if (stricmp(field, "debugbootswitch") == 0)  { 
+     settingDebugAfterBoot = EVALBOOLEAN(newValue); 
      }
 
   // without NTP no timebased switching 

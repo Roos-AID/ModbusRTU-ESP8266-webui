@@ -3,7 +3,7 @@
 **  Program  : Header file: ModbusStuff.h
 **  Version 1.9.1
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2022 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **

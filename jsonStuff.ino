@@ -3,7 +3,7 @@
 **  Program  : jsonStuff
 **  Version 1.8.0
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2022 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -58,7 +58,7 @@ void sendNestedJsonObj(const char *cName, String sValue)
 
   if (sValue.length() > (JSON_BUFF_MAX - 65) )
   {
-    DebugTf("[2] sValue.length() [%d]\r\n", sValue.length());
+    DebugTf(PSTR("[2] sValue.length() [%d]\r\n"), sValue.length());
   }
 
     snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": \"%s\"}"
