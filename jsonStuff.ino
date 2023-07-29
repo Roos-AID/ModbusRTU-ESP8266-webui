@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program  : jsonStuff
-**  Version 1.8.0
+**  Version 1.11.0
 **
-**  Copyright (c) 2022 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -27,15 +27,25 @@ void sendStartJsonObj(const char *objName)
 
 
 //=======================================================================
-void sendEndJsonObj()
-{
-  httpServer.sendContent("\r\n]}\r\n");
+// void sendEndJsonObj()
+// {
+//   httpServer.sendContent("\r\n]}\r\n");
 
-  //httpServer.sendHeader( "Content-Length", "0");
-  //httpServer.send ( 200, "application/json", "");
+//   //httpServer.sendHeader( "Content-Length", "0");
+//   //httpServer.send ( 200, "application/json", "");
+
+// } // sendEndJsonObj()
+
+void sendEndJsonObj(const char *objName)
+{
+  // iIdentlevel--;
+  if (strlen(objName)==0){  
+    httpServer.sendContent("\r\n}\r\n");
+  } else {
+    httpServer.sendContent("\r\n]}\r\n");
+  }
 
 } // sendEndJsonObj()
-
 
 //=======================================================================
 void sendNestedJsonObj(const char *cName, const char *cValue)

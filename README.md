@@ -44,7 +44,10 @@ Looking for the documentation?, see the Documentation folder (work in progress).
 
 | Version | Release notes |
 |-|-|
-| 1.10.0 | WIP: Add on off command via MQ to switch relay (TODO), setting in UI for debug after boot, ACETIME lib update, Heap optimization |
+| 1.11.1 | WIP: Add on off command via MQ to switch relay (TODO), fix Togglerelay to always work|
+| 1.11.0 | BREAKING CHANGE : fix missing MQ top topic nodeid in HA config |
+| 1.10.1 | WIP: Add on off command via MQ to switch relay (TODO), update core 3.1.2 |
+| 1.10.0 | setting in UI for debug after boot, ACETIME lib update, Heap optimization |
 | 1.9.1 | Updated libraries, expanded errorlog to find reboot reason, relay allways on failed bug fixed, Wifi sleepmode off|  
 | 1.9.0 | Breaking change , added stateclass to MQ Autoconfigure for HA , additional parameter in Modbusmap.cfg see examples|  
 | 1.8.1 | Implement a bootlog to register reboot reason and debug info, copied from rlagerweij<br>Changed: removed ezTime NTP library, moved to ConfigTime NTP and AceTime |  

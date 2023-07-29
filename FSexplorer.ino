@@ -1,10 +1,10 @@
 /* 
 ***************************************************************************  
 **  Program : FSexplorer
-**  Version 1.8.1
+**  Version 1.11.0
 **
 **
-**  Copyright (c) 2022 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **

@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program : networkStuff.h
-**  Version 1.9.1
+**  Version 1.11.0
 **
-**  Copyright (c) 2022 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -31,7 +31,7 @@
 bool updateRebootLog(String text) ;
 
 //Use the NTP SDK ESP 8266 
-#include <time.h>
+// #include <time.h>
 extern "C" int clock_gettime(clockid_t unused, struct timespec *tp);
 
 enum NtpStatus_t {
@@ -43,7 +43,7 @@ enum NtpStatus_t {
 
 NtpStatus_t NtpStatus = TIME_NOTSET;
 static const time_t EPOCH_2000_01_01 = 946684800;
-time_t NtpLastSync = 0; //last sync moment in EPOCH seconds
+// static double NtpSynctijd = 999999 ; //last sync moment in EPOCH seconds
 
 
 ESP8266WebServer httpServer(80);
@@ -210,7 +210,8 @@ void getNTPtime(){
 }
 
 void loopNTP(){
-time_t now;
+static ace_time::acetime_t NtpSynctijd = 0; //last sync moment in EPOCH seconds  
+ace_time::acetime_t now;
 now = time(nullptr); //this is now...
 configTime(0, 0, CSTR(settingNTPhostname), nullptr, nullptr);
 
@@ -218,16 +219,15 @@ if (!settingNTPenable) return;
   switch (NtpStatus){
     case TIME_NOTSET:
     case TIME_NEEDSYNC:
-      NtpLastSync = now; //remember last sync
+      NtpSynctijd = now ; //remember last sync
       DebugTln(F("Start time syncing"));
       startNTP();
       DebugTf(PSTR("Starting timezone lookup for [%s]\r\n"), CSTR(settingNTPtimezone));
       NtpStatus = TIME_WAITFORSYNC;
       break;
     case TIME_WAITFORSYNC:
-      if ((now > EPOCH_2000_01_01) && (now >= NtpLastSync)) { 
-        //DebugTf(PSTR("Waited for sync: epoch: %lld\r\n"), time(nullptr));
-        NtpLastSync = now; //remember last sync         
+      if ((now > EPOCH_2000_01_01) && (now >= NtpSynctijd)) { 
+        NtpSynctijd = now ; //remember last sync         
         TimeZone myTz =  timezoneManager.createForZoneName(CSTR(settingNTPtimezone));
         if (myTz.isError()){
           DebugTf(PSTR("Error: Timezone Invalid/Not Found: [%s]\r\n"), CSTR(settingNTPtimezone));
@@ -239,18 +239,21 @@ if (!settingNTPenable) return;
           DebugTf(PSTR("%02d:%02d:%02d %02d-%02d-%04d\n\r"), myTime.hour(), myTime.minute(), myTime.second(), myTime.day(), myTime.month(), myTime.year());
           if (!myTime.isError()) {
             //finally time is synced!
-            //setTime(myTime.hour(), myTime.minute(), myTime.second(), myTime.day(), myTime.month(), myTime.year());
+            // setTime(myTime.hour(), myTime.minute(), myTime.second(), myTime.day(), myTime.month(), myTime.year());
             NtpStatus = TIME_SYNC;
             DebugTln(F("Time synced!"));
+            NtpSynctijd = now;
           }
         }
       } 
     break;
     case TIME_SYNC:
-      if ((now -  NtpLastSync) > NTP_RESYNC_TIME){
+
+      if ((now -  NtpSynctijd) > NTP_RESYNC_TIME){
         //when xx seconds have passed, resync using NTP
          DebugTln(F("Time resync needed"));
-        NtpStatus = TIME_NEEDSYNC;
+        // NtpStatus = TIME_NEEDSYNC;
+        NtpStatus = TIME_WAITFORSYNC;
       }
     break;
   } 

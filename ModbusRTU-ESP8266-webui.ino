@@ -2,9 +2,9 @@
 /*
 ***************************************************************************
 **  Program  : ModbusRTU-webui.ino
-**  Version 1.10.0
+**  Version 1.11.0
 **
-**  Copyright (c) 2022 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -16,7 +16,7 @@
  *  How to install the ModbusRTU-webui on your nodeMCU
  *
  *  Make sure you have all required library's installed:
- *  - AceTime v1.8.0 - https://github.com/bxparks/AceTime
+ *  - AceTime v2.3.0 - https://github.com/bxparks/AceTime
  *  - TelnetStream - https://github.com/jandrassy/TelnetStream/commit/1294a9ee5cc9b1f7e51005091e351d60c8cddecf
  *  - ArduinoJson - https://arduinojson.org/
  *  - modbus-esp8266  -https://github.com/emelianov/modbus-esp8266
@@ -110,7 +110,7 @@ void setup()
   while (settingTimebasedSwitch && settingNTPenable && (NtpStatus != TIME_SYNC))
   {
     loopNTP(); // Make sure time is set
-    // delayms(1000) ;
+    delayms(1000) ;
   }
 
   // log last reset reason after all above has started 
@@ -245,6 +245,7 @@ void doTaskEvery30s(){
 //===[ Do task every 60s ]===
 void doTaskEvery60s(){
   //== do tasks ==
+  loopNTP() ;
   checkactivateRelay(true);
   //if no wifi, try reconnecting (once a minute)
   if (WiFi.status() != WL_CONNECTED)
@@ -275,7 +276,7 @@ void doTaskEvery60s(){
     //check telnet
     startTelnet();
   }
-
+  
 }
 // end doTaskEvery60s()
 
@@ -287,7 +288,7 @@ void doBackgroundTasks()
       handleDebug();
       handleMQTT();                 // MQTT transmissions
       httpServer.handleClient();
-      loopNTP();
+      // loopNTP();
     }           
   yield();
 }

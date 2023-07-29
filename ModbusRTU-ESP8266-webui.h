@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.10.0
+**  Version 1.11.1
 **
-**  Copyright (c) 2022 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -14,15 +14,14 @@
 //#include <ESP8266WiFi.h>
 #include <Arduino.h>
 
-#include <AceTime.h>
-#include <TimeLib.h>
+#include <AceTime.h>    
+// #include <TimeLib.h>
 
 #include <TelnetStream.h>       // https://github.com/jandrassy/TelnetStream/commit/1294a9ee5cc9b1f7e51005091e351d60c8cddecf
 #include <ArduinoJson.h>        // https://arduinojson.org/
 #include "Wire.h"
 #include "ModbusStuff.h"
 
-#include "Debug.h"
 #include "safeTimers.h"
 
 
@@ -77,7 +76,7 @@ static ExtendedZoneManager timezoneManager(
   zonedbx::kZoneAndLinkRegistry,
   zoneProcessorCache);
 
-const char *weekDayName[]  {  "Unknown", "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Unknown" };
+const char *weekDayName[]  {  "Unknown", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag", "Unknown" };
 const char *flashMode[]    { "QIO", "QOUT", "DIO", "DOUT", "Unknown" };
 
 
@@ -123,6 +122,7 @@ bool bDebugMBlogic = false; // when set to true during compile time, Modbusmapte
 bool bDebugRestAPI = false;
 bool bDebugMQTT = false;
 
-//Now load network suff
+//Now load Debug & network library
+#include "Debug.h"
 #include "networkStuff.h"
 // eof

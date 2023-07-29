@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.10.0
+**  Version 1.11.0
 **
-**  Copyright (c) 2022 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -316,7 +316,7 @@ bool Modbus_Read_int(uint16_t i)
   else
   {
     // this should never happen
-    DebugTln(PSTR("Error: Modbus Read while transaction active"));
+    DebugTln(F("Error: Modbus Read while transaction active"));
     ModbusdataObject.LastResult = 99;
   }
 
@@ -364,7 +364,7 @@ bool Modbus_Read_uint(uint16_t i)
   else
   {
     // this should never happen
-    DebugTln(PSTR("Error: Modbus Read while transaction active"));
+    DebugTln(F("Error: Modbus Read while transaction active"));
     ModbusdataObject.LastResult = 99;
   }
 
@@ -658,12 +658,16 @@ void readModbusSetup()
  if (bDebugMBmsg) Debugf(PSTR("readModbus ended \r\n"));
 }
 
-void processMQcommand(const char* buf, int len)
+void processMQcommand(const char* buf, unsigned int len)
 // analyse the incomming MQ command and process
 {
    
-   DebugTf(PSTR("processMQcommand"));
-   if (bDebugMQTT)  DebugTf(PSTR("processMQcommand len: [%s] buf: [%s]\r\n"), len, buf);
+  DebugTln(F("processMQcommand"));
+  char msgPayload[50];
+  int msglen = min((int)(len)+1, (int)sizeof(msgPayload));
+  strlcpy(msgPayload, (char *)buf, msglen);
+
+  if (bDebugMQTT)  DebugTf(PSTR("processMQcommand len: [%d] buf: [%s]\r\n"), msglen, msgPayload);
    
 
 }
@@ -754,7 +758,7 @@ void sendModbus(const char* buf, int len)
              if (bDebugMBmsg)
              {
                DebugTf(PSTR("Index1[%d],Index2[%d],Index3[%d],Index4[%d]\r\n"), Index1, Index2, Index3, Index4);
-               DebugTln(PSTR("ERROR: Missing parameters in Daytimemap, skip line"));
+               DebugTln(F("ERROR: Missing parameters in Daytimemap, skip line"));
              }
              break;
            }
@@ -803,7 +807,8 @@ void sendModbus(const char* buf, int len)
    for (int i = 1; i <= 7; i++)
    {
     //  DebugTf(PSTR("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[i].day).c_str(), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
-     DebugTf(PSTR("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[i].day), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+    //  DebugTf(PSTR("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[i].day), Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
+     DebugTf(PSTR("Day: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), weekDayName[Daytimemap[i].day], Daytimemap[i].starthour, Daytimemap[i].startmin, Daytimemap[i].endhour, Daytimemap[i].endmin);
 
    }
   Debugln();
@@ -891,7 +896,7 @@ void sendModbus(const char* buf, int len)
             {
               if (bDebugMBmsg) {
                 DebugTf(PSTR("Index1[%d],Index2[%d],Index3[%d],Index4[%d],Index5[%d],Index6[%d],Index7[%d],Index8[%d],Index9[%d],Index10[%d]\r\n"), Index1, Index2, Index3, Index4, Index5, Index6, Index7, Index8, Index9,Index10);
-                DebugTln(PSTR("ERROR: Missing parameters in config line, skip line"));
+                DebugTln(F("ERROR: Missing parameters in config line, skip line"));
               }
               break;
             }
@@ -1078,28 +1083,35 @@ void checkactivateRelay(bool activaterelay)
   {
     loopNTP(); // Make sure time is set
     if (NtpStatus != TIME_SYNC) {
-        DebugTln(PSTR("Warning: Time not synced, exit activate relay check")); 
+        DebugTln(F("Warning: Time not synced, exit activate relay check")); 
     }
     else {
-        // DebugTf(PSTR("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[weekday()].day).c_str(), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
-        DebugTf(PSTR("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[weekday()].day), Daytimemap[weekday()].starthour, Daytimemap[weekday()].startmin, Daytimemap[weekday()].endhour, Daytimemap[weekday()].endmin);
+
+        time_t now = time(nullptr);
+        TimeZone myTz =  timezoneManager.createForZoneName(CSTR(settingNTPtimezone));
+        ZonedDateTime myTime = ZonedDateTime::forUnixSeconds64(now, myTz);
+        DebugTf(PSTR("%02d:%02d:%02d %02d-%02d-%04d\r\n"), myTime.hour(), myTime.minute(), myTime.second(), myTime.day(), myTime.month(), myTime.year());
+        // DebugTf(PSTR("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[myTime.dayOfWeek()].day).c_str(), Daytimemap[myTime.dayOfWeek()].starthour, Daytimemap[myTime.dayOfWeek()].startmin, Daytimemap[myTime.dayOfWeek()].endhour, Daytimemap[myTime.dayOfWeek()].endmin);
+        // DebugTf(PSTR("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), dayStr(Daytimemap[myTime.dayOfWeek()].day), Daytimemap[myTime.dayOfWeek()].starthour, Daytimemap[myTime.dayOfWeek()].startmin, Daytimemap[myTime.dayOfWeek()].endhour, Daytimemap[myTime.dayOfWeek()].endmin);
+        DebugTf(PSTR("Schedule for today: %s, starttime: %02d:%02d, endtime: %02d:%02d \r\n"), weekDayName[(Daytimemap[myTime.dayOfWeek()].day)], Daytimemap[myTime.dayOfWeek()].starthour, Daytimemap[myTime.dayOfWeek()].startmin, Daytimemap[myTime.dayOfWeek()].endhour, Daytimemap[myTime.dayOfWeek()].endmin);
 
         if (tempsettingRelayOn && activaterelay) {
-          DebugTln(PSTR("Warning: Relay Temporary On until next on cycle")); 
+          DebugTln(F("Warning: Relay Temporary On until next on cycle")); 
           setRelay(RELAYON); 
         }
-        dagcurmin = hour() * 60 + minute();
-        dagstartmin = Daytimemap[weekday()].starthour * 60 + Daytimemap[weekday()].startmin;
-        dagendmin = Daytimemap[weekday()].endhour * 60 + Daytimemap[weekday()].endmin ;
-
+        // dagcurmin = hour() * 60 + minute();
+        dagcurmin = myTime.hour() * 60 + myTime.minute() ;
+        dagstartmin = Daytimemap[myTime.dayOfWeek()].starthour * 60 + Daytimemap[myTime.dayOfWeek()].startmin;
+        dagendmin = Daytimemap[myTime.dayOfWeek()].endhour * 60 + Daytimemap[myTime.dayOfWeek()].endmin ;
+        
         if (dagstartmin < dagendmin)
         {
           if (dagcurmin >= dagstartmin && dagcurmin < dagendmin)
           {
-            DebugTf(PSTR("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n"), hour(), minute());
+            DebugTf(PSTR("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n"), myTime.hour(), myTime.minute());
             if (tempsettingRelayOn)    {        
               tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
-              DebugTln(PSTR("Info: Relay Temporary On switch turned off")); 
+              DebugTln(F("Info: Relay Temporary On switch turned off")); 
             }
             if (activaterelay && statusRelay == RELAYOFF) {
               setRelay(RELAYON); 
@@ -1107,7 +1119,7 @@ void checkactivateRelay(bool activaterelay)
           }
           else
           {
-            DebugTf(PSTR("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n"), hour(), minute());
+            DebugTf(PSTR("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n"), myTime.hour(), myTime.minute());
             if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
           }
         }
@@ -1115,10 +1127,10 @@ void checkactivateRelay(bool activaterelay)
         {
           if (dagcurmin >= dagstartmin || dagcurmin < dagendmin)
           {
-            DebugTf(PSTR("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n"), hour(), minute());
+            DebugTf(PSTR("Tijd:%02d:%02d Binnen tijdslot, set relay on\r\n"), myTime.hour(), myTime.minute());
             if (tempsettingRelayOn)    {        
               tempsettingRelayOn = false ; // Turn the temporary on switch of at next cycle
-              DebugTln(PSTR("Info: Relay Temporary On switch turned off")); 
+              DebugTln(F("Info: Relay Temporary On switch turned off")); 
             }
             if (activaterelay && statusRelay == RELAYOFF) { 
               setRelay(RELAYON);
@@ -1126,13 +1138,13 @@ void checkactivateRelay(bool activaterelay)
           }
           else
           {
-            DebugTf(PSTR("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n"), hour(), minute());
+            DebugTf(PSTR("Tijd:%02d:%02d Buiten tijdslot, set relay off\r\n"), myTime.hour(), myTime.minute());
             if ((activaterelay && statusRelay == RELAYON) && !tempsettingRelayOn) setRelay(RELAYOFF); 
           }
         }
       
       if (settingRelayAllwaysOnSwitch) {
-        DebugTln(PSTR("#$#$# WARNING, Relay set to ON"));
+        DebugTln(F("#$#$# WARNING, Relay set to ON"));
         setRelay(RELAYON) ;
       }
       if (activaterelay) DebugTf(PSTR("statusRelay[%d]\r\n"), statusRelay);

@@ -1,10 +1,10 @@
 /*
 ***************************************************************************
 **  Program  : restAPI.ino
-**  Version 1.10.0
+**  Version 1.11.1
 **
 **
-**  Copyright (c) 2022 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -93,8 +93,12 @@ void processAPI()
       else if (words[3] == "relayToggle"){
         if (tempsettingRelayOn ) {
           tempsettingRelayOn = false ;
+          setRelay(RELAYOFF); 
         }
-        else tempsettingRelayOn = true ;
+        else { 
+          tempsettingRelayOn = true ;
+          setRelay(RELAYON); 
+        }
         // Set the relay according to the schedule and the tempsetting
         checkactivateRelay(true);
       }
@@ -213,19 +217,21 @@ void sendModbusmonitor()
     if (settingRelayAllwaysOnSwitch) {
       sendJsonModbusmonObj("Warning: Relay set to allways", "ON", "");
     }
-    if (tempsettingRelayOn) {
+    
+  } else if (!settingNTPenable) {
+    sendJsonModbusmonObj("Timebasedswitching", "NO NTP", "ERR");
+  }
+
+  if (tempsettingRelayOn) {
       sendJsonModbusmonObj("Warning: Relay temp. set to", "ON", "");
     }
 
-    if (statusRelay) {
+  if (statusRelay) {
       sendJsonModbusmonObj("Relay output status", "ON", "");
     } else
     {
       sendJsonModbusmonObj("Relay output status", "OFF", "");
     }
-  } else if (!settingNTPenable) {
-    sendJsonModbusmonObj("Timebasedswitching", "NO NTP", "ERR");
-  }
 
   for (int i = 1; i <= ModbusdataObject.NumberRegisters ; i++) {
   if (bDebugRestAPI) printModbusmapln(i) ; 
@@ -258,7 +264,7 @@ void sendModbusmonitor()
     }
   }
 
-  sendEndJsonObj();
+  sendEndJsonObj("Modbusmonitor");
 
 } // sendModbusmonitor()
 
@@ -326,7 +332,7 @@ void sendDeviceInfo()
   sendNestedJsonObj("modbusreaderrors", ModbusdataObject.ModbusErrors);
 
 
-  httpServer.sendContent("\r\n]}\r\n");
+  sendEndJsonObj("devinfo");
 
 } // sendDeviceInfo()
 
@@ -334,15 +340,19 @@ void sendDeviceInfo()
 //=======================================================================
 void sendDeviceTime()
 {
-  char actTime[50];
-
+  char buf[50];
+  
   sendStartJsonObj("devtime");
-  snprintf(actTime, 49, "%04d-%02d-%02d %02d:%02d:%02d", year(), month(), day()
-                                                       , hour(), minute(), second());
-  sendNestedJsonObj("dateTime", actTime);
-  sendNestedJsonObj("epoch", (int)now());
+  time_t now = time(nullptr);
+  //Timezone based devtime
+  TimeZone myTz =  timezoneManager.createForZoneName(CSTR(settingNTPtimezone));
+  ZonedDateTime myTime = ZonedDateTime::forUnixSeconds64(now, myTz);
+  snprintf(buf, 49, PSTR("%04d-%02d-%02d %02d:%02d:%02d"), myTime.year(), myTime.month(), myTime.day(), myTime.hour(), myTime.minute(), myTime.second());
+  sendNestedJsonObj("dateTime", buf); 
+  sendNestedJsonObj("epoch", (int)now);
+  sendNestedJsonObj("message", sMessage);
 
-  sendEndJsonObj();
+  sendEndJsonObj("devtime");
 
 } // sendDeviceTime()
 
@@ -379,7 +389,7 @@ void sendDeviceSettings()
   sendJsonSettingObj("timebasedswitch", settingTimebasedSwitch, "b");
   sendJsonSettingObj("relayallwayson", settingRelayAllwaysOnSwitch, "b");
   sendJsonSettingObj("debugbootswitch", settingDebugAfterBoot, "b");
-  sendEndJsonObj();
+  sendEndJsonObj("settings");
 
 } // sendDeviceSettings()
 

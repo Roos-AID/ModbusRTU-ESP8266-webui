@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program  : MQTTstuff
-**  Version 1.10.0
+**  Version 1.11.0
 **
-**  Copyright (c) 2022 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **  TERMS OF USE: MIT License. See bottom of file.
@@ -384,7 +384,7 @@ void doAutoConfigure()
 
   //  String sTopic_template = "%homeassistant%/sensor/%node_id%/%label%/config";
   //  String sMsg_template = "{\"avty_t\":\"%mqtt_pub_topic%\",\"dev\":{\"identifiers\":\"%node_id%\",\"manufacturer\":\"Rob Roos\",\"model\":\"modbusRTUrdr\",\"name\":\"ModbusRTU reader(%hostname%)\",\"sw_version\":\"%version%\"},\"uniq_id\":\"%node_id%-%label%\",\"device_class\":\"%devclass%\",\"state_class\":\"%stateclass%\",\"name\":\"%hostname%_%friendlyname%\", \"stat_t\":\"%mqtt_pub_topic%/%label%\",\"unit_of_measurement\": \"%unit%\", \"value_template\": \"{{ value }}\" }" ;
-  String sTopic_template = "%homeassistant%/sensor/%label%/config";
+  String sTopic_template = "%homeassistant%/sensor/%node_id%/%label%/config";
   String sMsg_template = "{\"avty_t\": \"%mqtt_pub_topic%\", \"dev\": {\"identifiers\": \"%node_id%\", \"manufacturer\": \"Rob Roos\", \"model\": \"modbusRTUrdr\", \"name\": \"ModbusRTU reader(%hostname%)\", \"sw_version\": \"%version%\"}, \"uniq_id\": \"%node_id%-%label%\", \"device_class\": \"%devclass%\", \"state_class\": \"%stateclass%\", \"name\": \"%hostname%_%friendlyname%\", \"stat_t\": \"%mqtt_pub_topic%/%label%\", \"unit_of_measurement\": \"%unit%\", \"value_template\": \"{{ value }}\" }";
   String sTopic = "";
   String sMsg = "";
