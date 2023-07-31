@@ -99,6 +99,7 @@ bool      settingNTPenable = true;
 String    settingNTPtimezone = NTP_DEFAULT_TIMEZONE;
 String    settingNTPhostname = NTP_HOST_DEFAULT;
 bool      settingLEDblink = true;
+String    lastMQcommandrcvd = "";
 
 //Modbus Settings
 String    settingModbusCfgfile = "Modbusmap.cfg";

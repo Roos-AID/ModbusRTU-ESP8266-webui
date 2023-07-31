@@ -663,13 +663,39 @@ void processMQcommand(const char* buf, unsigned int len)
 {
    
   DebugTln(F("processMQcommand"));
-  char msgPayload[50];
+  char msgPayload[16];
   int msglen = min((int)(len)+1, (int)sizeof(msgPayload));
   strlcpy(msgPayload, (char *)buf, msglen);
 
   if (bDebugMQTT)  DebugTf(PSTR("processMQcommand len: [%d] buf: [%s]\r\n"), msglen, msgPayload);
-   
+  lastMQcommandrcvd = msgPayload ; 
 
+  if (lastMQcommandrcvd == "relayon") {
+      // set relay on function
+      tempsettingRelayOn = true ;
+      setRelay(RELAYON); 
+    }
+  else if (lastMQcommandrcvd == "relayoff")  { 
+      // set relay off function
+      tempsettingRelayOn = false ;
+      setRelay(RELAYOFF); 
+    }  
+  else if (lastMQcommandrcvd == "timebasedoff")  { 
+      // set tume based switching off
+      settingTimebasedSwitch = false;      
+  }        
+  else if (lastMQcommandrcvd == "timebasedon")  { 
+      // set tume based switching on 
+      // without NTP no timebased switching 
+      if (!settingNTPenable) {
+          settingTimebasedSwitch = false;
+          if (bDebugMQTT)  DebugTln(F("WARNING: Cmd ignored:Timebased switch not without NTP active"));
+      }    
+      settingTimebasedSwitch = true;      
+    }  
+  else  {  
+       if (bDebugMQTT)  DebugTln(F("WARNING:  MQ command not recognized"));
+   }
 }
 
 void sendModbus(const char* buf, int len)

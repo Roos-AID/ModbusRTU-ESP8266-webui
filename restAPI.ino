@@ -93,10 +93,12 @@ void processAPI()
       else if (words[3] == "relayToggle"){
         if (tempsettingRelayOn ) {
           tempsettingRelayOn = false ;
+          lastMQcommandrcvd = "" ;
           setRelay(RELAYOFF); 
         }
         else { 
           tempsettingRelayOn = true ;
+          lastMQcommandrcvd = "" ;
           setRelay(RELAYON); 
         }
         // Set the relay according to the schedule and the tempsetting
@@ -212,15 +214,19 @@ void sendModbusmonitor()
 
   sendStartJsonObj("Modbusmonitor");
   if (ModbusdataObject.NumberRegisters == 0) sendJsonModbusmonObj("ERROR: No or invalid config file", "NO FILE", "ERR");
-
-  if (settingTimebasedSwitch && settingNTPenable) {
+  
+  if (lastMQcommandrcvd != "" ) sendJsonModbusmonObj("Last MQ command", lastMQcommandrcvd.c_str(), "");
+  
+  if (settingTimebasedSwitch) {
     if (settingRelayAllwaysOnSwitch) {
       sendJsonModbusmonObj("Warning: Relay set to allways", "ON", "");
     }
-    
-  } else if (!settingNTPenable) {
+    else if (!settingNTPenable) {
     sendJsonModbusmonObj("Timebasedswitching", "NO NTP", "ERR");
+    }
+    else  sendJsonModbusmonObj("Timebasedswitching", "Active", "");
   }
+  else sendJsonModbusmonObj("Timebasedswitching", "Disabled", "");
 
   if (tempsettingRelayOn) {
       sendJsonModbusmonObj("Warning: Relay temp. set to", "ON", "");
@@ -330,7 +336,8 @@ void sendDeviceInfo()
   sendNestedJsonObj("lastreset", lastReset);
 
   sendNestedJsonObj("modbusreaderrors", ModbusdataObject.ModbusErrors);
-
+  
+  sendNestedJsonObj("lastmqcmd", lastMQcommandrcvd.c_str()); 
 
   sendEndJsonObj("devinfo");
 

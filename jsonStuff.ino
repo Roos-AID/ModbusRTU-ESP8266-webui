@@ -10,35 +10,48 @@
 **  TERMS OF USE: MIT License. See bottom of file.
 ***************************************************************************
 */
-static char objSprtr[10] = "";
+static int iIdentlevel = 0;
+char sBeforenext[10] ="";
+bool bFirst = true; 
+
 
 //=======================================================================
 void sendStartJsonObj(const char *objName)
 {
   char sBuff[50] = "";
-  objSprtr[0]    = '\0';
+  sBeforenext[0]='\0';
 
-  snprintf(sBuff, sizeof(sBuff), "{\"%s\":[\r\n", objName);
+  if (strlen(objName)==0){  
+    snprintf(sBuff, sizeof(sBuff), "{\r\n");
+  }else {
+    snprintf(sBuff, sizeof(sBuff), "{\"%s\":[\r\n", objName);
+  }
   httpServer.sendHeader("Access-Control-Allow-Origin", "*");
   httpServer.setContentLength(CONTENT_LENGTH_UNKNOWN);
   httpServer.send(200, "application/json", sBuff);
+  iIdentlevel++;
+  bFirst = true;
 
 } // sendStartJsonObj()
 
-
 //=======================================================================
-// void sendEndJsonObj()
-// {
-//   httpServer.sendContent("\r\n]}\r\n");
 
-//   //httpServer.sendHeader( "Content-Length", "0");
-//   //httpServer.send ( 200, "application/json", "");
-
-// } // sendEndJsonObj()
+void sendIdent(){
+  for (int i = iIdentlevel; i >0; i--){
+    httpServer.sendContent("  ");
+  }
+}  //sendIdent()
+//=======================================================================
+void sendBeforenext(){
+  if (!bFirst){ 
+    httpServer.sendContent(",\r\n");
+  }
+  bFirst = false;
+} //sendBeforenext()
 
 void sendEndJsonObj(const char *objName)
 {
-  // iIdentlevel--;
+  iIdentlevel--;
   if (strlen(objName)==0){  
     httpServer.sendContent("\r\n}\r\n");
   } else {
@@ -52,11 +65,11 @@ void sendNestedJsonObj(const char *cName, const char *cValue)
 {
   char jsonBuff[JSON_BUFF_MAX] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": \"%s\"}"
-                                      , objSprtr, cName, cValue);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": \"%s\"}", cName, cValue);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendNestedJsonObj(*char, *char)
 
@@ -71,11 +84,11 @@ void sendNestedJsonObj(const char *cName, String sValue)
     DebugTf(PSTR("[2] sValue.length() [%d]\r\n"), sValue.length());
   }
 
-    snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": \"%s\"}"
-                                     , objSprtr, cName, sValue.c_str());
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": \"%s\"}", cName, sValue.c_str());
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendNestedJsonObj(*char, String)
 
@@ -85,11 +98,11 @@ void sendNestedJsonObj(const char *cName, int32_t iValue)
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %d}"
-                                      , objSprtr, cName, iValue);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %d}", cName, iValue);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendNestedJsonObj(*char, int)
 
@@ -98,11 +111,11 @@ void sendNestedJsonObj(const char *cName, uint32_t uValue)
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %u }"
-                                      , objSprtr, cName, uValue);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %u}", cName, uValue);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendNestedJsonObj(*char, uint)
 
@@ -112,11 +125,11 @@ void sendNestedJsonObj(const char *cName, float fValue)
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %.3f }"
-                                      , objSprtr, cName, fValue);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %.3f}", cName, fValue);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendNestedJsonObj(*char, float)
 
@@ -125,11 +138,12 @@ void sendJsonModbusmonObj(const char *cName, const char *cValue, const char *cUn
 {
   char jsonBuff[JSON_BUFF_MAX] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": \"%s\", \"unit\": \"%s\"}"
-                                      , objSprtr, cName, cValue, cUnit);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": \"%s\", \"unit\": \"%s\"}"
+                                      , cName, cValue, cUnit);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendJsonModbusmonObj(*char, *char, *char)
 
@@ -138,11 +152,12 @@ void sendJsonModbusmonObj(const char *cName, int32_t iValue, const char *cUnit)
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %d, \"unit\": \"%s\"}"
-                                      , objSprtr, cName, iValue, cUnit);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %d, \"unit\": \"%s\"}"
+                                      , cName, iValue, cUnit);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendJsonModbusmonObj(*char, int, *char)
 
@@ -151,11 +166,12 @@ void sendJsonModbusmonObj(const char *cName, uint32_t uValue, const char *cUnit)
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %u, \"unit\": \"%s\"}"
-                                      , objSprtr, cName, uValue, cUnit);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %u, \"unit\": \"%s\"}"
+                                      , cName, uValue, cUnit);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendNestedJsonObj(*char, uint, *char)
 
@@ -165,11 +181,12 @@ void sendJsonModbusmonObj(const char *cName, float fValue, const char *cUnit)
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %.2f, \"unit\": \"%s\"}"
-                                      , objSprtr, cName, fValue, cUnit);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %.2f, \"unit\": \"%s\"}"
+                                      , cName, fValue, cUnit);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendJsonModbusmonObj(*char, float, *char)
 
@@ -181,11 +198,12 @@ void sendJsonSettingObj(const char *cName, float fValue, const char *fType, int 
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %.3f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
-                                      , objSprtr, cName, fValue, fType, minValue, maxValue);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %.3f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
+                                      , cName, fValue, fType, minValue, maxValue);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendJsonSettingObj(*char, float, *char, int, int)
 
@@ -197,25 +215,26 @@ void sendJsonSettingObj(const char *cName, float fValue, const char *fType, int 
 
   switch(decPlaces) {
     case 0:
-      snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %.0f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
-                                      , objSprtr, cName, fValue, fType, minValue, maxValue);
+      snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %.0f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
+                                      , cName, fValue, fType, minValue, maxValue);
       break;
     case 2:
-      snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %.2f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
-                                      , objSprtr, cName, fValue, fType, minValue, maxValue);
+      snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %.2f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
+                                      , cName, fValue, fType, minValue, maxValue);
       break;
     case 5:
-      snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %.5f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
-                                      , objSprtr, cName, fValue, fType, minValue, maxValue);
+      snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %.5f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
+                                      , cName, fValue, fType, minValue, maxValue);
       break;
     default:
-      snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
-                                      , objSprtr, cName, fValue, fType, minValue, maxValue);
+      snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %f, \"type\": \"%s\", \"min\": %d, \"max\": %d}"
+                                      , cName, fValue, fType, minValue, maxValue);
 
   }
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendJsonSettingObj(*char, float, *char, int, int, int)
 
@@ -224,11 +243,12 @@ void sendJsonSettingObj(const char *cName, bool bValue, const char *bType)
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\":\"%s\", \"type\": \"%s\"}"
-                                    , objSprtr, cName, CBOOLEAN(bValue), bType);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\":\"%s\", \"type\": \"%s\"}"
+                                    , cName, CBOOLEAN(bValue), bType);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendJsonSettingObj(*char, bool, *char)
 //=======================================================================
@@ -236,11 +256,12 @@ void sendJsonSettingObj(const char *cName, int iValue, const char *iType, int mi
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\": %d, \"type\": \"%s\", \"min\": %d, \"max\": %d, \"step\": %d}" 
-                                      ,objSprtr, cName, iValue, iType, minValue, maxValue, stepValue);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\": %d, \"type\": \"%s\", \"min\": %d, \"max\": %d, \"step\": %d}" 
+                                      , cName, iValue, iType, minValue, maxValue, stepValue);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendJsonSettingObj(*char, int, *char, int, int, int)
 
@@ -250,11 +271,12 @@ void sendJsonSettingObj(const char *cName, const char *cValue, const char *sType
 {
   char jsonBuff[200] = "";
 
-  snprintf(jsonBuff, sizeof(jsonBuff), "%s{\"name\": \"%s\", \"value\":\"%s\", \"type\": \"%s\", \"maxlen\": %d}"
-                                      , objSprtr, cName, cValue, sType, maxLen);
+  snprintf(jsonBuff, sizeof(jsonBuff), "{\"name\": \"%s\", \"value\":\"%s\", \"type\": \"%s\", \"maxlen\": %d}"
+                                      , cName, cValue, sType, maxLen);
 
+  sendBeforenext();
+  sendIdent();
   httpServer.sendContent(jsonBuff);
-  sprintf(objSprtr, ",\r\n");
 
 } // sendJsonSettingObj(*char, *char, *char, int, int)
 

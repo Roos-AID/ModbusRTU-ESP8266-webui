@@ -29,13 +29,15 @@ The features of this ModbusRTU-ESP8266-webui firmware are:
 - settings for Modbus baudrate, RTU slave address and read interval in the webUI
 
 - Time/day based setting to enable external relay (GPIO) to allow for day/night energy monitoring/use
+- Possibility to switch the relay on/off or timebased switching on/off with MQ message syntax [MQTT Top Topic]/set/[MQTT Uniqueid]/command [value]
+  MQ value can be [relayon|relayoff|timebasedon|timebasedoff]
+
 - Initially designed to read Jantitza UMG96RM energy monitor registers and display in webUI
 
 
 To do:
 - Byteswap switch in config screen
 - Documentation (configuration and operation)
-- InfluxDB client to do direct logging
 - Update of specific registers through MQTT (low prio)
 - In version 2 we might add multiple Modbus devices to be read (very low prio now)
 
@@ -44,9 +46,9 @@ Looking for the documentation?, see the Documentation folder (work in progress).
 
 | Version | Release notes |
 |-|-|
-| 1.11.1 | WIP: Add on off command via MQ to switch relay (TODO), fix Togglerelay to always work|
+| 1.11.1 | Add Commands via MQ to switch relay and timebased switching, fix Togglerelay in Webui to always work|
 | 1.11.0 | BREAKING CHANGE : fix missing MQ top topic nodeid in HA config |
-| 1.10.1 | WIP: Add on off command via MQ to switch relay (TODO), update core 3.1.2 |
+| 1.10.1 | Update core 3.1.2 |
 | 1.10.0 | setting in UI for debug after boot, ACETIME lib update, Heap optimization |
 | 1.9.1 | Updated libraries, expanded errorlog to find reboot reason, relay allways on failed bug fixed, Wifi sleepmode off|  
 | 1.9.0 | Breaking change , added stateclass to MQ Autoconfigure for HA , additional parameter in Modbusmap.cfg see examples|  
