@@ -1,10 +1,10 @@
 /*
 ***************************************************************************
 **  Program  : helperStuff
-**  Version 1.9.1
+**  Version 1.11.0
 **
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -118,7 +118,7 @@ int8_t splitString(String inStrng, char delimiter, String wOut[], uint8_t maxWor
       inxE  = inStrng.indexOf(delimiter, inxS);         //finds location of first ,
       wOut[wordCount] = inStrng.substring(inxS, inxE);  //captures first data String
       wOut[wordCount].trim();
-      //DebugTf("[%d] => [%c] @[%d] found[%s]\r\n", wordCount, delimiter, inxE, wOut[wordCount].c_str());
+      //DebugTf(PSTR("[%d] => [%c] @[%d] found[%s]\r\n"), wordCount, delimiter, inxE, wOut[wordCount].c_str());
       inxS = inxE;
       inxS++;
       wordCount++;
@@ -149,7 +149,7 @@ void strConcat(char *dest, int maxLen, const char *src)
   }
   else
   {
-    DebugTf("Combined string > %d chars\r\n", maxLen);
+    DebugTf(PSTR("Combined string > %d chars\r\n"), maxLen);
   }
 
 } // strConcat()
@@ -173,7 +173,7 @@ void strConcat(char *dest, int maxLen, float v, int dec)
   }
   else
   {
-    DebugTf("Combined string > %d chars\r\n", maxLen);
+    DebugTf(PSTR("Combined string > %d chars\r\n"), maxLen);
   }
 
 } // strConcat()
@@ -191,7 +191,7 @@ void strConcat(char *dest, int maxLen, int v)
   }
   else
   {
-    DebugTf("Combined string > %d chars\r\n", maxLen);
+    DebugTf(PSTR("Combined string > %d chars\r\n"), maxLen);
   }
 
 } // strConcat()
@@ -213,7 +213,7 @@ void strToLower(char *src)
 void strCopy(char *dest, int maxLen, const char *src, int frm, int to)
 {
   int d=0;
-//DebugTf("dest[%s], src[%s] max[%d], frm[%d], to[%d] =>\r\n", dest, src, maxLen, frm, to);
+//DebugTf(PSTR("dest[%s], src[%s] max[%d], frm[%d], to[%d] =>\r\n"), dest, src, maxLen, frm, to);
   dest[0] = '\0';
   for (int i=0; i<=frm; i++)
   {
@@ -345,7 +345,7 @@ int strIndex(const char *haystack, const char *needle, int start)
 {
   char *p = strstr (haystack+start, needle);
   if (p) {
-    //DebugTf("found [%s] at position [%d]\r\n", needle, (p - haystack));
+    //DebugTf(PSTR("found [%s] at position [%d]\r\n"), needle, (p - haystack));
     return (p - haystack);
   }
   return -1;
@@ -411,7 +411,7 @@ float strToFloat(const char *s, int dec)
   r = strtof(s, NULL);
   p = (int)(r*pow(10, dec));
   r = p / pow(10, dec);
-  //DebugTf("[%s][%d] => p[%d] -> r[%f]\r\n", s, dec, p, r);
+  //DebugTf(PSTR("[%s][%d] => p[%d] -> r[%f]\r\n"), s, dec, p, r);
   return r;
 
 } //  strToFloat()
@@ -553,27 +553,25 @@ bool updateRebootLog(String text)
 {
   #define REBOOTLOG_FILE "/reboot_log.txt"
   #define TEMPLOG_FILE "/reboot_log.t.txt"
-  #define LOG_LINES 30
+  #define LOG_LINES 20
   #define LOG_LINE_LENGTH 140
-
 
   char log_line[LOG_LINE_LENGTH] = {0};
   char log_line_regs[LOG_LINE_LENGTH] = {0};
-  char log_line_reason[LOG_LINE_LENGTH] = {0};
   char log_line_excpt[LOG_LINE_LENGTH] = {0};
   uint32_t errorCode = -1;
 
-
-  loopNTP(); // make sure time is up to date
-
+  //waitforNTPsync();
+  loopNTP(); // make sure time is up to date (improved error logging)
 
   struct	rst_info	*rtc_info	=	system_get_rst_info();
   
   if (rtc_info == NULL) {
-    DebugTf("no reset info available:	%x\r\n",	errorCode);
+    DebugTf(PSTR("no reset info available:	%x\r\n"),	errorCode);
   } else {
 
-
+    DebugTf(PSTR("reset reason:	%x\r\n"),	rtc_info->reason);
+    errorCode = rtc_info->reason;
     // Rst cause No.    Cause                     GPIO state
     //--------------    -------------------       -------------
     // 0                Power reboot              Changed
@@ -584,30 +582,20 @@ bool updateRebootLog(String text)
     // 5                Deep-sleep                Changed
     // 6                Hardware reset            Changed
 
-    errorCode = rtc_info->reason;
-
-    switch(rtc_info->reason) {
-        case 0:   snprintf(log_line_reason, LOG_LINE_LENGTH, "0 - Power reboot"); break;
-        case 1:   snprintf(log_line_reason, LOG_LINE_LENGTH, "1 - Hardware WDT reset"); break;
-        case 2:   snprintf(log_line_reason, LOG_LINE_LENGTH, "2 - Fatal exception"); break;
-        case 3:   snprintf(log_line_reason, LOG_LINE_LENGTH, "3 - Software watchdog reset"); break;
-        case 4:   snprintf(log_line_reason, LOG_LINE_LENGTH, "4 - Software reset"); break;
-        case 5:   snprintf(log_line_reason, LOG_LINE_LENGTH, "5 - Deep-sleep"); break;
-        case 6:   snprintf(log_line_reason, LOG_LINE_LENGTH, "6 - Hardware reset"); break;
-        default:  snprintf(log_line_reason, LOG_LINE_LENGTH, "- Other (not specified) (%d)", rtc_info->reason); break;
-      }
-    DebugTf("reset reason:	%s\r\n",	log_line_reason);
-
     if	(rtc_info->reason	==	REASON_WDT_RST	|| rtc_info->reason	==	REASON_EXCEPTION_RST	|| rtc_info->reason	==	REASON_SOFT_WDT_RST)	{
 
       //The	address	of	the	last	crash	is	printed,	which	is	used	to	debug	garbled	output
       snprintf(log_line_regs, LOG_LINE_LENGTH,"ESP register contents: epc1=0x%08x, epc2=0x%08x, epc3=0x%08x, excvaddr=0x%08x, depc=0x%08x\r\n", rtc_info->epc1, rtc_info->epc2, rtc_info->epc3, rtc_info->excvaddr, rtc_info->depc);
-      DebugTf(log_line_regs);
+      Debugf(log_line_regs);
     }
 
+    // if (rtc_info->reason == REASON_EXT_SYS_RST) {
+    //   //external reset, so try to fetch the reset reason from the tiny watchdog and print that
+    //   snprintf(log_line_regs, LOG_LINE_LENGTH,"External Reason: External Watchdog reason: %s\r\n", CSTR(initWatchDog()));
+    //   Debugf(log_line_regs);      
+    // }
 
     if	(rtc_info->reason	==	REASON_EXCEPTION_RST)	{
-
 
       // Fatal exception No.    Description             Possible Causes
       // -------------------    --------------          -------------------
@@ -624,7 +612,6 @@ bool updateRebootLog(String text)
       //
       // more reasons can be found in the "corebits.h" file of the Extensa SDK
 
-
       switch(rtc_info->exccause) {
         case 0:   snprintf(log_line_excpt, LOG_LINE_LENGTH, "- Invalid command (0)"); break;
         case 6:   snprintf(log_line_excpt, LOG_LINE_LENGTH, "- Division by zero (6)"); break;
@@ -634,33 +621,25 @@ bool updateRebootLog(String text)
         default:  snprintf(log_line_excpt, LOG_LINE_LENGTH, "- Other (not specified) (%d)", rtc_info->exccause); break;
       }
 
-
-      DebugTf("Fatal exception (%d): %s\r\n",	rtc_info->exccause, log_line_excpt);
+      Debugf("Fatal exception (%d): %s\r\n",	rtc_info->exccause, log_line_excpt);
     }
   }
 
-
-  snprintf(log_line, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d - reboot cause: %s (%x) %s\r\n", year(),  month(), day(), hour(), minute(), second(), text, errorCode, log_line_excpt);
-
+  TimeZone myTz =  timezoneManager.createForZoneName(CSTR(settingNTPtimezone));
+  ZonedDateTime myTime = ZonedDateTime::forUnixSeconds64(time(nullptr), myTz);
+  snprintf(log_line, LOG_LINE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d - reboot cause: %s (%x) %s\r\n", myTime.year(),  myTime.month(), myTime.day(), myTime.hour(), myTime.minute(), myTime.second(), CSTR(text), errorCode, log_line_excpt);
 
   if (LittleFS.begin()) {
     //start with opening the file
     File outfh = LittleFS.open(TEMPLOG_FILE, "w");
 
-
     if (outfh) {
       //write to _reboot to file
       outfh.print(log_line);
 
-      if (strlen(log_line_reason)>2) {
-        outfh.print(log_line_reason);
-      }
-
-
       if (strlen(log_line_regs)>2) {
         outfh.print(log_line_regs);
       }
-
 
       File infh = LittleFS.open(REBOOTLOG_FILE, "r");
       
@@ -669,7 +648,6 @@ bool updateRebootLog(String text)
         //read from file
         while (infh.available() && (i < LOG_LINES)){
           //read the first line 
-          // String line = infh.readStringUntil('\r\n');
           String line = infh.readStringUntil('\n');
           if (line.length() > 3) { //TODO: check is no longer needed?
             outfh.print(line);
@@ -685,7 +663,6 @@ bool updateRebootLog(String text)
       }
       
       LittleFS.rename(TEMPLOG_FILE, REBOOTLOG_FILE);
-
 
       return true; // succesfully logged
     }

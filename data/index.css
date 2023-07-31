@@ -1,8 +1,8 @@
 /*
 ***************************************************************************
 **  Program  : index.css,
-**  Version 1.8.1
-**  Copyright (c) 2021 Rob Roos
+**  Version 1.11.0
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **  TERMS OF USE: MIT License. See bottom of file.
@@ -278,23 +278,29 @@ input {
 
 
 /* Modbusmonitor */
-.Modbusmonrow {
+
+.modbusMonTable {
+  display: table;
+  width: 100%;
+}
+
+.modbusmonrow {
   background: lightblue;
   display: table-row;
 }
-.Modbusmoncolumn1 {
+.modbusmoncolumn1 {
   display: table-cell;
   float: left;
-  width: 220px;
+  width: 230px;
 
 }
-.Modbusmoncolumn2 {
+.modbusmoncolumn2 {
   display: table-cell;
   float: left;
-  width: 80px;
+  width: 70px;
   text-align: right;
 }
-.Modbusmoncolumn3 {
+.modbusmoncolumn3 {
   display: table-cell;
   float: left;
   width: 34px;

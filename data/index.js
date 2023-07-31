@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program  : index.js, part of Modbus-firmware project
-**  Version 1.8.1
+**  Version 1.11.0
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -191,40 +191,50 @@ function initMainPage() {
         console.log("then(json => ..)");
         // console.log("parsed .., data is ["+ JSON.stringify(json)+"]");
         data = json.Modbusmonitor;
+
+        let modbusMonPage = document.getElementById('mainPage');
+        while (modbusMonPage.lastChild) {
+          modbusMonPage.lastChild.remove();
+        }
+        let modbusMonTable = document.createElement("div");
+        modbusMonTable.setAttribute("class", "modbusMonTable");
+
         for( let i in data )
         {
-          document.getElementById("waiting").innerHTML = "";
+          // document.getElementById("waiting").innerHTML = "";
           // console.log("["+data[i].name+"]=>["+data[i].value+"]");
-          var mainPage = document.getElementById('mainPage');
-          if( ( document.getElementById("Modbusmon_"+data[i].name)) == null )
+          // var mainPage = document.getElementById('mainPage');
+          if( ( document.getElementById("modbusmon_"+data[i].name)) == null )
           { // if element does not exists yet, then build page
             var rowDiv = document.createElement("div");
-            rowDiv.setAttribute("class", "Modbusmonrow");
-            //rowDiv.setAttribute("id", "Modbusmon_"+data[i].name);
+            rowDiv.setAttribute("class", "modbusmonrow");
+            //rowDiv.setAttribute("id", "modbusmon_"+data[i].name);
             rowDiv.style.background = "lightblue";
             //--- field Name ---
             var fldDiv = document.createElement("div");
-            fldDiv.setAttribute("class", "Modbusmoncolumn1");
+            fldDiv.setAttribute("class", "modbusmoncolumn1");
             fldDiv.textContent = translateToHuman(data[i].name);
             rowDiv.appendChild(fldDiv);
             //--- Value ---
             var valDiv = document.createElement("div");
-            valDiv.setAttribute("class", "Modbusmoncolumn2");
-            valDiv.setAttribute("id", "Modbusmon_"+data[i].name);
+            valDiv.setAttribute("class", "modbusmoncolumn2");
+            valDiv.setAttribute("id", "modbusmon_"+data[i].name);
             valDiv.textContent = data[i].value;
             rowDiv.appendChild(valDiv);
             //--- Unit  ---
             var unitDiv = document.createElement("div");
-            unitDiv.setAttribute("class", "Modbusmoncolumn3");
+            unitDiv.setAttribute("class", "modbusmoncolumn3");
             unitDiv.textContent = data[i].unit;
             rowDiv.appendChild(unitDiv);
-            mainPage.appendChild(rowDiv);
+            modbusMonTable.appendChild(rowDiv);
           }
           else
           { //if the element exists, then update the value
-            document.getElementById("Modbusmon_"+data[i].name).textContent = data[i].value;
+            document.getElementById("modbusmon_"+data[i].name).textContent = data[i].value;
           }
         }
+        modbusMonPage.appendChild(modbusMonTable);
+        if (needReload) window.location.reload(true);
 
       })
       .catch(function(error) {
@@ -553,10 +563,12 @@ function sendPostSetting(field, value) {
     , ["modbussinglephase", "Modbus Single Phase"]
     , ["timebasedswitch", "Day and timebased switching"]
     , ["relayallwayson", "Relay allways on"]
+    , ["debugbootswitch", "Debuglog all on after reboot"]
     , ["wifireconnect", "Wifi reconnect count (reset at reboot)"]
     , ["wifirestart", "Wifi restart count (reset at reboot)"]
     , ["rebootcount", "ESP reboot count"]
     , ["modbusreaderrors", "Modbus read errors"]
+    , ["lastmqcmd", "Last MQ command received"]
                  ];
 
 /*

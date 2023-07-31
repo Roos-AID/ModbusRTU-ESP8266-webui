@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program  : Modbus-firmware.h
-**  Version 1.8.1
+**  Version 1.11.1
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -14,15 +14,14 @@
 //#include <ESP8266WiFi.h>
 #include <Arduino.h>
 
-#include <AceTime.h>
-#include <TimeLib.h>
+#include <AceTime.h>    
+// #include <TimeLib.h>
 
 #include <TelnetStream.h>       // https://github.com/jandrassy/TelnetStream/commit/1294a9ee5cc9b1f7e51005091e351d60c8cddecf
 #include <ArduinoJson.h>        // https://arduinojson.org/
 #include "Wire.h"
 #include "ModbusStuff.h"
 
-#include "Debug.h"
 #include "safeTimers.h"
 
 
@@ -39,7 +38,7 @@ void setLed(int8_t, uint8_t);
 #define _HOSTNAME   "ModbusRTU"
 #define SETTINGS_FILE   "/settings.ini"
 #define NTP_DEFAULT_TIMEZONE "Europe/Amsterdam"
-#define NTP_HOST_DEFAULT "nl.pool.ntp.org"
+#define NTP_HOST_DEFAULT "pool.ntp.org"
 #define NTP_RESYNC_TIME 1800 //seconds = every 30 minutes
 
 #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant" // Home Assistant discovery prefix
@@ -65,12 +64,19 @@ String      NodeId = "";
 
 //Use acetime
 using namespace ace_time;
-static BasicZoneProcessor timeProcessor;
+// static BasicZoneProcessor timeProcessor;
+// static const int CACHE_SIZE = 3;
+// static BasicZoneProcessorCache<CACHE_SIZE> zoneProcessorCache;
+// static BasicZoneManager timezoneManager(zonedb::kZoneRegistrySize, zonedb::kZoneRegistry, zoneProcessorCache);
+static ExtendedZoneProcessor tzProcessor;
 static const int CACHE_SIZE = 3;
-static BasicZoneProcessorCache<CACHE_SIZE> zoneProcessorCache;
-static BasicZoneManager timezoneManager(zonedb::kZoneRegistrySize, zonedb::kZoneRegistry, zoneProcessorCache);
+static ExtendedZoneProcessorCache<CACHE_SIZE> zoneProcessorCache;
+static ExtendedZoneManager timezoneManager(
+  zonedbx::kZoneAndLinkRegistrySize,
+  zonedbx::kZoneAndLinkRegistry,
+  zoneProcessorCache);
 
-const char *weekDayName[]  {  "Unknown", "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Unknown" };
+const char *weekDayName[]  {  "Unknown", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag", "Unknown" };
 const char *flashMode[]    { "QIO", "QOUT", "DIO", "DOUT", "Unknown" };
 
 
@@ -93,6 +99,7 @@ bool      settingNTPenable = true;
 String    settingNTPtimezone = NTP_DEFAULT_TIMEZONE;
 String    settingNTPhostname = NTP_HOST_DEFAULT;
 bool      settingLEDblink = true;
+String    lastMQcommandrcvd = "";
 
 //Modbus Settings
 String    settingModbusCfgfile = "Modbusmap.cfg";
@@ -108,12 +115,15 @@ bool      settingRelayAllwaysOnSwitch = false;
 uint8_t   statusRelay = false;
 
 //debug flags
+bool      settingDebugAfterBoot = false;  // setting in front end
+
 bool bDebugMBmsg = false;
 bool bDebugMBlogic = false; // when set to true during compile time, Modbusmaptest.cfg file is selected during boot
 
 bool bDebugRestAPI = false;
 bool bDebugMQTT = false;
 
-//Now load network suff
+//Now load Debug & network library
+#include "Debug.h"
 #include "networkStuff.h"
 // eof

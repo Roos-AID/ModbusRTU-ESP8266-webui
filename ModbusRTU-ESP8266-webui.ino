@@ -2,9 +2,9 @@
 /*
 ***************************************************************************
 **  Program  : ModbusRTU-webui.ino
-**  Version 1.9.1
+**  Version 1.11.0
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -16,7 +16,7 @@
  *  How to install the ModbusRTU-webui on your nodeMCU
  *
  *  Make sure you have all required library's installed:
- *  - AceTime v1.8.0 - https://github.com/bxparks/AceTime
+ *  - AceTime v2.3.0 - https://github.com/bxparks/AceTime
  *  - TelnetStream - https://github.com/jandrassy/TelnetStream/commit/1294a9ee5cc9b1f7e51005091e351d60c8cddecf
  *  - ArduinoJson - https://arduinojson.org/
  *  - modbus-esp8266  -https://github.com/emelianov/modbus-esp8266
@@ -68,7 +68,13 @@ void setup()
   setLed(LED2, ON);
 
   LittleFS.begin();
-  readSettings(true);    
+  readSettings(true);  
+
+  if (settingDebugAfterBoot) {
+    bDebugMBmsg = true;
+    bDebugRestAPI = true;
+    bDebugMQTT = true;
+  }  
   
   if (settingRelayAllwaysOnSwitch) setRelay(RELAYON);  else
     setRelay(RELAYOFF);
@@ -80,6 +86,11 @@ void setup()
   
   
   Serial.println(F("Attempting to connect to WiFi network\r"));
+
+  //setup NTP before connecting to wifi will enable DHCP to overrule the NTP setting
+  startNTP();
+
+
   setLed(LED1, ON);
   startWiFi(CSTR(settingHostname), 240);  // timeout 240 seconds
   blinkLED(LED1, 3, 100);
@@ -90,7 +101,6 @@ void setup()
   startMDNS(CSTR(settingHostname));
   startLLMNR(CSTR(settingHostname));
   startMQTT(); 
-  startNTP();
 
   setupFSexplorer();
   startWebserver();
@@ -100,11 +110,12 @@ void setup()
   while (settingTimebasedSwitch && settingNTPenable && (NtpStatus != TIME_SYNC))
   {
     loopNTP(); // Make sure time is set
+    delayms(1000) ;
   }
 
   // log last reset reason after all above has started 
   lastReset = ESP.getResetReason();
-  DebugTf("Last reset reason: [%s]\r\n", CSTR(ESP.getResetReason()));
+  DebugTf(PSTR("Last reset reason: [%s]\r\n"), CSTR(ESP.getResetReason()));
   rebootCount = updateRebootCount();
   // updateRebootLog(ESP.getResetReason());
   updateRebootLog("Startup");
@@ -123,7 +134,7 @@ void setup()
   if (WiFi.status() != WL_CONNECTED)
   {
     //disconnected, try to reconnect then...
-    DebugTln("Wifi not Connected !!!  Restart Wifi");
+    DebugTln(F("Wifi not Connected !!!  Restart Wifi"));
     reconnectWiFiCount++;
     restartWiFi(CSTR(settingHostname), 240);
     MDNS.update();
@@ -136,8 +147,8 @@ void setup()
 
   if (pinger.Ping(WiFi.gatewayIP(), 1) == false)
   {
-    DebugTf("Pinging default gateway with IP %s, FAILED\n", WiFi.gatewayIP().toString().c_str());
-    DebugTln("Error during last ping command. Restart Wifi");
+    DebugTf(PSTR("Pinging default gateway with IP %s, FAILED\n"), WiFi.gatewayIP().toString().c_str());
+    DebugTln(F("Error during last ping command. Restart Wifi"));
     restartWiFiCount++;
     if (restartWiFiCount > 5)
     {
@@ -151,7 +162,7 @@ void setup()
     startTelnet();
   }
 
-  Debugf("Reboot count = [%d]\r\n", rebootCount);
+  Debugf(PSTR("Reboot count = [%d]\r\n"), rebootCount);
   Debugln(F("Setup finished!"));
 
   //Blink LED2 to signal setup done
@@ -234,6 +245,7 @@ void doTaskEvery30s(){
 //===[ Do task every 60s ]===
 void doTaskEvery60s(){
   //== do tasks ==
+  loopNTP() ;
   checkactivateRelay(true);
   //if no wifi, try reconnecting (once a minute)
   if (WiFi.status() != WL_CONNECTED)
@@ -251,7 +263,7 @@ void doTaskEvery60s(){
 
   if(pinger.Ping(WiFi.gatewayIP(),1) == false)
   {
-    DebugTf("Pinging default gateway with IP %s, FAILED\n", WiFi.gatewayIP().toString().c_str());
+    DebugTf(PSTR("Pinging default gateway with IP %s, FAILED\n"), WiFi.gatewayIP().toString().c_str());
     DebugTln("Error during last ping command. Restart Wifi");
     restartWiFiCount++ ;
     if (restartWiFiCount > 5) {
@@ -264,7 +276,7 @@ void doTaskEvery60s(){
     //check telnet
     startTelnet();
   }
-
+  
 }
 // end doTaskEvery60s()
 
@@ -276,7 +288,7 @@ void doBackgroundTasks()
       handleDebug();
       handleMQTT();                 // MQTT transmissions
       httpServer.handleClient();
-      loopNTP();
+      // loopNTP();
     }           
   yield();
 }

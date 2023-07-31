@@ -1,0 +1,11 @@
+node_modules/*
+package-lock.json
+*.log
+*.bin
+.vscode/*
+.DS_Store
+**/.DS_Store
+Arduino/**
+libraries/**
+staging/**
+arduino-cli.yaml

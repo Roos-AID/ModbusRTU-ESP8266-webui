@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program  : MQTTstuff
-**  Version 1.8.0
+**  Version 1.11.0
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **  TERMS OF USE: MIT License. See bottom of file.
@@ -69,11 +69,11 @@ void handleMQTTcallback(char *topic, byte *payload, unsigned int length) {
   
 if (bDebugMQTT)   { 
   DebugT("Message arrived on topic [");  Debug(topic); Debug("] = [");
-  for (int i = 0; i < length; i++)
+  for (unsigned int i = 0; i < length; i++)
   {
     Debug((char)payload[i]);
   }
-  Debug("] ("); Debug(length);  Debug(")"); Debugln();
+  Debug("] ("); Debug(length);  Debug(")"); Debugln(); DebugFlush();
 }
   char subscribeTopic[100];
   // naming convention <mqtt top>/set/<node id>/<command>
@@ -82,8 +82,8 @@ if (bDebugMQTT)   {
   //what is the incoming message?
   if (stricmp(topic, subscribeTopic) == 0)
   {
-    //incoming command to be forwarded to MODBUS
-    sendModbus((char *)payload, length);
+    //incoming command to be analysed and processed
+    processMQcommand((char *)payload, length);
   }
 }
 
@@ -108,7 +108,7 @@ void handleMQTT()
     sprintf(MQTTbrokerIPchar, "%d.%d.%d.%d", MQTTbrokerIP[0], MQTTbrokerIP[1], MQTTbrokerIP[2], MQTTbrokerIP[3]);
     if (isValidIP(MQTTbrokerIP))
     {
-      MQTTDebugTf("[%s] => setServer(%s, %d)\r\n", CSTR(settingMQTTbroker), MQTTbrokerIPchar, settingMQTTbrokerPort);
+      MQTTDebugTf(PSTR("[%s] => setServer(%s, %d)\r\n"), CSTR(settingMQTTbroker), MQTTbrokerIPchar, settingMQTTbrokerPort);
       MQTTclient.disconnect();
       MQTTclient.setServer(MQTTbrokerIPchar, settingMQTTbrokerPort);
       MQTTclient.setCallback(handleMQTTcallback);
@@ -120,7 +120,7 @@ void handleMQTT()
     }
     else
     { // invalid IP, then goto error state
-      MQTTDebugTf("ERROR: [%s] => is not a valid URL\r\n", CSTR(settingMQTTbroker));
+      MQTTDebugTf(PSTR("ERROR: [%s] => is not a valid URL\r\n"), CSTR(settingMQTTbroker));
       stateMQTT = MQTT_STATE_ERROR;
       //DebugTln(F("Next State: MQTT_STATE_ERROR"));
     }
@@ -129,9 +129,9 @@ void handleMQTT()
 
   case MQTT_STATE_TRY_TO_CONNECT:
     MQTTDebugTln(F("MQTT State: MQTT try to connect"));
-    MQTTDebugTf("MQTT server is [%s], IP[%s]\r\n", settingMQTTbroker.c_str(), MQTTbrokerIPchar);
-    MQTTDebugTf("MQTT clientid [%s] \r\n", MQTTclientId.c_str());
-    MQTTDebugTf("MQTT PubNamespace [%s], SubNamespace [%s]\r\n", MQTTPubNamespace.c_str(), MQTTSubNamespace.c_str());
+    MQTTDebugTf(PSTR("MQTT server is [%s], IP[%s]\r\n"), settingMQTTbroker.c_str(), MQTTbrokerIPchar);
+    MQTTDebugTf(PSTR("MQTT clientid [%s] \r\n"), MQTTclientId.c_str());
+    MQTTDebugTf(PSTR("MQTT PubNamespace [%s], SubNamespace [%s]\r\n"), MQTTPubNamespace.c_str(), MQTTSubNamespace.c_str());
 
     MQTTDebugT(F("Attempting MQTT connection .. "));
     reconnectAttempts++;
@@ -163,21 +163,21 @@ void handleMQTT()
       char topic[100];
       strcpy(topic, CSTR(MQTTSubNamespace));
       strlcat(topic, "/#", sizeof(topic));
-      MQTTDebugTf("Subscribe to MQTT: TopicId [%s]\r\n", topic);
+      MQTTDebugTf(PSTR("Subscribe to MQTT: TopicId [%s]\r\n"), topic);
       if (MQTTclient.subscribe(topic))
       {
-        MQTTDebugTf("MQTT: Subscribed successfully to TopicId [%s]\r\n", topic);
+        MQTTDebugTf(PSTR("MQTT: Subscribed successfully to TopicId [%s]\r\n"), topic);
       }
       else
       {
-        MQTTDebugTf("MQTT: Subscribe TopicId [%s] FAILED! \r\n", topic);
+        MQTTDebugTf(PSTR("MQTT: Subscribe TopicId [%s] FAILED! \r\n"), topic);
       }
       sendMQTTversioninfo();
     }
     else
     { // no connection, try again, do a non-blocking wait for 3 seconds.
       MQTTDebugln(F(" .. \r"));
-      MQTTDebugTf("failed, retrycount=[%d], rc=[%d] ..  try again in 3 seconds\r\n", reconnectAttempts, MQTTclient.state());
+      MQTTDebugTf(PSTR("failed, retrycount=[%d], rc=[%d] ..  try again in 3 seconds\r\n"), reconnectAttempts, MQTTclient.state());
       RESTART_TIMER(timerMQTTwaitforretry);
       stateMQTT = MQTT_STATE_WAIT_CONNECTION_ATTEMPT; // if the re-connect did not work, then return to wait for reconnect
       MQTTDebugTln(F("Next State: MQTT_STATE_WAIT_CONNECTION_ATTEMPT"));
@@ -282,12 +282,12 @@ void sendMQTTData(const char *topic, const char *json, const bool retain = false
 {
   if (!settingMQTTenable) return;
   if (!MQTTclient.connected() || !isValidIP(MQTTbrokerIP))  return;
-  MQTTDebugTf("Sending data to MQTT server [%s]:[%d]\r\n", settingMQTTbroker.c_str(), settingMQTTbrokerPort);
+  MQTTDebugTf(PSTR("Sending data to MQTT server [%s]:[%d]\r\n"), settingMQTTbroker.c_str(), settingMQTTbrokerPort);
   char full_topic[100];
   snprintf(full_topic, sizeof(full_topic), "%s/", CSTR(MQTTPubNamespace));
   strlcat(full_topic, topic, sizeof(full_topic));
-  MQTTDebugTf("Sending MQTT: TopicId [%s] Message [%s]\r\n", full_topic, json);
-  if (!MQTTclient.publish(full_topic, json, retain))  DebugTln("MQTT publish failed.");
+  MQTTDebugTf(PSTR("Sending MQTT: TopicId [%s] Message [%s]\r\n"), full_topic, json);
+  if (!MQTTclient.publish(full_topic, json, retain))  DebugTln(F("MQTT publish failed."));
   // feedWatchDog(); //feed the dog
 } // sendMQTTData()
 
@@ -306,8 +306,8 @@ void sendMQTT(const char *topic, const char *json, const size_t len)
 {
   if (!settingMQTTenable)   return;
   if (!MQTTclient.connected() || !isValidIP(MQTTbrokerIP))  return;
-  MQTTDebugTf("Sending data to MQTT server [%s]:[%d] ", settingMQTTbroker.c_str(), settingMQTTbrokerPort);
-  MQTTDebugTf("Sending MQTT: TopicId [%s] Message [%s]\r\n", topic, json);
+  MQTTDebugTf(PSTR("Sending data to MQTT server [%s]:[%d] "), settingMQTTbroker.c_str(), settingMQTTbrokerPort);
+  MQTTDebugTf(PSTR("Sending MQTT: TopicId [%s] Message [%s]\r\n"), topic, json);
   if (MQTTclient.getBufferSize() < len)
     MQTTclient.setBufferSize(len); //resize buffer when needed
 
@@ -327,9 +327,9 @@ Publish usefull firmware version information to MQTT broker.
 */
 void sendMQTTversioninfo()
 {
-  MQTTDebugln("sendMQTT versioninfo");
+  MQTTDebugln(F("sendMQTT versioninfo"));
   sendMQTTData("ModbusRTU-webui/version", _VERSION);
-  MQTTDebugln("sendMQTT rebootcount");
+  MQTTDebugln(F("sendMQTT rebootcount"));
 
   sendMQTTData("ModbusRTU-webui/reboot_count", CSTR(String(rebootCount)));
   // sendMQTTData("ModbusRTU-webui/reboot_count", rebootCount.c_str);
@@ -337,7 +337,7 @@ void sendMQTTversioninfo()
   // char _msg[15]{0};
   // itoa(_value, _msg, 10);
   // sendMQTTData("ModbusRTU-webui/reboot_count", _msg);
-  MQTTDebugln("end versioninfo ");
+  MQTTDebugln(F("end versioninfo "));
 }
 //===========================================================================================
 void resetMQTTBufferSize()
@@ -380,11 +380,11 @@ void doAutoConfigure()
     return;
   }
 
-  MQTTDebugln("Start doAutoConfigureMB");
+  MQTTDebugln(F("Start doAutoConfigureMB"));
 
   //  String sTopic_template = "%homeassistant%/sensor/%node_id%/%label%/config";
   //  String sMsg_template = "{\"avty_t\":\"%mqtt_pub_topic%\",\"dev\":{\"identifiers\":\"%node_id%\",\"manufacturer\":\"Rob Roos\",\"model\":\"modbusRTUrdr\",\"name\":\"ModbusRTU reader(%hostname%)\",\"sw_version\":\"%version%\"},\"uniq_id\":\"%node_id%-%label%\",\"device_class\":\"%devclass%\",\"state_class\":\"%stateclass%\",\"name\":\"%hostname%_%friendlyname%\", \"stat_t\":\"%mqtt_pub_topic%/%label%\",\"unit_of_measurement\": \"%unit%\", \"value_template\": \"{{ value }}\" }" ;
-  String sTopic_template = "%homeassistant%/sensor/%label%/config";
+  String sTopic_template = "%homeassistant%/sensor/%node_id%/%label%/config";
   String sMsg_template = "{\"avty_t\": \"%mqtt_pub_topic%\", \"dev\": {\"identifiers\": \"%node_id%\", \"manufacturer\": \"Rob Roos\", \"model\": \"modbusRTUrdr\", \"name\": \"ModbusRTU reader(%hostname%)\", \"sw_version\": \"%version%\"}, \"uniq_id\": \"%node_id%-%label%\", \"device_class\": \"%devclass%\", \"state_class\": \"%stateclass%\", \"name\": \"%hostname%_%friendlyname%\", \"stat_t\": \"%mqtt_pub_topic%/%label%\", \"unit_of_measurement\": \"%unit%\", \"value_template\": \"{{ value }}\" }";
   String sTopic = "";
   String sMsg = "";
@@ -393,7 +393,7 @@ void doAutoConfigure()
   sTopic_template.replace("%homeassistant%", CSTR(settingMQTThaprefix));
   // node
   sTopic_template.replace("%node_id%", CSTR(settingMQTTuniqueid));
-  MQTTDebugTf("sTopic_template[%s]\r\n", CSTR(sTopic_template));
+  MQTTDebugTf(PSTR("sTopic_template[%s]\r\n"), CSTR(sTopic_template));
 
   /// node
   sMsg_template.replace("%node_id%", CSTR(settingMQTTuniqueid));
@@ -410,7 +410,7 @@ void doAutoConfigure()
   // sub topics
   sMsg_template.replace("%mqtt_sub_topic%", CSTR(MQTTSubNamespace));
 
-  MQTTDebugTf("sMsg_template[%s]\r\n", CSTR(sMsg_template));
+  MQTTDebugTf(PSTR("sMsg_template[%s]\r\n"), CSTR(sMsg_template));
   /// ----------------------
   // Now for all records in Modbusmap, convert sTopic and sMsg
 
@@ -418,7 +418,7 @@ void doAutoConfigure()
   {
     if ((Modbusmap[i].oper == Modbus_READ || Modbusmap[i].oper == Modbus_RW) && Modbusmap[i].mqenable == 1 )
     {
-      MQTTDebugTf("Record: %d, id %d, oper: %d, label:%s \r\n", i, Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].label);
+      MQTTDebugTf(PSTR("Record: %d, id %d, oper: %d, label:%s \r\n"), i, Modbusmap[i].id, Modbusmap[i].oper, Modbusmap[i].label);
       
       sTopic = sTopic_template;
       sMsg = sMsg_template;
@@ -436,8 +436,8 @@ void doAutoConfigure()
       // unit
       sMsg.replace("%unit%", Modbusmap[i].unit);
 
-      MQTTDebugTf("sTopic[%s]\r\n", CSTR(sTopic));
-      MQTTDebugTf("sMsg[%s]==>\r\n", CSTR(sMsg));
+      MQTTDebugTf(PSTR("sTopic[%s]\r\n"), CSTR(sTopic));
+      MQTTDebugTf(PSTR("sMsg[%s]==>\r\n"), CSTR(sMsg));
       DebugFlush();
 
       //sendMQTT(CSTR(sTopic), CSTR(sMsg), (sTopic.length() + sMsg.length()+2));

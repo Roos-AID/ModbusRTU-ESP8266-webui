@@ -1,9 +1,9 @@
 /*
 ***************************************************************************
 **  Program  : Debug.h, part of ModbusRTU-webui
-**  Version 1.8.0
+**  Version 1.11.0
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
@@ -63,17 +63,53 @@
 
 // needs #include <TelnetStream.h>       // Version 0.0.1 - https://github.com/jandrassy/TelnetStream
 
-char _bol[128];
+//#include <sys/time.h>
+// #include <time.h>
+// extern "C" int clock_gettime(clockid_t unused, struct timespec *tp);
+
 void _debugBOL(const char *fn, int line)
 {
+   char _bol[128];
+   // This commented out code is using mix of system time and acetime to print, but it will not work on microsecond level correctly
+   // // //calculate fractional seconds to millis fraction
+   // double fractional_seconds;
+   // int microseconds;
+   // struct timespec tp;   //to enable clock_gettime()  
+   // clock_gettime(CLOCK_REALTIME, &tp); 
+   // fractional_seconds = (double) tp.tv_nsec;
+   // fractional_seconds /= 1e3;
+   // fractional_seconds = round(fractional_seconds);
+   // microseconds = (int) fractional_seconds;
+     
+   /* snprintf(_bol, sizeof(_bol), "%02d:%02d:%02d.%06d (%7u|%6u) %-12.12s(%4d): ", \
+                 hour(), minute(), second(), microseconds, \
+                 ESP.getFreeHeap(), ESP.getMaxFreeBlockSize(),\
+                 fn, line);
+   */
+                 
+   //Alternative based on localtime function
+   timeval now;
+   //struct tm *tod;
+   gettimeofday(&now, nullptr);
+   //tod = localtime(&now.tv_sec);
 
-  snprintf(_bol, sizeof(_bol), "[%02d:%02d:%02d][%7u|%6u] %-12.12s(%4d): ", \
-                hour(), minute(), second(), \
-                ESP.getFreeHeap(), ESP.getMaxFreeBlockSize(),\
-                fn, line);
+   /*
+   snprintf(_bol, sizeof(_bol), "%02d:%02d:%02d.%06d (%7u|%6u) %-12.12s(%4d): ", \
+                  tod->tm_hour, tod->tm_min, tod->tm_sec, (int)now.tv_usec, \
+                  ESP.getFreeHeap(), ESP.getMaxFreeBlockSize(),\
+                  fn, line);
+   */
 
-  DEBUG_PORT.print (_bol);
-  TelnetStream.print(_bol);
+   TimeZone myTz =  timezoneManager.createForZoneName(CSTR(settingNTPtimezone));
+   ZonedDateTime myTime = ZonedDateTime::forUnixSeconds64(time(nullptr), myTz);
+   
+   //DebugTf(PSTR("%02d:%02d:%02d %02d-%02d-%04d\r\n"), myTime.hour(), myTime.minute(), myTime.second(), myTime.day(), myTime.month(), myTime.year());
+
+   snprintf(_bol, sizeof(_bol), "%02d:%02d:%02d.%06d (%7u|%6u) %-12.12s(%4d): ", \
+                  myTime.hour(), myTime.minute(), myTime.second(), (int)now.tv_usec, \
+                  ESP.getFreeHeap(), ESP.getMaxFreeBlockSize(),\
+                  fn, line);
+
+   TelnetStream.print (_bol);
 }
-
 #endif // DEBUG_H

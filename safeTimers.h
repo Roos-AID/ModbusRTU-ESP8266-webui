@@ -1,10 +1,10 @@
 /*
 ***************************************************************************
 **  Program  : safeTimers.ino
-**  Version 1.8.0
+**  Version 1.11.0
 **
 **
-**  Copyright (c) 2021 Rob Roos
+**  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
 **     from Robert van Breemen
 **
