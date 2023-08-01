@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : MQTTstuff
-**  Version 1.11.0
+**  Version 1.11.2
 **
 **  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -446,6 +446,55 @@ void doAutoConfigure()
       delay(10);
     }
   }
+
+  // Autoconfig relay status
+
+  String sTopic_bintemplate = "%homeassistant%/binary_sensor/%node_id%/%label%/config";
+  String sMsg_bintemplate = "{\"avty_t\": \"%mqtt_pub_topic%\", \"dev\": {\"identifiers\": \"%node_id%\", \"manufacturer\": \"Rob Roos\", \"model\": \"modbusRTUrdr\", \"name\": \"ModbusRTU reader(%hostname%)\", \"sw_version\": \"%version%\"}, \"uniq_id\": \"%node_id%-%label%\", \"device_class\": \"%devclass%\", \"name\": \"%hostname%_%friendlyname%\", \"stat_t\": \"%mqtt_pub_topic%/%label%\", \"value_template\": \"{{ value }}\" }";
+  // first convert sTopic_template and sMsg_template to unique MQTT Topic and Msg templates
+  // discovery topic prefix
+  sTopic_bintemplate.replace("%homeassistant%", CSTR(settingMQTThaprefix));
+  // node
+  sTopic_bintemplate.replace("%node_id%", CSTR(settingMQTTuniqueid));
+  MQTTDebugTf(PSTR("sTopic_binary template[%s]\r\n"), CSTR(sTopic_bintemplate));
+
+  /// node
+  sMsg_bintemplate.replace("%node_id%", CSTR(settingMQTTuniqueid));
+
+  /// hostname
+  sMsg_bintemplate.replace("%hostname%", CSTR(settingHostname));
+
+  /// version
+  sMsg_bintemplate.replace("%version%", CSTR(String(_VERSION)));
+
+  // pub topics prefix
+  sMsg_bintemplate.replace("%mqtt_pub_topic%", CSTR(MQTTPubNamespace));
+
+  // sub topics
+  sMsg_bintemplate.replace("%mqtt_sub_topic%", CSTR(MQTTSubNamespace));
+
+  MQTTDebugTf(PSTR("sMsg_binary template[%s]\r\n"), CSTR(sMsg_template));
+  sTopic = sTopic_bintemplate;
+  sMsg = sMsg_bintemplate;
+
+  // label
+  sTopic.replace("%label%", "Relaystat");
+
+  sMsg.replace("%label%", "Relaystat");
+  // friendlyname 
+  sMsg.replace("%friendlyname%", "Relay status");
+  // deviceclass
+  sMsg.replace("%devclass%", "battery_charging");
+
+  MQTTDebugTf(PSTR("sTopic[%s]\r\n"), CSTR(sTopic));
+  MQTTDebugTf(PSTR("sMsg[%s]==>\r\n"), CSTR(sMsg));
+  DebugFlush();
+
+  //sendMQTT(CSTR(sTopic), CSTR(sMsg), (sTopic.length() + sMsg.length()+2));
+  sendMQTT(sTopic, sMsg);
+  resetMQTTBufferSize();
+  delay(10);  
+
 
   // HA discovery msg's are rather large, reset the buffer size to release some memory
   resetMQTTBufferSize();

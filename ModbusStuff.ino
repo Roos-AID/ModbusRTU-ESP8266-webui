@@ -1,7 +1,7 @@
 /*
 ***************************************************************************
 **  Program  : ModbusStuff
-**  Version 1.11.0
+**  Version 1.11.2
 **
 **  Copyright (c) 2023 Rob Roos
 **     based on Framework ESP8266 from Willem Aandewiel and modifications
@@ -550,6 +550,17 @@ void toMQTT_string(int id)
   sendMQTTData(Modbusmap[id].label, CSTR(Modbusmap[id].Modbus_string));
 
 }
+void toMQTT_relay(uint8_t status)
+{
+  //function to push relay status to MQTT
+
+  if (bDebugMBmsg) DebugTf(PSTR("To MQTT relay %d \r\n"), status);
+
+  if (status) sendMQTTData("Relaystat", "ON");
+  else sendMQTTData("Relaystat", "OFF");
+
+}
+
 
 void Modbus2MQTT() {
   for (int i = 1; i <= ModbusdataObject.NumberRegisters; i++)
@@ -1184,6 +1195,8 @@ void setRelay(uint8_t status)
   digitalWrite(RELAY, status);
   if (bDebugMBmsg)  DebugTf(PSTR("INFO: Relay set to %d \r\n"), status);
   statusRelay = status;
+  // send status to MQ
+  toMQTT_relay(status) ;
 }
 
 /***************************************************************************
