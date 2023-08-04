@@ -76,6 +76,8 @@ void setup()
     bDebugMQTT = true;
   }  
   
+  // set relay early in startup
+  // But send status again after start of MQTT
   if (settingRelayAllwaysOnSwitch) setRelay(RELAYON);  else
     setRelay(RELAYOFF);
   
@@ -170,6 +172,9 @@ void setup()
   blinkLED(LED2, 3, 100);
   setLed(LED2, OFF);
 
+  // set MQ info for relay etc.
+  do5minevent();
+
 }  // End setup
 
 //=====================================================================
@@ -224,6 +229,11 @@ void delayms(unsigned long delay_ms)
     doBackgroundTasks();
 }
 
+// void sendMQTTuptime(){
+//   DebugTf(PSTR("Uptime seconds: %d\r\n"), upTimeSeconds);
+//   String sUptime = String(upTimeSeconds);
+//   sendMQTTData(F("ModbusRTU/uptime"), sUptime, false);
+// }
 //=====================================================================
 
 //===[ Do task every 1s ]===
@@ -280,6 +290,13 @@ void doTaskEvery60s(){
 }
 // end doTaskEvery60s()
 
+//===[ Do task every 5min ]===
+void do5minevent(){
+  // sendMQTTuptime();
+  sendMQTTversioninfo();
+  toMQTT_relay(statusRelay) ;
+}
+
 //===[ Do the background tasks ]===
 void doBackgroundTasks()
 {
@@ -300,11 +317,13 @@ void loop()
   DECLARE_TIMER_SEC(timer5s, 5, CATCH_UP_MISSED_TICKS);
   DECLARE_TIMER_SEC(timer30s, 30, CATCH_UP_MISSED_TICKS);
   DECLARE_TIMER_SEC(timer60s, 60, CATCH_UP_MISSED_TICKS);
+  DECLARE_TIMER_MIN(timer5min, 5, CATCH_UP_MISSED_TICKS);
 
   if (DUE(timer1s))       doTaskEvery1s();
   if (DUE(timer5s))       doTaskEvery5s();
   if (DUE(timer30s))      doTaskEvery30s();
   if (DUE(timer60s))      doTaskEvery60s();
+  if (DUE(timer5min))     do5minevent();
   if (DUE(timerreadmodbus)) readModbus();
 
   doBackgroundTasks();

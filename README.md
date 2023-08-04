@@ -46,6 +46,7 @@ Looking for the documentation?, see the Documentation folder (work in progress).
 
 | Version | Release notes |
 |-|-|
+| 1.11.3 | Send MQ refresh message for relay status every 5 min|
 | 1.11.2 | MQ status message relay and autodiscovery for relay|
 | 1.11.1 | Add Commands via MQ to switch relay and timebased switching, fix Togglerelay in Webui to always work|
 | 1.11.0 | BREAKING CHANGE : fix missing MQ top topic nodeid in HA config |
